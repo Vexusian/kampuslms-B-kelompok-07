@@ -13,9 +13,10 @@ Berkas ```public/index.php``` merupakan _entry point_ aplikasi Laravel yang mene
 - Exception: bagian ```->withExceptions(function (Exceptions $exceptions): void { ... })``` yang digunakan untuk konfigurasi penanganan exception/error.
 
 ### 3. Buka ```routes/web.php```. Temukan route yang menghasilkan halaman selamat datang. Ubah teksnya, muat ulang _browser_, pastikan berubah.
-
+_Route_ yang menghasilkan halaman selamat datang adalah ```Route::get('/', function () { return view('welcome'); });```. _Route_ tersebut menangani _request_ GET pada URL / dan mengembalikan view```welcome```, yang berasal dari ```resources/views/welcome.blade.php```. Setelah teks pada view diubah dan browser dimuat ulang, halaman menampilkan teks yang telah diperbarui.
 
 ### 4. Jalankan ```php artisan route:list```. Cocokkan keluarannya dengan ```routes/web.php```.
+Perintah ```php artisan route:list``` menampilkan daftar _route_ yang terdaftar pada aplikasi Laravel. _Route_ / dengan method ```GET|HEAD``` dapat dicocokkan dengan ```Route::get('/', ...)``` yang terdapat pada ```routes/web.php```. Hal ini menunjukkan bahwa route yang ditulis pada ```routes/web.php``` telah terdaftar dan dikenali oleh Laravel.
 
 ## BREAK — Rusak dengan Sengaja
 

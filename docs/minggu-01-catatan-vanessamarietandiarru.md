@@ -21,19 +21,12 @@ Perintah ```php artisan route:list``` menampilkan daftar _route_ yang terdaftar 
 ## BREAK — Rusak dengan Sengaja
 | # | Yang dirusak | Prediksi | Pesan Error Sebenarnya |
 | --- | --- | --- | --- |
-| 1 | Ganti nama ```.env``` menjadi ```.env.bak``` |  |  |
-| 2 | Kosongkan nilai ```APP_KEY``` di ```.env``` |  |  |
-| 3 | Ubah ```DB_DATABASE``` menjadi nama yang tidak ada |  |  |
-| 4 | Ubah ```APP_DEBUG=false```, lalu ulangi nomor 3 |  |  |
-
-### Mengganti Nama .env
-> Tampilan awal browser Laravel:
-![alt text](images/gambar_1-vanessa.png)
-
-> Tampilan setelah diganti:
-![alt text](images/gambar_2-vanessa.png)
+| 1 | Ganti nama ```.env``` menjadi ```.env.bak``` | Laravel tidak bisa membaca konfigurasi environment sehingga _browser_ kemungkinan akan error | "This site can't be reached. 127.0.0.1 refused to connect" |
+| 2 | Kosongkan nilai ```APP_KEY``` di ```.env``` | Laravel akan error karena _application encryption key_ tidak ada | "Illuminate\Encryption\MissingAppKeyException. vendor\laravel\framework\src\Illuminate\Encryption\EncryptionServiceProvider.php:83. No application encryption key has been specified."|
+| 3 | Ubah ```DB_DATABASE``` menjadi nama yang tidak ada | Laravel tidak dapat terhubung ke _database_ yang ditentukan |  |
+| 4 | Ubah ```APP_DEBUG=false```, lalu ulangi nomor 3 | Akan tetap error |  |
 
 ## FIX — Perbaiki Proyek yang Cacat
 
 
-## BUILD — Fondasi Proye    k Kelompok
+## BUILD — Fondasi Proyek Kelompok

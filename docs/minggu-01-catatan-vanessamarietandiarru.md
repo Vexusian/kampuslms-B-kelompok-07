@@ -28,9 +28,10 @@ Perintah ```php artisan route:list``` menampilkan daftar _route_ yang terdaftar 
 
 ### Mengganti Nama .env
 > Tampilan awal browser Laravel:
-![alt text](<Screenshot 2026-09-02 010201.png>)
+![alt text](images/gambar_1-vanessa.png)
+
 > Tampilan setelah diganti:
-![alt text](image.png)
+![alt text](images/gambar_2-vanessa.png)
 
 ## FIX — Perbaiki Proyek yang Cacat
 

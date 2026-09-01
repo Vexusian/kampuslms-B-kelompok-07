@@ -38,7 +38,7 @@ Perintah ```php artisan route:list``` menampilkan daftar _route_ yang terdaftar 
 6. Sudah
 7. Sudah ![alt text](images/image_1-vanessa.png)
 
-## Catatan Checkhpoint
+# Catatan Checkhpoint 1
 1.  Sebutkan urutan berkas yang dilewati sebuah request dari browser sampai HTML kembali.
 > browser -> public/index.php -> bootstrap/app.php -> routes/web.php -> Controller / Closure -> View (.blade.php) -> HTML -> Browser
 2. Kenapa hanya folder public/ yang boleh diakses dari internet? Apa yang terjadi kalau seluruh folder proyek diekspos?

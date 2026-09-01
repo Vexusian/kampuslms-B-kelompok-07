@@ -37,3 +37,20 @@ Perintah ```php artisan route:list``` menampilkan daftar _route_ yang terdaftar 
 5. Sudah
 6. Sudah
 7. Sudah ![alt text](images/image_1-vanessa.png)
+
+## Catatan Checkhpoint
+1.  Sebutkan urutan berkas yang dilewati sebuah request dari browser sampai HTML kembali.
+> browser -> public/index.php -> bootstrap/app.php -> routes/web.php -> Controller / Closure -> View (.blade.php) -> HTML -> Browser
+2. Kenapa hanya folder public/ yang boleh diakses dari internet? Apa yang terjadi kalau seluruh folder proyek diekspos?
+> Karena `public/` memang dirancang sebagai _web root_, yaitu satu-satunya bagian aplikasi yang boleh menjadi titik masuk dari _web_.
+3. Apa beda .env dan .env.example, dan kenapa hanya satu yang di-commit?
+> `.env` berisi konfigurasi aktual dan dapat mengandung info sensitif seperti _password database_ atau API key, sehingga tidak boleh di-_commit_ ke _repository_. Sementara itu, `.env.example` merupakan _template_ konfigurasi yang menunjukkan variabel apa saja yang dibutuhkan aplikasi tanpa menyimpan kredensial pribadi.
+4. Di Laravel 12, di berkas mana middleware didaftarkan? Kenapa jawabannya berbeda dari kebanyakan tutorial di internet?
+> ->withMiddleware(function (Middleware $middleware): void {
+    //
+})
+> Pada Laravel 12, konfigurasi middleware dilakukan di `bootstrap/app.php`, melalui bagian `withMiddleware()`. Hal ini berbeda dari banyak tutorial di internet karena tutorial tersebut masih menggunakan struktur Laravel versi sebelumnya yang memiliki `app/Http/Kernel.php` sebagai tempat konfigurasi _middleware_.
+5. Apa risiko konkret APP_DEBUG=true di server produksi?
+> Laravel akan dapat menampilkan halaman _error_ yang sangat detail ketika terjadi kesalahan.
+6. Tunjukkan di git log bahwa Anda punya commit atas nama Anda sendiri.
+> ![alt text](images/image_2-vanessa.png)

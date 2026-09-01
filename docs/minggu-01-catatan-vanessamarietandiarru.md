@@ -32,7 +32,7 @@ SQLSTATE[HY000] [1049] Unknown database 'database_anu' (Connection: mysql, Host:
 > Belum ada repo kampuslms-broken
 
 ## BUILD — Fondasi Proyek Kelompok
-1. Link repo: https://github.com/Vexusian/kampuslms-B-kelompok-07.git
+1. _Link_ repo: https://github.com/Vexusian/kampuslms-B-kelompok-07.git
 2. Laravel Framework 12.68.0
 3. Sudah
 4. Sudah

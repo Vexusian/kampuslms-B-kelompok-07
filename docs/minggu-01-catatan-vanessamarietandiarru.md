@@ -23,10 +23,19 @@ Perintah ```php artisan route:list``` menampilkan daftar _route_ yang terdaftar 
 | --- | --- | --- | --- |
 | 1 | Ganti nama ```.env``` menjadi ```.env.bak``` | Laravel tidak bisa membaca konfigurasi environment sehingga _browser_ kemungkinan akan error | "This site can't be reached. 127.0.0.1 refused to connect" |
 | 2 | Kosongkan nilai ```APP_KEY``` di ```.env``` | Laravel akan error karena _application encryption key_ tidak ada | "Illuminate\Encryption\MissingAppKeyException. vendor\laravel\framework\src\Illuminate\Encryption\EncryptionServiceProvider.php:83. No application encryption key has been specified."|
-| 3 | Ubah ```DB_DATABASE``` menjadi nama yang tidak ada | Laravel tidak dapat terhubung ke _database_ yang ditentukan |  |
-| 4 | Ubah ```APP_DEBUG=false```, lalu ulangi nomor 3 | Akan tetap error |  |
+| 3 | Ubah ```DB_DATABASE``` menjadi nama yang tidak ada | Laravel tidak dapat terhubung ke _database_ yang ditentukan | Illuminate\Database\QueryException
+vendor\laravel\framework\src\Illuminate\Database\Connection.php:838
+SQLSTATE[HY000] [1049] Unknown database 'database_anu' (Connection: mysql, Host: 127.0.0.1, Port: 3306, Database: database_anu, SQL: select * from `sessions` where `id` = unRS9McTQNkKtPtmswhvCOA4eMzElKFq3FW7W55A limit 1)" |
+| 4 | Ubah ```APP_DEBUG=false```, lalu ulangi nomor 3 | Akan tetap error | "505 Server Error" |
 
 ## FIX — Perbaiki Proyek yang Cacat
-
+> Belum ada repo kampuslms-broken
 
 ## BUILD — Fondasi Proyek Kelompok
+1. Link repo: https://github.com/Vexusian/kampuslms-B-kelompok-07.git
+2. Laravel Framework 12.68.0
+3. Sudah
+4. Sudah
+5. Sudah
+6. Sudah
+7. 

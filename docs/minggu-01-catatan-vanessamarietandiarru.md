@@ -19,7 +19,14 @@ _Route_ yang menghasilkan halaman selamat datang adalah ```Route::get('/', funct
 Perintah ```php artisan route:list``` menampilkan daftar _route_ yang terdaftar pada aplikasi Laravel. _Route_ / dengan method ```GET|HEAD``` dapat dicocokkan dengan ```Route::get('/', ...)``` yang terdapat pada ```routes/web.php```. Hal ini menunjukkan bahwa route yang ditulis pada ```routes/web.php``` telah terdaftar dan dikenali oleh Laravel.
 
 ## BREAK — Rusak dengan Sengaja
+| # | Yang dirusak | Prediksi | Pesan Error Sebenarnya |
+| --- | --- | --- | --- |
+| 1 | Ganti nama ```.env``` menjadi ```.env.bak``` |  |  |
+| 2 | Kosongkan nilai ```APP_KEY``` di ```.env``` |  |  |
+| 3 | Ubah ```DB_DATABASE``` menjadi nama yang tidak ada |  |  |
+| 4 | Ubah ```APP_DEBUG=false```, lalu ulangi nomor 3 |  |  |
 
+![alt text](<Screenshot 2026-09-02 010201.png>)
 
 ## FIX — Perbaiki Proyek yang Cacat
 

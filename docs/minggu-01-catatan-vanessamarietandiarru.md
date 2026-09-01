@@ -36,4 +36,4 @@ Perintah ```php artisan route:list``` menampilkan daftar _route_ yang terdaftar 
 4. Sudah
 5. Sudah
 6. Sudah
-7. ![alt text](images/image_1-vanessa.png)
+7. Sudah ![alt text](images/image_1-vanessa.png)

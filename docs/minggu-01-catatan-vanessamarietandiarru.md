@@ -26,9 +26,13 @@ Perintah ```php artisan route:list``` menampilkan daftar _route_ yang terdaftar 
 | 3 | Ubah ```DB_DATABASE``` menjadi nama yang tidak ada |  |  |
 | 4 | Ubah ```APP_DEBUG=false```, lalu ulangi nomor 3 |  |  |
 
+### Mengganti Nama .env
+> Tampilan awal browser Laravel:
 ![alt text](<Screenshot 2026-09-02 010201.png>)
+> Tampilan setelah diganti:
+![alt text](image.png)
 
 ## FIX — Perbaiki Proyek yang Cacat
 
 
-## BUILD — Fondasi Proyek Kelompok
+## BUILD — Fondasi Proye    k Kelompok

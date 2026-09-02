@@ -42,7 +42,8 @@ Perintah ```php artisan route:list``` menampilkan daftar _route_ yang terdaftar 
 1.  Sebutkan urutan berkas yang dilewati sebuah _request_ dari _browser_ sampai HTML kembali.
 > browser -> public/index.php -> bootstrap/app.php -> routes/web.php -> Controller / Closure -> View (.blade.php) -> HTML -> Browser
 2. Kenapa hanya folder public/ yang boleh diakses dari internet? Apa yang terjadi kalau seluruh folder proyek diekspos?
-> Karena `public/` memang dirancang sebagai _web root_, yaitu satu-satunya bagian aplikasi yang boleh menjadi titik masuk dari _web_.
+> Karena `public/` memang dirancang sebagai _web root_, yaitu satu-satunya bagian aplikasi yang boleh menjadi titik masuk dari _web_. Folder tersebut berisi _entry point_ seperti index.php serta aset yang memang ditujukan untuk publik.
+> Jika seluruh folder proyek diekspos, file internal seperti `.env`, _source code_, konfigurasi, dan informasi sensitif lainnya dapat diakses sehingga meningkatkan risiko kebocoran data dan keamanan aplikasi.
 3. Apa beda `.env` dan `.env.example`, dan kenapa hanya satu yang di-commit?
 > `.env` berisi konfigurasi aktual dan dapat mengandung info sensitif seperti _password database_ atau API key, sehingga tidak boleh di-_commit_ ke _repository_. Sementara itu, `.env.example` merupakan _template_ konfigurasi yang menunjukkan variabel apa saja yang dibutuhkan aplikasi tanpa menyimpan kredensial pribadi.
 4. Di Laravel 12, di berkas mana middleware didaftarkan? Kenapa jawabannya berbeda dari kebanyakan tutorial di internet?

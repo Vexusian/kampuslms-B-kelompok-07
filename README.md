@@ -8,12 +8,12 @@ Kampus LMS merupakan proyek aplikasi web yang dikembangkan menggunakan Laravel 1
 
 ## Anggota Kelompok
 
-| No. | Nama | NIM |
-|---|---|---|
-| 1 | Tresia Uyang | 10241072 |
-| 2 | Vanessa Marie Tandiarru | 10251118 |
-| 3 | Wahyu Ramadan | 10241074 |
-| 4 | Zalfa Putri Sopyandi | 10241076 |
+| No. | Nama | NIM | Peran |
+|---|---|---| --- |
+| 1 | Tresia Uyang | 10241072 | UI/UX |
+| 2 | Vanessa Marie Tandiarru | 10251118 | Frontend |
+| 3 | Wahyu Ramadan | 10241074 | Backend |
+| 4 | Zalfa Putri Sopyandi | 10241076 | Database |
 
 ## Cara Instalasi
 

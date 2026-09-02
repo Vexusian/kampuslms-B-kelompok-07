@@ -3,6 +3,10 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\CourseController;
 
+Route::get('/', function () {
+    return view('welcome');
+});
+
 /*
 |--------------------------------------------------------------------------
 | Course Routes
@@ -19,7 +23,7 @@ Route::post('/mata-kuliah', [CourseController::class, 'index'])
 // Menampilkan detail satu mata kuliah
 Route::post('/mata-kuliah/{id}', [CourseController::class, 'show'])
     ->name('mata-kuliah.show');
-    
+
 Route::get('/tentang', function () {
     return view('tentang');
 })->name('tentang');

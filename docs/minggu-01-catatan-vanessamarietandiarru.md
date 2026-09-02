@@ -52,6 +52,6 @@ Perintah ```php artisan route:list``` menampilkan daftar _route_ yang terdaftar 
 })
 > Pada Laravel 12, konfigurasi middleware dilakukan di `bootstrap/app.php`, melalui bagian `withMiddleware()`. Hal ini berbeda dari banyak tutorial di internet karena tutorial tersebut masih menggunakan struktur Laravel versi sebelumnya yang memiliki `app/Http/Kernel.php` sebagai tempat konfigurasi _middleware_.
 5. Apa risiko konkret APP_DEBUG=true di server produksi?
-> Laravel akan dapat menampilkan halaman _error_ yang sangat detail ketika terjadi kesalahan.
+> Laravel akan dapat menampilkan halaman _error_ yang sangat detail ketika terjadi kesalahan, seperti _stack trace_, lokasi file, dan informasi mengenai kode yang sedang dijalankan. Informasi tersebut dapat membantu pihak eksternal memahami struktur aplikasi dan mencari celah keamanan. Karena itu, `APP_DEBUG` seharusnya bernilai false pada server produksi.
 6. Tunjukkan di git log bahwa Anda punya commit atas nama Anda sendiri.
 > ![alt text](images/image_2-vanessa.png)

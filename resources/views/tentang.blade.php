@@ -10,6 +10,8 @@
 
     <h3>Anggota Kelompok</h3>
 
+    <p>{{ $nama }} = <script>alert('XSS')</script></p>
+
     <ul>
         <li>Tresia Uyang - 102410</li>
         <li>Vanessa Marie Tandiarru - 10251118</li>

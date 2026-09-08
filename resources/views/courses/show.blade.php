@@ -1,24 +1,35 @@
-{{-- Menggunakan x-layout agar struktur HTML utama tidak perlu ditulis ulang. --}}
 <x-layout title="{{ $course['nama'] }}">
 
-    {{-- Menampilkan nama mata kuliah yang sedang dilihat. --}}
+    {{-- Menampilkan detail mata kuliah yang dipilih pengguna. --}}
+    {{-- Data berasal dari CourseController berdasarkan ID pada URL. --}}
     <h1>{{ $course['nama'] }}</h1>
 
-    {{-- Menampilkan informasi dasar mata kuliah. --}}
+    {{-- Menampilkan kode mata kuliah. --}}
     <p>
-        <strong>Kode:</strong> {{ $course['kode'] }}
+        <strong>Kode:</strong>
+        {{ $course['kode'] }}
     </p>
 
+    {{-- Menampilkan jumlah SKS mata kuliah. --}}
     <p>
-        <strong>SKS:</strong> {{ $course['sks'] }}
+        <strong>SKS:</strong>
+        {{ $course['sks'] }}
+    </p>
+
+    {{-- Menampilkan dosen pengampu mata kuliah. --}}
+    <p>
+        <strong>Dosen:</strong>
+        {{ $course['dosen'] }}
     </p>
 
     {{-- Menampilkan deskripsi mata kuliah. --}}
     <p>
-        <strong>Deskripsi:</strong> {{ $course['deskripsi'] }}
+        <strong>Deskripsi:</strong>
+        {{ $course['deskripsi'] }}
     </p>
 
-    {{-- Menggunakan route() agar kembali ke daftar tanpa menulis URL secara hardcode. --}}
+    {{-- Kembali ke daftar mata kuliah menggunakan nama route. --}}
+    {{-- route() digunakan agar tautan tidak bergantung pada URL hardcoded. --}}
     <a href="{{ route('courses.index') }}">
         Kembali ke Daftar Mata Kuliah
     </a>

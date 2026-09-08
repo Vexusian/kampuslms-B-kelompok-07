@@ -13,6 +13,7 @@ class CourseController extends Controller
             'nama'      => 'Kapita Selekta',
             'sks'       => 2,
             'deskripsi' => 'Belajar AI Engineering',
+            'dosen'     => 'Aidil',
         ],
         [
             'id'        => 2,
@@ -20,6 +21,7 @@ class CourseController extends Controller
             'nama'      => 'Pemrograman Web',
             'sks'        => 3,
             'deskripsi' => 'Belajar HTML, CSS, JavaScript, dan framework web modern',
+            'dosen'     => 'Aidil',
         ],
         [
             'id'        => 3,
@@ -27,20 +29,23 @@ class CourseController extends Controller
             'nama'      => 'Basis Data',
             'sks'       => 3,
             'deskripsi' => 'Belajar perancangan basis data, query SQL, dan manajemen relasi data',
+            'dosen'     => 'Arif Wicaksono',
         ],
         [
             'id'        => 4,
             'kode'      => 'MK004',
-            'nama'      => 'Algoritma dan Struktur Data',
+            'nama'      => 'Algoritma Pemrograman',
             'sks'       => 4,
             'deskripsi' => 'Belajar logika pemrograman, pemecahan masalah, dan struktur data kompleks',
+            'dosen'     => 'Dwi Arif',
         ],
         [
             'id'        => 5,
             'kode'      => 'MK005',
-            'nama'      => 'Desain dan Manajemen Jaringan Komputer',
+            'nama'      => 'DMJK',
             'sks'       => 3,
             'deskripsi' => 'Belajar konsep dasar protokol jaringan, arsitektur TCP/IP, dan keamanan jaringan',
+            'dosen'     => 'Aidil'
         ],
     ];
 

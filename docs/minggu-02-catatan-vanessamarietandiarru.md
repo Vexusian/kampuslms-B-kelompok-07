@@ -34,6 +34,72 @@ NIM: 10251118
 | 7 | Hentikan `npm run dev` lalu muat ulang halaman | Halaman yang melibatkan `courses` akan menampilkan eror not found | Beda dev server vs build |
 | 8 | Panggil `route('courses.show')` tanpa mengirim parameter | Karena tidak ada parameter _input_ Laravel akan menganggapnya sebagai `/course/` dan menampilkan seluruh daftar mata kuliah sama seperti `/course` | Missing required parameter |
 
-## FIX
+# Checkpoint Minggu 2
 
-## BUILD
+## 1. Kenapa menghapus data lewat `GET` berbahaya? Beri satu skenario konkret.
+
+Menghapus data lewat `GET` berbahaya karena method `GET` seharusnya digunakan untuk mengambil atau membaca data, bukan untuk melakukan perubahan atau penghapusan data. Request `GET` dapat dipanggil secara tidak sengaja, misalnya melalui crawler, bookmark, atau ketika URL dibuka oleh pengguna.
+
+Contoh konkretnya, jika terdapat route:
+
+```php
+Route::get('/courses/5/delete', function () {
+    // Menghapus mata kuliah dengan ID 5
+});
+
+```
+## 2. Apa yang terjadi kalau /courses/{course} ditulis sebelum /courses/create? Kenapa?
+Jika /courses/{course} ditulis sebelum /courses/create, ketika URL /courses/create diakses, Laravel akan mencocokkannya terlebih dahulu dengan route /courses/{course}.
+
+Hal ini terjadi karena Laravel mencocokkan route berdasarkan urutan dari atas ke bawah dan menggunakan route pertama yang cocok.
+
+## 3. Tunjukkan di kode Anda satu tempat yang memakai route(). Apa untungnya dibanding URL hardcode?
+Salah satu penggunaan route() terdapat pada file `resources/views/courses/index.blade.php`:
+
+``` html
+<a href="{{ route('courses.show', ['course' => $course['id']]) }}">
+    Detail
+</a>
+```
+Route tersebut menggunakan nama:
+
+``` html
+Route::get('/courses/{course}', [CourseController::class, 'show'])
+    ->name('courses.show');
+```
+
+Keuntungannya dibandingkan URL hardcode adalah kode tidak bergantung langsung pada struktur URL. Jika URI:
+
+``` php
+/courses/{course}
+```
+
+diubah menjadi misalnya:
+``` php
+/mata-kuliah/{course}
+```
+
+saya cukup mengubah URI pada definisi route, sedangkan pemanggilan:
+
+```php
+route('courses.show', ['course' => $course['id']])
+```
+
+tetap dapat digunakan selama nama route courses.show tidak berubah.
+
+Dengan demikian, penggunaan `route()` membuat kode lebih mudah dikelola ketika struktur URL berubah.
+
+## 4. Apa beda {{ }} dan {!! !!}? Peragakan XSS yang Anda buat di bagian BREAK.
+
+{{ }} digunakan untuk menampilkan data dengan HTML _escaping_ otomatis oleh Blade. Hal ini membuat karakter HTML dari input pengguna tidak langsung dianggap sebagai kode HTML atau JavaScript oleh _browser_.
+
+## 5. Apa fungsi @vite? Apa beda npm run dev dan npm run build?
+@vite adalah directive Blade yang digunakan untuk menghubungkan view Laravel dengan asset frontend yang dikelola oleh Vite, seperti CSS dan JavaScript.
+
+`npm run dev` digunakan ketika melakukan pengembangan aplikasi. Perintah ini menjalankan Vite dalam mode development sehingga _asset frontend_ dapat diproses oleh development server. Sedangkan `npm run build` digunakan untuk membuat hasil build asset yang siap digunakan untuk _deployment_.
+
+## 6. Jelaskan mengapa data dari `Request` tidak boleh dipercaya.
+
+Data dari Request tidak boleh langsung dipercaya karena request berasal dari client atau pengguna, sedangkan client berada di luar kendali server.
+
+Pengguna dapat memodifikasi request, menambahkan parameter, atau mengirim request secara manual tanpa menggunakan form yang disediakan aplikasi.

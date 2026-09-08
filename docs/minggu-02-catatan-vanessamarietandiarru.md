@@ -34,5 +34,3 @@ NIM: 10251118
 | 7 | Hentikan `npm run dev` lalu muat ulang halaman | Beda dev server vs build |
 | 8 | Panggil `route('courses.show')` tanpa mengirim parameter | Missing required parameter |
 
-
-Tes tes

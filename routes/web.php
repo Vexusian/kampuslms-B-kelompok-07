@@ -7,9 +7,9 @@ Route::get('/', function () {
     return view('welcome');
 })->name('welcome');
 
-Route::get('/tentang', function () {
-    return view('tentang');
-})->name('tentang');
+// Route::get('/tentang', function () {
+//     return view('tentang');
+// })->name('tentang');
 
 Route::get('/courses', [CourseController::class, 'index'])
     ->name('courses.index');
@@ -20,3 +20,11 @@ Route::get('/courses/{course}', [CourseController::class, 'show'])
 Route::get('/dashboard', function () {
     return view('dashboard');
 })->name('dashboard');
+
+Route::get('/tentang', function () {
+    $nama = "<script>alert('XSS')</script>";
+
+    return view('tentang', [
+        'nama' => $nama,
+    ]);
+})->name('tentang');

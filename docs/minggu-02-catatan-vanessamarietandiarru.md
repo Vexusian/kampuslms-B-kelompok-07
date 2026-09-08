@@ -26,7 +26,7 @@ NIM: 10251118
 | # | Yang dirusak | Yang Anda pelajari |
 |---|--------------|--------------------|
 | 1 | Ubah `Route::get` menjadi `Route::post` pada route daftar mata kuliah | Method HTTP tidak cocok → 405 |
-| 2 | Ubah nama view di `return view(...)` menjadi yang tidak ada | Exception view not found |
+| 2 | Ubah nama view di `return view(...)` menjadi yang tidak ada | Not found |
 | 3 | Hapus `->name('courses.show')`, lalu muat halaman yang memakai `route('courses.show')` | Kenapa nama route wajib |
 | 4 | Pindahkan `/courses/{course}` ke ATAS `/courses/create`, lalu buka `/courses/create` | Urutan route menentukan |
 | 5 | Ganti `{{ $nama }}` menjadi `{!! $nama !!}`, isi `$nama` dengan `<script>alert('XSS')</script>` | **XSS nyata di layar Anda sendiri** |

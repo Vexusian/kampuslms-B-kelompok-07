@@ -16,3 +16,7 @@ Route::get('/courses', [CourseController::class, 'index'])
 
 Route::get('/courses/{course}', [CourseController::class, 'show'])
     ->name('courses.show');
+
+Route::get('/dashboard', function () {
+    return view('dashboard');
+})->name('dashboard');

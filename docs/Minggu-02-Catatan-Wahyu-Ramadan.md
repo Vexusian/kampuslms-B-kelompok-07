@@ -27,7 +27,6 @@ Route::get('/tentang', function () {
 
 ### BREAK — Delapan kerusakan (40 menit)
 
-Lakukan berurutan. Untuk setiap nomor, **tulis prediksi Anda dulu** sebelum menjalankan.
 
 | # | Yang dirusak | Yang Anda pelajari |
 |---|--------------|--------------------|

@@ -1,7 +1,7 @@
-<x-layout title="Mata Kuliah">
+<x-layout title="Pengguna">
 
     <style>
-        .courses-page {
+        .users-page {
             max-width: 1100px;
             margin: 0 auto;
             padding: 40px 24px;
@@ -35,23 +35,19 @@
             font-weight: 600;
         }
 
-        .btn-primary:hover {
-            background: #1d4ed8;
-        }
-
-        .course-table-wrapper {
+        .user-table-wrapper {
             background: white;
             border: 1px solid #e5e7eb;
             border-radius: 12px;
             overflow: hidden;
         }
 
-        .course-table {
+        .user-table {
             width: 100%;
             border-collapse: collapse;
         }
 
-        .course-table th {
+        .user-table th {
             text-align: left;
             padding: 14px 18px;
             background: #f9fafb;
@@ -60,26 +56,15 @@
             text-transform: uppercase;
         }
 
-        .course-table td {
+        .user-table td {
             padding: 16px 18px;
             border-top: 1px solid #e5e7eb;
             color: #374151;
         }
 
-        .course-code {
-            font-weight: 700;
-            color: #2563eb;
-        }
-
-        .course-name {
+        .user-name {
             font-weight: 600;
             color: #111827;
-        }
-
-        .course-description {
-            font-size: 13px;
-            color: #6b7280;
-            margin-top: 4px;
         }
 
         .badge {
@@ -97,6 +82,7 @@
             text-decoration: none;
             font-weight: 600;
             font-size: 14px;
+            margin-right: 10px;
         }
 
         .action-link:hover {
@@ -104,82 +90,77 @@
         }
     </style>
 
-    <div class="courses-page">
+    <div class="users-page">
 
         <div class="page-header">
             <div>
-                <h1>Mata Kuliah</h1>
-                <p>Kelola daftar mata kuliah KampusLMS.</p>
+                <h1>Pengguna</h1>
+                <p>Kelola pengguna KampusLMS.</p>
             </div>
 
-            <a href="{{ route('courses.create') }}" class="btn-primary">
-                + Tambah Mata Kuliah
+            <a href="{{ route('users.create') }}" class="btn-primary">
+                + Tambah Pengguna
             </a>
         </div>
 
-        <div class="course-table-wrapper">
-            <table class="course-table">
+        @if (session('success'))
+            <div style="margin-bottom: 20px; color: #166534;">
+                {{ session('success') }}
+            </div>
+        @endif
+
+        <div class="user-table-wrapper">
+            <table class="user-table">
                 <thead>
                     <tr>
-                        <th>Kode</th>
-                        <th>Mata Kuliah</th>
-                        <th>SKS</th>
-                        <th>Dosen</th>
-                        <th>Status</th>
+                        <th>Nama</th>
+                        <th>Email</th>
+                        <th>NIM/NIP</th>
+                        <th>Role</th>
                         <th>Aksi</th>
                     </tr>
                 </thead>
 
                 <tbody>
-                    @forelse ($courses as $course)
+                    @forelse ($users as $user)
                         <tr>
                             <td>
-                                <span class="course-code">
-                                    {{ $course->code }}
-                                </span>
+                                <div class="user-name">
+                                    {{ $user->name }}
+                                </div>
                             </td>
 
                             <td>
-                                <div class="course-name">
-                                    {{ $course->name }}
-                                </div>
+                                {{ $user->email }}
+                            </td>
 
-                                <div class="course-description">
-                                    {{ Str::limit($course->description, 70) }}
-                                </div>
+                            <td>
+                                {{ $user->nim_nip ?? '-' }}
                             </td>
 
                             <td>
                                 <span class="badge">
-                                    {{ $course->sks }} SKS
+                                    {{ ucfirst($user->role) }}
                                 </span>
                             </td>
 
                             <td>
-                                {{ $course->lecturer->name }}
-                            </td>
-
-                            <td>
-                                {{ ucfirst($course->status) }}
-                            </td>
-
-                            <td>
                                 <a
-                                    href="{{ route('courses.show', $course) }}"
+                                    href="{{ route('users.show', $user) }}"
                                     class="action-link"
                                 >
                                     Detail
                                 </a>
 
                                 <a
-                                    href="{{ route('courses.edit', $course) }}"
+                                    href="{{ route('users.edit', $user) }}"
                                     class="action-link"
                                 >
                                     Edit
                                 </a>
 
                                 <form
-                                    action="{{ route('courses.destroy', $course) }}"
+                                    action="{{ route('users.destroy', $user) }}"
                                     method="POST"
                                     style="display: inline;"
                                 >
@@ -189,7 +170,7 @@
                                     <button
                                         type="submit"
                                         class="action-link"
-                                        onclick="return confirm('Hapus mata kuliah ini?')"
+                                        onclick="return confirm('Hapus pengguna ini?')"
                                         style="border: none; background: none; cursor: pointer; padding: 0;"
                                     >
                                         Hapus
@@ -199,8 +180,11 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" style="text-align: center; padding: 40px;">
-                                Belum ada mata kuliah.
+                            <td
+                                colspan="5"
+                                style="text-align: center; padding: 40px;"
+                            >
+                                Belum ada pengguna.
                             </td>
                         </tr>
                     @endforelse

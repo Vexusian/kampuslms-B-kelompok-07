@@ -2,78 +2,98 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Course;
+use App\Models\User;
+use Illuminate\Http\Request;
+
 class CourseController extends Controller
 {
-    // Menyimpan data mata kuliah secara statis sebagai array.
-    // Data masih hardcoded karena belum menggunakan database.
-    private array $courses = [
-        [
-            'id'        => 1,
-            'kode'      => 'MK001',
-            'nama'      => 'Kapita Selekta',
-            'sks'       => 2,
-            'deskripsi' => 'Belajar AI Engineering',
-            'dosen'     => 'Aidil',
-        ],
-        [
-            'id'        => 2,
-            'kode'      => 'MK002',
-            'nama'      => 'Pemrograman Web',
-            'sks'        => 3,
-            'deskripsi' => 'Belajar HTML, CSS, JavaScript, dan framework web modern',
-            'dosen'     => 'Aidil',
-        ],
-        [
-            'id'        => 3,
-            'kode'      => 'MK003',
-            'nama'      => 'Basis Data',
-            'sks'       => 3,
-            'deskripsi' => 'Belajar perancangan basis data, query SQL, dan manajemen relasi data',
-            'dosen'     => 'Arif Wicaksono',
-        ],
-        [
-            'id'        => 4,
-            'kode'      => 'MK004',
-            'nama'      => 'Algoritma Pemrograman',
-            'sks'       => 4,
-            'deskripsi' => 'Belajar logika pemrograman, pemecahan masalah, dan struktur data kompleks',
-            'dosen'     => 'Dwi Arif',
-        ],
-        [
-            'id'        => 5,
-            'kode'      => 'MK005',
-            'nama'      => 'DMJK',
-            'sks'       => 3,
-            'deskripsi' => 'Belajar konsep dasar protokol jaringan, arsitektur TCP/IP, dan keamanan jaringan',
-            'dosen'     => 'Aidil'
-        ],
-    ];
-
-    // Menampilkan seluruh data mata kuliah.
-    // Method ini digunakan oleh route courses.index untuk mengirim data ke view index.
+    // Menampilkan seluruh mata kuliah.
     public function index()
     {
-        return view('courses.index', [
-            'courses' => $this->courses,
+        $courses = Course::with('lecturer')->get();
+
+        return view('cours  es.index', [
+            'courses' => $courses,
         ]);
     }
 
-    // Menampilkan satu mata kuliah berdasarkan ID yang diterima dari URL.
-    // Pencarian dilakukan pada array karena data belum berasal dari database.
-    public function show($course)
+    // Menampilkan form tambah mata kuliah.
+    public function create()
     {
-        // Mencari data yang ID-nya sama dengan parameter route.
-        // Hasil pencarian digunakan untuk menentukan mata kuliah yang akan ditampilkan.
-        $courseData = collect($this->courses)->firstWhere('id', (int) $course);
+        $lecturers = User::where('role', 'dosen')->get();
 
-        // Jika ID tidak ditemukan, Laravel mengembalikan halaman 404.
-        // Ini mencegah view menerima data kosong untuk mata kuliah yang tidak ada.
-        abort_if($courseData === null, 404);
-
-        // Mengirim satu data mata kuliah ke view show.
-        // View tersebut bertanggung jawab mengatur bagaimana data ditampilkan.
-        return view('courses.show', [
-            'course' => $courseData,
+        return view('courses.create', [
+            'lecturers' => $lecturers,
         ]);
+    }
+
+    // Menyimpan mata kuliah baru ke database.
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'code' => 'required|string|max:255|unique:courses,code',
+            'name' => 'required|string|max:255',
+            'description' => 'required|string',
+            'sks' => 'required|integer|min:1|max:6',
+            'lecturer_id' => 'required|exists:users,id',
+            'status' => 'required|in:draft,active,archived',
+        ]);
+
+        Course::create($validated);
+
+        return redirect()
+            ->route('courses.index')
+            ->with('success', 'Mata kuliah berhasil ditambahkan.');
+    }
+
+    // Menampilkan detail satu mata kuliah.
+    public function show(Course $course)
+    {
+        $course->load('lecturer');
+
+        return view('courses.show', [
+            'course' => $course,
+        ]);
+    }
+
+    // Menampilkan form edit.
+    public function edit(Course $course)
+    {
+        $lecturers = User::where('role', 'dosen')->get();
+
+        return view('courses.edit', [
+            'course' => $course,
+            'lecturers' => $lecturers,
+        ]);
+    }
+
+    // Mengubah data mata kuliah.
+    public function update(Request $request, Course $course)
+    {
+        $validated = $request->validate([
+            'code' => 'required|string|max:255|unique:courses,code,' . $course->id,
+            'name' => 'required|string|max:255',
+            'description' => 'required|string',
+            'sks' => 'required|integer|min:1|max:6',
+            'lecturer_id' => 'required|exists:users,id',
+            'status' => 'required|in:draft,active,archived',
+        ]);
+
+        $course->update($validated);
+
+        return redirect()
+            ->route('courses.index')
+            ->with('success', 'Mata kuliah berhasil diperbarui.');
+    }
+
+    // Menghapus mata kuliah.
+    public function destroy(Course $course)
+    {
+        $course->delete();
+
+        return redirect()
+            ->route('courses.index')
+            ->with('success', 'Mata kuliah berhasil dihapus.');
     }
 }

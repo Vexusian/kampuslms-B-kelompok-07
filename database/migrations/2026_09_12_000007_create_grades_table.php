@@ -13,10 +13,11 @@ return new class extends Migration
     {
         Schema::create('grades', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('submission_id')->constrained()->cascadeOnDelete();
-            $table->decimal('score', 5, 2);
+            $table->foreignId('submission_id')->unique()->constrained()->cascadeOnDelete();
+            $table->foreignId('graded_by')->constrained('users')->restrictOnDelete();
+            $table->unsignedInteger('score');
             $table->text('feedback')->nullable();
-            $table->unique('submission_id'); // ⚠️ 1 submission = 1 grade
+            $table->timestamp('graded_at')->now();
             $table->timestamps();
         });
     }

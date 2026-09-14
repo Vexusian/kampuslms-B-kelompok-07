@@ -51,18 +51,26 @@ class User extends Authenticatable
         ];
     }
 
-    public function coursesAsLecturer(): HasMany
+    public function taughtCourses(): HasMany
     {
         return $this->hasMany(Course::class, 'lecturer_id');
     }
 
     public function courses(): BelongsToMany
     {
-        return $this->belongsToMany(Course::class)->withTimestamps();
+        return $this->belongsToMany(Course::class)
+            ->withPivot('enrolled_at')
+            ->withTimestamps();
     }
 
     public function submissions(): HasMany
     {
         return $this->hasMany(Submission::class);
     }
+
+    public function gradesGiven(): HasMany
+    {
+        return $this->hasMany(Grade::class, 'graded_by');
+    }
+
 }

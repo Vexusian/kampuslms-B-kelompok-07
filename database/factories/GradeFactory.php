@@ -13,10 +13,8 @@ class GradeFactory extends Factory
     {
         return [
             'submission_id' => null,
-            'graded_by' => null,
             'score' => fake()->randomFloat(2, 60, 100),
             'feedback' => fake()->optional()->sentence(),
-            'graded_at' => now(),
         ];
     }
 }

@@ -13,13 +13,9 @@ class AssignmentFactory extends Factory
     {
         return [
             'course_id' => null,
-            'created_by' => null,
             'title' => fake()->sentence(4),
-            'instructions' => fake()->paragraph(),
+            'description' => fake()->paragraph(),
             'due_at' => now()->addDays(fake()->numberBetween(1, 14)),
-            'max_score' => 100,
-            'allow_late' => true,
-            'status' => 'published',
         ];
     }
 }

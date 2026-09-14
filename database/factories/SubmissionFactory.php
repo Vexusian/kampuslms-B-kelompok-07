@@ -15,11 +15,8 @@ class SubmissionFactory extends Factory
             'assignment_id' => null,
             'user_id' => null,
             'file_path' => 'submissions/' . fake()->uuid() . '.pdf',
-            'original_name' => fake()->word() . '.pdf',
-            'file_size' => fake()->numberBetween(10000, 5000000),
-            'note' => fake()->optional()->sentence(),
+            'content' => fake()->optional()->paragraph(),
             'submitted_at' => now(),
-            'is_late' => false,
         ];
     }
 }

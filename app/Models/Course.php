@@ -18,7 +18,7 @@ class Course extends Model
         'description',
         'sks',
         'status',
-        // ⚠️ 'lecturer_id' TIDAK di sini — diisi eksplisit
+        'lecturer_id',
     ];
 
     protected function casts(): array

@@ -15,7 +15,12 @@ class Material extends Model
         'title',
         'content',
     ];
-
+    
+    protected function casts(): array
+    {
+        return [];
+    }
+    
     public function course(): BelongsTo
     {
         return $this->belongsTo(Course::class);

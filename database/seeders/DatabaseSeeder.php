@@ -85,7 +85,7 @@ class DatabaseSeeder extends Seeder
                             'graded_by' => $course->lecturer_id,
                             'score' => fake()->numberBetween(60, 100),
                             'feedback' => fake()->sentence(),
-                        ]); 
+                        ]);
                     }
                 }
             }

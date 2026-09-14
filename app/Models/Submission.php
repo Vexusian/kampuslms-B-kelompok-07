@@ -31,9 +31,9 @@ class Submission extends Model
         return $this->belongsTo(Assignment::class);
     }
 
-    public function user(): BelongsTo
+    public function student(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'user_id');
     }
 
     public function grade(): HasOne

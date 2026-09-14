@@ -21,18 +21,22 @@ class DatabaseSeeder extends Seeder
         // 1. Akun demo (3 akun)
         $admin = User::factory()->create([
             'name' => 'Admin Kampus',
-            'email' => 'admin@kampus.test',
-            'password' => bcrypt('password'),
+            'email' => 'admin@kampuslms.test',
+            'password' => 'password',
             'role' => 'admin',
         ]);
 
-        $dosen = User::factory()->count(3)->create([
-            'password' => bcrypt('password'),
+        $dosenDemo = User::factory()->create([
+            'name' => 'Dosen Demo',
+            'email' => 'dosen@kampuslms.test',
+            'password' => 'password',
             'role' => 'dosen',
         ]);
 
-        $mahasiswa = User::factory()->count(30)->create([
-            'password' => bcrypt('password'),
+        $mahasiswaDemo = User::factory()->create([
+            'name' => 'Mahasiswa Demo',
+            'email' => 'mahasiswa@kampuslms.test',
+            'password' => 'password',
             'role' => 'mahasiswa',
         ]);
 
@@ -45,7 +49,9 @@ class DatabaseSeeder extends Seeder
         // 3. Daftarkan mahasiswa ke mata kuliah (acak)
         foreach ($courses as $course) {
             $course->students()->attach(
-                $mahasiswa->random(rand(5, 15))->pluck('id')
+                $mahasiswa->random(15)->mapWithKeys(fn ($student) => [
+                    $student->id => ['enrolled_at' => now()],
+                ])->toArray()
             );
         }
 
@@ -53,7 +59,7 @@ class DatabaseSeeder extends Seeder
         foreach ($courses as $course) {
             Material::factory()->count(3)->create(['course_id' => $course->id]);
 
-            $assignments = Assignment::factory()->count(4)->create([
+            $assignments = Assignment::factory()->count(3)->create([
                 'course_id' => $course->id,
             ]);
 
@@ -73,11 +79,14 @@ class DatabaseSeeder extends Seeder
                         'submitted_at' => $submittedAt,
                     ]);
 
-                    Grade::create([
-                        'submission_id' => $submission->id,
-                        'score' => fake()->numberBetween(60, 100),
-                        'feedback' => fake()->sentence(),
-                    ]);
+                    if (fake()->boolean(60)) {
+                        Grade::create([
+                            'submission_id' => $submission->id,
+                            'graded_by' => $course->lecturer_id,
+                            'score' => fake()->numberBetween(60, 100),
+                            'feedback' => fake()->sentence(),
+                        ]);
+                    }
                 }
             }
         }

@@ -14,8 +14,13 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
             $table->timestamp('enrolled_at');
             $table->timestamps();
+
             $table->unique(['course_id', 'user_id']);
         });
+
+        // migrate:refresh
+        // db:seed
+
     }
 
     public function down(): void

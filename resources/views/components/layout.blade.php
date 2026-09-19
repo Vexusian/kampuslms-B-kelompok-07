@@ -128,6 +128,33 @@
         .mb-4 { margin-bottom: 1rem; }
         .mb-6 { margin-bottom: 1.5rem; }
         .mt-4 { margin-top: 1rem; }
+        /* Pagination (Laravel default) – smaller buttons */
+        .pagination {
+            display: flex;
+            gap: 0.25rem;
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .pagination li a,
+        .pagination li span {
+            display: block;
+            padding: 0.25rem 0.5rem;
+            border: 1px solid #cbd5e1;
+            border-radius: 4px;
+            background: #f1f5f9;
+            color: #374151;
+            font-size: 0.875rem;
+            text-decoration: none;
+        }
+        .pagination li a:hover {
+            background: #e2e8f0;
+        }
+        .pagination .active span {
+            background: #2563eb;
+            color: #fff;
+            border-color: #2563eb;
+        }
     </style>
 </head>
 <body>
@@ -136,6 +163,7 @@
         <a href="{{ route('dashboard') }}"><i class="fas fa-home"></i> Dashboard</a>
         <a href="{{ route('courses.index') }}"><i class="fas fa-book"></i> Mata Kuliah</a>
         <a href="{{ route('tentang') }}"><i class="fas fa-info-circle"></i> Tentang</a>
+        <a href="{{ route('users.index') }}"><i class="fas fa-users"></i> User</a>
     </nav>
 
     <main>

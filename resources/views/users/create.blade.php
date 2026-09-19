@@ -1,51 +1,40 @@
-{{-- resources/views/users/create.blade.php --}}
-<x-layout>
-    <x-slot:title>Tambah User - Kampus LMS</x-slot:title>
+<x-layout title="Tambah User">
+    <h1>Tambah User Baru</h1>
 
-    <h1>Tambah User</h1>
-
-    {{--
-        Tampilkan semua pesan error validasi di atas form. $errors selalu
-        tersedia otomatis di semua view kalau request sebelumnya redirect
-        dari validate() yang gagal (Laravel share otomatis lewat session).
-    --}}
-    @if ($errors->any())
-        <ul>
-            @foreach ($errors->all() as $error)
-                <li>{{ $error }}</li>
-            @endforeach
-        </ul>
-    @endif
-
-    <form action="{{ route('users.store') }}" method="POST">
+    <form action="{{ route('users.store') }}" method="POST" style="max-width: 600px;" class="mt-4">
         @csrf
 
-        <div>
-            <label>Nama</label><br>
-            <input type="text" name="name" value="{{ old('name') }}">
+        <div class="form-group">
+            <label for="name">Nama Lengkap <span style="color: #dc2626;">*</span></label>
+            <input type="text" id="name" name="name" value="{{ old('name') }}" class="form-control" placeholder="Nama pengguna" required />
+            @error('name') <div class="text-error">{{ $message }}</div> @enderror
         </div>
 
-        <div>
-            <label>Email</label><br>
-            <input type="email" name="email" value="{{ old('email') }}">
+        <div class="form-group">
+            <label for="email">Email <span style="color: #dc2626;">*</span></label>
+            <input type="email" id="email" name="email" value="{{ old('email') }}" class="form-control" placeholder="contoh@kampus.ac.id" required />
+            @error('email') <div class="text-error">{{ $message }}</div> @enderror
         </div>
 
-       
-
-        <div>
-            <label>NIM/NIP</label><br>
-            <input type="text" name="nim_nip" value="{{ old('nim_nip') }}">
+        <div class="form-group">
+            <label for="nim_nip">NIM / NIP</label>
+            <input type="text" id="nim_nip" name="nim_nip" value="{{ old('nim_nip') }}" class="form-control" placeholder="Nomor Induk Mahasiswa / Pegawai" />
+            @error('nim_nip') <div class="text-error">{{ $message }}</div> @enderror
         </div>
 
-        <div>
-            <label>Password</label><br>
-            {{-- Tidak pakai old('password') -- password memang tidak boleh
-                 dikembalikan ke form setelah gagal validasi, alasan keamanan. --}}
-            <input type="password" name="password">
+        <div class="form-group">
+            <label for="password">Password <span style="color: #dc2626;">*</span></label>
+            <input type="password" id="password" name="password" class="form-control" placeholder="Minimal 8 karakter" required />
+            @error('password') <div class="text-error">{{ $message }}</div> @enderror
         </div>
 
-        <button type="submit">Simpan</button>
+        <div class="flex gap-2 mt-4">
+            <button type="submit" class="btn btn-success">
+                <i class="fas fa-save"></i> Simpan
+            </button>
+            <a href="{{ route('users.index') }}" class="btn btn-secondary">
+                <i class="fas fa-times"></i> Batal
+            </a>
+        </div>
     </form>
-
-    <p><a href="{{ route('users.index') }}">&larr; Kembali</a></p>
 </x-layout>

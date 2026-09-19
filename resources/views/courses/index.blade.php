@@ -6,11 +6,28 @@
         </a>
     </div>
 
-    @if(session('success'))
-        <div class="alert alert-success">
-            <i class="fas fa-check-circle"></i> {{ session('success') }}
+    {{-- Form Pencarian & Filter (state dipertahankan di query string) --}}
+    <form method="GET" action="{{ route('courses.index') }}" class="mb-4 flex gap-2" style="flex-wrap: wrap; align-items: center; background: #f1f5f9; padding: 1rem; border-radius: 6px;">
+        <div style="flex: 1; min-width: 220px;">
+            <input type="text" name="q" value="{{ request('q') }}" class="form-control" placeholder="Cari kode atau nama mata kuliah...">
         </div>
-    @endif
+        <div style="width: 180px;">
+            <select name="status" class="form-control">
+                <option value="">-- Semua Status --</option>
+                <option value="draft" {{ request('status') === 'draft' ? 'selected' : '' }}>Draft</option>
+                <option value="active" {{ request('status') === 'active' ? 'selected' : '' }}>Active</option>
+                <option value="archived" {{ request('status') === 'archived' ? 'selected' : '' }}>Archived</option>
+            </select>
+        </div>
+        <button type="submit" class="btn btn-secondary">
+            <i class="fas fa-search"></i> Cari
+        </button>
+        @if(request()->hasAny(['q', 'status', 'lecturer_id']))
+            <a href="{{ route('courses.index') }}" class="btn btn-secondary" style="background: #94a3b8;" title="Reset Filter">
+                <i class="fas fa-undo"></i> Reset
+            </a>
+        @endif
+    </form>
 
     <table>
         <thead>
@@ -80,4 +97,8 @@
             @endforelse
         </tbody>
     </table>
+
+    <div class="mt-4">
+        {{ $courses->links() }}
+    </div>
 </x-layout>

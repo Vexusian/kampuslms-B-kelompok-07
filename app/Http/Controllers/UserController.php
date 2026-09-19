@@ -2,22 +2,40 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreUserRequest;
+use App\Http\Requests\UpdateUserRequest;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class UserController extends Controller
 {
     /**
-     * Daftar semua user, dipaginasi (bukan get() semua) karena volume
-     * data user bisa banyak (30+ mahasiswa saja dari seeder wajib).
+     * Daftar semua user, dipaginasi dengan pencarian (q) dan filter (role).
+     * Filter dipertahankan di query string menggunakan withQueryString().
      */
-    public function index(): View
+    public function index(Request $request): View
     {
-        $users = User::latest()->paginate(15);
+        $query = User::query();
+
+        if ($request->filled('q')) {
+            $search = $request->q;
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'LIKE', "%{$search}%")
+                  ->orWhere('email', 'LIKE', "%{$search}%")
+                  ->orWhere('nim_nip', 'LIKE', "%{$search}%");
+            });
+        }
+
+        if ($request->filled('role')) {
+            $query->where('role', $request->role);
+        }
+
+        $users = $query->latest()
+                       ->paginate(15)
+                       ->withQueryString();
 
         return view('users.index', compact('users'));
     }
@@ -27,9 +45,9 @@ class UserController extends Controller
         return view('users.create');
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(StoreUserRequest $request): RedirectResponse
     {
-        $validated = $this->validateUser($request);
+        $validated = $request->validated();
 
         // Password WAJIB di-hash manual di sini — kalau lupa, password
         // akan tersimpan plain text dan user tidak akan pernah bisa login
@@ -58,9 +76,9 @@ class UserController extends Controller
         return view('users.edit', compact('user'));
     }
 
-    public function update(Request $request, User $user): RedirectResponse
+    public function update(UpdateUserRequest $request, User $user): RedirectResponse
     {
-        $validated = $this->validateUser($request, ignoreUserId: $user->id, passwordRequired: false);
+        $validated = $request->validated();
 
         if (filled($validated['password'] ?? null)) {
             // Password diisi -> update dengan hash baru.
@@ -87,27 +105,5 @@ class UserController extends Controller
         return redirect()
             ->route('users.index')
             ->with('success', 'User berhasil dihapus (soft delete).');
-    }
-
-    /**
-     * Validasi dipusatkan di satu method karena aturan store & update
-     * hampir sama, cuma beda 2 hal: unique rule harus ignore user yang
-     * sedang diedit, dan password wajib diisi hanya saat create. User baru
-     * selalu dibuat sebagai mahasiswa; role tidak berasal dari request.
-     */
-    private function validateUser(Request $request, ?int $ignoreUserId = null, bool $passwordRequired = true): array
-    {
-        return $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => [
-                'required', 'email', 'max:255',
-                Rule::unique('users', 'email')->ignore($ignoreUserId),
-            ],
-            'nim_nip' => [
-                'nullable', 'string', 'max:50',
-                Rule::unique('users', 'nim_nip')->ignore($ignoreUserId),
-            ],
-            'password' => [$passwordRequired ? 'required' : 'nullable', 'string', 'min:8'],
-        ]);
     }
 }

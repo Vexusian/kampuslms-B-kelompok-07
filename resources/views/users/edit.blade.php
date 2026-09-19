@@ -1,39 +1,41 @@
-{{-- resources/views/users/edit.blade.php --}}
-<x-layout>
-    <x-slot:title>Edit User - Kampus LMS</x-slot:title>
-
+<x-layout title="Edit User">
     <h1>Edit User: {{ $user->name }}</h1>
 
-    @if ($errors->any())
-        <ul>
-            @foreach ($errors->all() as $error)
-                <li>{{ $error }}</li>
-            @endforeach
-        </ul>
-    @endif
+    <form action="{{ route('users.update', $user) }}" method="POST" style="max-width: 600px;" class="mt-4">
+        @csrf
+        @method('PUT')
 
-        <form action="{{ route('users.update', $user) }}" method="POST" class="mt-4">
-            @csrf
-            @method('PUT')
-            <div class="form-group">
-                <label>Nama</label>
-                <input type="text" name="name" value="{{ old('name', $user->name) }}" class="form-control" />
-            </div>
-            <div class="form-group">
-                <label>Email</label>
-                <input type="email" name="email" value="{{ old('email', $user->email) }}" class="form-control" />
-            </div>
-            <div class="form-group">
-                <label>NIM/NIP</label>
-                <input type="text" name="nim_nip" value="{{ old('nim_nip', $user->nim_nip) }}" class="form-control" />
-            </div>
-            <div class="form-group">
-                <label>Password (kosongkan bila tidak ingin mengubah)</label>
-                <input type="password" name="password" class="form-control" />
-            </div>
-            <button type="submit" class="btn btn-success">Simpan Perubahan</button>
-            <a href="{{ route('users.index') }}" class="btn btn-secondary ml-2">&larr; Kembali</a>
-        </form>
+        <div class="form-group">
+            <label for="name">Nama Lengkap <span style="color: #dc2626;">*</span></label>
+            <input type="text" id="name" name="name" value="{{ old('name', $user->name) }}" class="form-control" required />
+            @error('name') <div class="text-error">{{ $message }}</div> @enderror
+        </div>
 
-    <p><a href="{{ route('users.index') }}">&larr; Kembali</a></p>
+        <div class="form-group">
+            <label for="email">Email <span style="color: #dc2626;">*</span></label>
+            <input type="email" id="email" name="email" value="{{ old('email', $user->email) }}" class="form-control" required />
+            @error('email') <div class="text-error">{{ $message }}</div> @enderror
+        </div>
+
+        <div class="form-group">
+            <label for="nim_nip">NIM / NIP</label>
+            <input type="text" id="nim_nip" name="nim_nip" value="{{ old('nim_nip', $user->nim_nip) }}" class="form-control" />
+            @error('nim_nip') <div class="text-error">{{ $message }}</div> @enderror
+        </div>
+
+        <div class="form-group">
+            <label for="password">Password (kosongkan bila tidak ingin mengubah)</label>
+            <input type="password" id="password" name="password" class="form-control" placeholder="Minimal 8 karakter jika diubah" />
+            @error('password') <div class="text-error">{{ $message }}</div> @enderror
+        </div>
+
+        <div class="flex gap-2 mt-4">
+            <button type="submit" class="btn btn-warning">
+                <i class="fas fa-save"></i> Simpan Perubahan
+            </button>
+            <a href="{{ route('users.index') }}" class="btn btn-secondary">
+                <i class="fas fa-times"></i> Batal
+            </a>
+        </div>
+    </form>
 </x-layout>

@@ -21,7 +21,7 @@ class CourseController extends Controller
         $course = Course::create($request->validated());
 
         return redirect()
-            ->route('mata-kuliah.index')
+            ->route('courses.index')
             ->with('success', "Mata kuliah '{$course->name}' berhasil ditambahkan.");
     }
 
@@ -34,7 +34,7 @@ class CourseController extends Controller
         $course->update($request->validated());
 
         return redirect()
-            ->route('mata-kuliah.show', $course)
+            ->route('courses.show', $course)
             ->with('success', "Mata kuliah '{$course->name}' berhasil diperbarui.");
     }
     
@@ -125,10 +125,10 @@ class CourseController extends Controller
         }
 
         // 06 --------------------------------------------------------------
-        // 6️⃣ Pagination – hasil otomatis menambahkan `page=` ke query string.
+        // 6️⃣ Pagination – hasil otomatis menambahkan `page=` dan mempertahankan parameter pencarian/filter di query string.
         $courses = $query->orderBy('id', 'desc')
                          ->paginate(15)
-                         ->appends($request->except('page')); // keep filter/search
+                         ->withQueryString();
 
         // 07 --------------------------------------------------------------
         // 7️⃣ Return view (atau JSON API) dengan data + query‑string yang

@@ -1,50 +1,67 @@
-<x-layout>
-    <x-slot:title>
-        {{ $course['title'] }} - Detail Mata Kuliah
-    </x-slot:title>
-
+<x-layout title="Detail {{ $course->name }}">
     <div class="mb-4">
-        <a href="{{ route('courses.index') }}" class="text-indigo-600 hover:underline font-medium text-sm">
-            &larr; Kembali ke Daftar Mata Kuliah
+        <a href="{{ route('courses.index') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Kembali ke Daftar
         </a>
     </div>
 
-    <!-- Detail Card -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-        <div class="flex flex-col md:flex-row md:justify-between md:items-start mb-4">
-            <div>
-                <span class="text-xs font-bold uppercase tracking-wider bg-indigo-100 text-indigo-800 px-2.5 py-1 rounded">
-                    {{ $course['code'] }}
-                </span>
-                <h2 class="text-3xl font-bold text-gray-900 mt-2">
-                    {{ $course['title'] }}
-                </h2>
-                <p class="text-md text-gray-600 mt-1">
-                    Dosen Pengampu: <strong class="text-gray-800">{{ $course['lecturer'] }}</strong>
-                </p>
-            </div>
+    <h1>{{ $course->name }}</h1>
 
-            <div class="mt-4 md:mt-0 flex items-center gap-3">
-                <span class="bg-gray-100 text-gray-700 text-sm font-semibold px-3 py-1.5 rounded-md border">
-                    {{ $course['sks'] }} SKS
-                </span>
-
-                <a href="{{ route('courses.edit', ['course' => $course['id']]) }}" class="bg-amber-500 hover:bg-amber-600 text-white font-medium text-sm px-3 py-1.5 rounded-md">
-                    Edit
-                </a>
-            </div>
-        </div>
-
-        <hr class="my-4 border-gray-100">
-
-        <h3 class="text-lg font-semibold text-gray-800 mb-2">Deskripsi Mata Kuliah</h3>
-        <p class="text-gray-700 leading-relaxed">
-            {{ $course['description'] }}
-        </p>
+    <div style="background: #f8fafc; padding: 1.5rem; border-radius: 8px; border: 1px solid #e2e8f0;">
+        <table style="border: none;">
+            <tr>
+                <td style="padding: 0.5rem 1rem 0.5rem 0; font-weight: 600; width: 180px; border: none;">Kode</td>
+                <td style="padding: 0.5rem; border: none;">{{ $course->code }}</td>
+            </tr>
+            <tr>
+                <td style="padding: 0.5rem 1rem 0.5rem 0; font-weight: 600; border: none;">Nama Mata Kuliah</td>
+                <td style="padding: 0.5rem; border: none;">{{ $course->name }}</td>
+            </tr>
+            <tr>
+                <td style="padding: 0.5rem 1rem 0.5rem 0; font-weight: 600; border: none;">SKS</td>
+                <td style="padding: 0.5rem; border: none;">{{ $course->sks }} SKS</td>
+            </tr>
+            <tr>
+                <td style="padding: 0.5rem 1rem 0.5rem 0; font-weight: 600; border: none;">Status</td>
+                <td style="padding: 0.5rem; border: none;">
+                    <span style="
+                        padding: 0.25rem 0.6rem;
+                        border-radius: 12px;
+                        font-size: 0.85rem;
+                        font-weight: 600;
+                        background: {{ $course->status === 'active' ? '#d1fae5' : ($course->status === 'draft' ? '#fef3c7' : '#e2e8f0') }};
+                        color: {{ $course->status === 'active' ? '#065f46' : ($course->status === 'draft' ? '#92400e' : '#475569') }};
+                    ">
+                        {{ ucfirst($course->status) }}
+                    </span>
+                </td>
+            </tr>
+            <tr>
+                <td style="padding: 0.5rem 1rem 0.5rem 0; font-weight: 600; border: none;">Dosen Pengampu</td>
+                <td style="padding: 0.5rem; border: none;">
+                    {{ $course->lecturer->name ?? 'Belum ditentukan' }}
+                </td>
+            </tr>
+            <tr>
+                <td style="padding: 0.5rem 1rem 0.5rem 0; font-weight: 600; border: none; vertical-align: top;">Deskripsi</td>
+                <td style="padding: 0.5rem; border: none;">
+                    {{ $course->description ?: 'Tidak ada deskripsi.' }}
+                </td>
+            </tr>
+        </table>
     </div>
 
-    <!-- Placeholder Modul Berikutnya -->
-    <div class="bg-gray-50 border border-dashed border-gray-300 rounded-lg p-6 text-center text-gray-500">
-        <p class="font-medium">Modul Materi & Tugas akan ditampilkan di area ini pada tahap pengembangan selanjutnya.</p>
+    <div class="flex gap-2 mt-4">
+        <a href="{{ route('courses.edit', $course->id) }}" class="btn btn-warning">
+            <i class="fas fa-edit"></i> Edit
+        </a>
+        <form action="{{ route('courses.destroy', $course->id) }}" method="POST" 
+              onsubmit="return confirm('️ Yakin ingin menghapus mata kuliah ini?');">
+            @csrf
+            @method('DELETE')
+            <button type="submit" class="btn btn-danger">
+                <i class="fas fa-trash"></i> Hapus
+            </button>
+        </form>
     </div>
 </x-layout>

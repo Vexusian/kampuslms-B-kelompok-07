@@ -1,56 +1,83 @@
-<x-layout>
-    <x-slot:title>
-        Daftar Mata Kuliah - LMS Kampus
-    </x-slot:title>
-
-    <div class="mb-6 flex justify-between items-center">
-        <div>
-            <h2 class="text-2xl font-bold text-gray-800">Daftar Mata Kuliah</h2>
-            <p class="text-gray-600">Pilih mata kuliah untuk melihat detail dan materi pembelajaran.</p>
-        </div>
-
-        <a href="{{ route('courses.create') }}" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-4 py-2 rounded-lg shadow-sm">
-            + Tambah Mata Kuliah
+<x-layout title="Daftar Mata Kuliah">
+    <div class="flex flex-between mb-6">
+        <h1>Daftar Mata Kuliah</h1>
+        <a href="{{ route('courses.create') }}" class="btn btn-success">
+            <i class="fas fa-plus"></i> Tambah Mata Kuliah
         </a>
     </div>
 
-    <!-- Grid Daftar Mata Kuliah -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        @forelse ($courses as $course)
-            <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex flex-col justify-between">
-                <div class="p-5">
-                    <div class="flex justify-between items-center mb-2">
-                        <span class="text-xs font-bold uppercase tracking-wider bg-indigo-100 text-indigo-800 px-2 py-1 rounded">
-                            {{ $course['code'] }}
+    @if(session('success'))
+        <div class="alert alert-success">
+            <i class="fas fa-check-circle"></i> {{ session('success') }}
+        </div>
+    @endif
+
+    <table>
+        <thead>
+            <tr>
+                <th>Kode</th>
+                <th>Nama Mata Kuliah</th>
+                <th>SKS</th>
+                <th>Dosen</th>
+                <th>Status</th>
+                <th style="text-align: center;">Aksi</th>
+            </tr>
+        </thead>
+        <tbody>
+            @forelse ($courses as $course)
+                <tr>
+                    <td><strong>{{ $course->code }}</strong></td>
+                    <td>{{ $course->name }}</td>
+                    <td style="text-align: center;">{{ $course->sks }}</td>
+                    <td>{{ $course->lecturer->name ?? '-' }}</td>
+                    <td>
+                        <span style="
+                            padding: 0.25rem 0.6rem;
+                            border-radius: 12px;
+                            font-size: 0.8rem;
+                            font-weight: 600;
+                            background: {{ $course->status === 'active' ? '#d1fae5' : ($course->status === 'draft' ? '#fef3c7' : '#e2e8f0') }};
+                            color: {{ $course->status === 'active' ? '#065f46' : ($course->status === 'draft' ? '#92400e' : '#475569') }};
+                        ">
+                            {{ ucfirst($course->status) }}
                         </span>
-                        <span class="text-sm text-gray-500 font-medium">
-                            {{ $course['sks'] }} SKS
-                        </span>
-                    </div>
-
-                    <h3 class="text-lg font-bold text-gray-900 mb-1">
-                        {{ $course['title'] }}
-                    </h3>
-
-                    <p class="text-sm text-gray-600 mb-3">
-                        Dosen: <span class="font-medium text-gray-800">{{ $course['lecturer'] }}</span>
-                    </p>
-
-                    <p class="text-sm text-gray-500 line-clamp-2">
-                        {{ $course['description'] }}
-                    </p>
-                </div>
-
-                <div class="bg-gray-50 px-5 py-3 border-t border-gray-100 text-right">
-                    <a href="{{ route('courses.show', ['course' => $course['id']]) }}" class="text-indigo-600 hover:text-indigo-800 font-semibold text-sm">
-                        Lihat Detail &rarr;
-                    </a>
-                </div>
-            </div>
-        @empty
-            <div class="col-span-full bg-white p-6 text-center text-gray-500 rounded-lg border border-gray-200">
-                Belum ada data mata kuliah yang tersedia.
-            </div>
-        @endforelse
-    </div>
+                    </td>
+                    <td>
+                        <div class="flex gap-2" style="justify-content: center;">
+                            <a href="{{ route('courses.show', $course->id) }}" 
+                               class="btn btn-sm" 
+                               style="background: #3b82f6;"
+                               title="Detail">
+                                <i class="fas fa-eye"></i> Detail
+                            </a>
+                            <a href="{{ route('courses.edit', $course->id) }}" 
+                               class="btn btn-sm btn-warning"
+                               title="Edit">
+                                <i class="fas fa-edit"></i> Edit
+                            </a>
+                            <form action="{{ route('courses.destroy', $course->id) }}" 
+                                  method="POST" 
+                                  style="display: inline;"
+                                  onsubmit="return confirm('⚠️ Yakin ingin menghapus mata kuliah ini?');">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" 
+                                        class="btn btn-sm btn-danger"
+                                        title="Hapus">
+                                    <i class="fas fa-trash"></i> Hapus
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+            @empty
+                <tr>
+                    <td colspan="6" style="text-align: center; padding: 2rem; color: #94a3b8;">
+                        <i class="fas fa-inbox" style="font-size: 2rem;"></i>
+                        <p>Belum ada data mata kuliah.</p>
+                    </td>
+                </tr>
+            @endforelse
+        </tbody>
+    </table>
 </x-layout>

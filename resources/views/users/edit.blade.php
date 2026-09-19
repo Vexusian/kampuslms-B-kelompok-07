@@ -12,32 +12,28 @@
         </ul>
     @endif
 
-    <form action="{{ route('users.update', $user) }}" method="POST">
-        @csrf
-        @method('PUT') {{-- route update terdaftar sebagai PUT, wajib method spoofing ini --}}
-
-        <div>
-            <label>Nama</label><br>
-            <input type="text" name="name" value="{{ old('name', $user->name) }}">
-        </div>
-
-        <div>
-            <label>Email</label><br>
-            <input type="email" name="email" value="{{ old('email', $user->email) }}">
-        </div>
-
-        <div>
-            <label>NIM/NIP</label><br>
-            <input type="text" name="nim_nip" value="{{ old('nim_nip', $user->nim_nip) }}">
-        </div>
-
-        <div>
-            <label>Password (kosongkan kalau tidak ingin mengubah)</label><br>
-            <input type="password" name="password">
-        </div>
-
-        <button type="submit">Simpan Perubahan</button>
-    </form>
+        <form action="{{ route('users.update', $user) }}" method="POST" class="mt-4">
+            @csrf
+            @method('PUT')
+            <div class="form-group">
+                <label>Nama</label>
+                <input type="text" name="name" value="{{ old('name', $user->name) }}" class="form-control" />
+            </div>
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" name="email" value="{{ old('email', $user->email) }}" class="form-control" />
+            </div>
+            <div class="form-group">
+                <label>NIM/NIP</label>
+                <input type="text" name="nim_nip" value="{{ old('nim_nip', $user->nim_nip) }}" class="form-control" />
+            </div>
+            <div class="form-group">
+                <label>Password (kosongkan bila tidak ingin mengubah)</label>
+                <input type="password" name="password" class="form-control" />
+            </div>
+            <button type="submit" class="btn btn-success">Simpan Perubahan</button>
+            <a href="{{ route('users.index') }}" class="btn btn-secondary ml-2">&larr; Kembali</a>
+        </form>
 
     <p><a href="{{ route('users.index') }}">&larr; Kembali</a></p>
 </x-layout>

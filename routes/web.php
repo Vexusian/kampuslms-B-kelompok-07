@@ -1,7 +1,7 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\CourseController;
+use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
 
 Route::get('/', function () {
@@ -16,5 +16,6 @@ Route::get('/tentang', function () {
 // Route::resource otomatis menempatkan route statis (/create, /edit) DI ATAS route dinamis (/{course})
 Route::resource('courses', CourseController::class);
 
-
 Route::resource('users', UserController::class);
+
+Route::resource('mata-kuliah', CourseController::class);

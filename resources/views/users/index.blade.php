@@ -9,9 +9,9 @@
         <p>{{ session('success') }}</p>
     @endif
 
-    <p><a href="{{ route('users.create') }}">+ Tambah User</a></p>
+    <a href="{{ route('users.create') }}" class="btn btn-success mb-4">+ Tambah User</a>
 
-    <table border="1" cellpadding="8">
+    <table>
         <thead>
             <tr>
                 <th>Nama</th>
@@ -28,20 +28,13 @@
                     <td>{{ $user->email }}</td>
                     <td>{{ $user->role }}</td>
                     <td>{{ $user->nim_nip ?? '-' }}</td>
-                    <td>
-                        <a href="{{ route('users.show', $user) }}">Detail</a>
-                        <a href="{{ route('users.edit', $user) }}">Edit</a>
-
-                        {{--
-                            Hapus WAJIB pakai <form> method DELETE, bukan <a href>,
-                            karena route destroy terdaftar sebagai Route::delete().
-                            Browser tidak bisa kirim method DELETE lewat <a> biasa,
-                            makanya butuh @method('DELETE') + @csrf.
-                        --}}
-                        <form action="{{ route('users.destroy', $user) }}" method="POST" style="display:inline">
+                    <td class="flex gap-2">
+                        <a href="{{ route('users.show', $user) }}" class="btn btn-primary btn-sm">Detail</a>
+                        <a href="{{ route('users.edit', $user) }}" class="btn btn-warning btn-sm">Edit</a>
+                        <form action="{{ route('users.destroy', $user) }}" method="POST" class="inline-block">
                             @csrf
                             @method('DELETE')
-                            <button type="submit" onclick="return confirm('Hapus user ini?')">Hapus</button>
+                            <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Hapus user ini?')">Hapus</button>
                         </form>
                     </td>
                 </tr>
@@ -53,6 +46,7 @@
         </tbody>
     </table>
 
-    {{-- Tautan pagination bawaan Laravel, otomatis pakai route() di baliknya --}}
-    {{ $users->links() }}
+    <div class="mt-4">
+        {{ $users->links() }}
+    </div>
 </x-layout>

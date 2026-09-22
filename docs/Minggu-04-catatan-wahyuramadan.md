@@ -37,13 +37,14 @@ curl -X POST http://localhost/courses \
 - Setelah **store** atau **update** berhasil, controller **redirect** ke halaman lain (biasanya index atau show). Jika `store` mengembalikan view langsung, maka **refresh** halaman akan mengirim ulang POST → duplikasi data.
 
 **10. Filter di query string vs. session**
-- Menyimpan filter di **query string** membuat URL dapat dibagikan, bookmark, dan mudah dipertahankan saat berpindah halaman.
-- Jika dipindah ke **session**, filter tidak terlihat di URL; membuka tab baru atau men‑share link akan **kehilangan filter**. *Skenario rusak:*
-  - User A mengatur filter `status=active` di session.
-  - User B membuka tab baru (session sama) → akan otomatis melihat data **aktif** meski tidak mengatur filter, mengacaukan UI.
+Query string digunakan untuk memungkinkan pengguna dapat membagikan url dengan menyimpan filter pencariannya pada url tersebut. url yang dibagikan akan memuat filter pencarian, sehingga ketika dibuka di tab lainnya filter pencarian masih berlaku namun ketika tab baru dibuka tanpa url tampilannya tidak akan menerapkan filter pencarian pada tab sebelumnya. 
+
+- kalau session dipakai di pencarian, filter pencarian tidak disimpan di url, 
+namun jika kita gunakan session untuk filter pencarian, url tidak menyimpan filter pencarian namun filter disimpan di session sehingga ketika session masih aktif dan user membuka tab filter yang lama akan mempengaruhi tampilan pada tab baru. 
+
 
 **11. Fungsi `@csrf`**
-- Menyisipkan **token CSRF** ke dalam form. Laravel memverifikasi token pada setiap request non‑GET. Mencegah **Cross‑Site Request Forgery**, di mana penyerang memaksa user yang sudah login mengirim request berbahaya ke aplikasi.
+- csrf disini berfungsi sebagai pencegah penyerang yang memanfaatkan pengguna yang sedang login, penyerang ini memanfaatkan session untuk menyisipkan form berbahaya untuk user mengirimkan request berbahaya kedalam aplikasi. jika kita tambahkan csrf maka request akan diubah menjadi token terlebih dahulu dan di validasi melalui 
 
 **12. Kenapa `unique` pada update perlu `ignore()`?**
-- Pada update, nilai kolom yang **sudah ada** (mis. kode mata kuliah) akan dianggap duplikat oleh aturan `unique`. `Rule::unique('courses','code')->ignore($course->id)` mengecualikan record yang sedang di‑update sehingga validasi tidak gagal bila kode tidak berubah.
+Unique update perlu ditambahkan karena ketika pengguna memasukan data update maka tanpa ignore data id yang harus unique akan dianggap duplikat sehingga update dicegah karna id nya dianggap duplikat. sedangkan jika dengan ignore() maka form akan memastikan nilai tetap unik tapi akan mengabaikan pada baris yang sedang diperbarui. 

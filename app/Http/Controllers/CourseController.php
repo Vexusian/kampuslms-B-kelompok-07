@@ -30,6 +30,11 @@ class CourseController extends Controller
     // -------------------------------------------------
     public function update(UpdateCourseRequest $request, Course $course): RedirectResponse
     {
+        $user = auth()->user();
+        if ($user && $user->role === 'dosen') {
+            abort_unless($course->lecturer_id === $user->id, 403, 'Akses ditolak: Anda bukan dosen pengampu mata kuliah ini.');
+        }
+
         // validated() memberi array bersih yang hanya berisi field yang di‑rules.
         $course->update($request->validated());
 
@@ -58,6 +63,11 @@ class CourseController extends Controller
     // 5. EDIT: Menampilkan form edit untuk data yang sudah ada
     public function edit(Course $course)
     {
+        $user = auth()->user();
+        if ($user && $user->role === 'dosen') {
+            abort_unless($course->lecturer_id === $user->id, 403, 'Akses ditolak: Anda bukan dosen pengampu mata kuliah ini.');
+        }
+
         $lecturers = User::where('role', 'dosen')->get();
         return view('courses.edit', compact('course', 'lecturers'));
     }
@@ -67,6 +77,11 @@ class CourseController extends Controller
     // 7. DESTROY: Menghapus data dari database
     public function destroy(Course $course)
     {
+        $user = auth()->user();
+        if ($user && $user->role !== 'admin') {
+            abort(403, 'Akses ditolak: Hanya admin yang berhak menghapus mata kuliah.');
+        }
+
         $course->delete();
 
         return redirect()->route('courses.index')

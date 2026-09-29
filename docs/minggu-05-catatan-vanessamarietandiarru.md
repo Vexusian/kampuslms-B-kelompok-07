@@ -11,81 +11,74 @@ NIM: 10251118
 Hasil eksekusi perintah `php artisan route:list --except-vendor`:
 
 ```text
-  GET|HEAD        / ..................................................... dashboard › routes/web.php:17
-  GET|HEAD        admin/courses ......................................... admin.courses.index › CourseController@index
-  POST            admin/courses ......................................... admin.courses.store › CourseController@store
-  GET|HEAD        admin/courses/create ................................ admin.courses.create › CourseController@create
-  GET|HEAD        admin/courses/{course} .................................. admin.courses.show › CourseController@show
-  PUT|PATCH       admin/courses/{course} .............................. admin.courses.update › CourseController@update
-  DELETE          admin/courses/{course} ............................ admin.courses.destroy › CourseController@destroy
-  GET|HEAD        admin/courses/{course}/edit ............................. admin.courses.edit › CourseController@edit
-  GET|HEAD        admin/users ............................................... admin.users.index › UserController@index
-  POST            admin/users ............................................... admin.users.store › UserController@store
-  GET|HEAD        admin/users/create ...................................... admin.users.create › UserController@create
-  GET|HEAD        admin/users/{user} .......................................... admin.users.show › UserController@show
-  PUT|PATCH       admin/users/{user} ...................................... admin.users.update › UserController@update
-  DELETE          admin/users/{user} .................................... admin.users.destroy › UserController@destroy
-  GET|HEAD        admin/users/{user}/edit ..................................... admin.users.edit › UserController@edit
-  GET|HEAD        courses ..................................................... courses.index › CourseController@index
-  POST            courses ..................................................... courses.store › CourseController@store
-  GET|HEAD        courses/create ............................................ courses.create › CourseController@create
-  GET|HEAD        courses/{course} .............................................. courses.show › CourseController@show
-  PUT|PATCH       courses/{course} .......................................... courses.update › CourseController@update
-  DELETE          courses/{course} ........................................ courses.destroy › CourseController@destroy
-  GET|HEAD        courses/{course}/edit ......................................... courses.edit › CourseController@edit
-  GET|HEAD        dev/login/{user} ..................................................... dev.login › routes/web.php:33
-  GET|HEAD        dev/logout .......................................................... dev.logout › routes/web.php:38
-  GET|HEAD        dosen/assignments/{assignment} .................. dosen.assignments.show › AssignmentController@show
-  PUT|PATCH       dosen/assignments/{assignment} .............. dosen.assignments.update › AssignmentController@update
-  DELETE          dosen/assignments/{assignment} ............ dosen.assignments.destroy › AssignmentController@destroy
-  GET|HEAD        dosen/assignments/{assignment}/edit ............. dosen.assignments.edit › AssignmentController@edit
-  GET|HEAD        dosen/assignments/{assignment}/submissions dosen.assignments.submissions.index › SubmissionController@index
-  GET|HEAD        dosen/courses ......................................... dosen.courses.index › CourseController@index
-  GET|HEAD        dosen/courses/{course} .................................. dosen.courses.show › CourseController@show
-  PUT|PATCH       dosen/courses/{course} .............................. dosen.courses.update › CourseController@update
-  GET|HEAD        dosen/courses/{course}/assignments .... dosen.courses.assignments.index › AssignmentController@index
-  POST            dosen/courses/{course}/assignments .... dosen.courses.assignments.store › AssignmentController@store
-  GET|HEAD        dosen/courses/{course}/assignments/create dosen.courses.assignments.create › AssignmentController@create
-  GET|HEAD        dosen/courses/{course}/edit ............................. dosen.courses.edit › CourseController@edit
-  GET|HEAD        dosen/courses/{course}/materials .......... dosen.courses.materials.index › MaterialController@index
-  POST            dosen/courses/{course}/materials .......... dosen.courses.materials.store › MaterialController@store
-  GET|HEAD        dosen/courses/{course}/materials/create . dosen.courses.materials.create › MaterialController@create
-  GET|HEAD        dosen/materials/{material} .......................... dosen.materials.show › MaterialController@show
-  PUT|PATCH       dosen/materials/{material} ...................... dosen.materials.update › MaterialController@update
-  DELETE          dosen/materials/{material} .................... dosen.materials.destroy › MaterialController@destroy
-  GET|HEAD        dosen/materials/{material}/edit ..................... dosen.materials.edit › MaterialController@edit
-  GET|HEAD        dosen/submissions/{submission} .................. dosen.submissions.show › SubmissionController@show
-  GET|HEAD        login .................................................................... login › routes/web.php:27
-  GET|HEAD        mahasiswa/assignments/{assignment} .......... mahasiswa.assignments.show › AssignmentController@show
-  POST            mahasiswa/assignments/{assignment}/submissions mahasiswa.assignments.submissions.store › SubmissionController@store
-  GET|HEAD        mahasiswa/courses ................................. mahasiswa.courses.index › CourseController@index
-  GET|HEAD        mahasiswa/courses/{course} .......................... mahasiswa.courses.show › CourseController@show
-  GET|HEAD        mahasiswa/courses/{course}/assignments mahasiswa.courses.assignments.index › AssignmentController@index
-  GET|HEAD        mahasiswa/courses/{course}/materials .. mahasiswa.courses.materials.index › MaterialController@index
-  GET|HEAD        mahasiswa/materials/{material} .................. mahasiswa.materials.show › MaterialController@show
-  GET|HEAD        mahasiswa/submissions/{submission} .......... mahasiswa.submissions.show › SubmissionController@show
-  GET|HEAD        mata-kuliah ............................................. mata-kuliah.index › CourseController@index
-  POST            mata-kuliah ............................................. mata-kuliah.store › CourseController@store
-  GET|HEAD        mata-kuliah/create .................................... mata-kuliah.create › CourseController@create
-  GET|HEAD        mata-kuliah/{mata_kuliah} ................................. mata-kuliah.show › CourseController@show
-  PUT|PATCH       mata-kuliah/{mata_kuliah} ............................. mata-kuliah.update › CourseController@update
-  DELETE          mata-kuliah/{mata_kuliah} ........................... mata-kuliah.destroy › CourseController@destroy
-  GET|HEAD        mata-kuliah/{mata_kuliah}/edit ............................ mata-kuliah.edit › CourseController@edit
-  GET|HEAD        tentang ................................................................ tentang › routes/web.php:23
-  GET|HEAD        users ........................................................... users.index › UserController@index
-  POST            users ........................................................... users.store › UserController@store
-  GET|HEAD        users/create .................................................. users.create › UserController@create
-  GET|HEAD        users/{user} ...................................................... users.show › UserController@show
-  PUT|PATCH       users/{user} .................................................. users.update › UserController@update
-  DELETE          users/{user} ................................................ users.destroy › UserController@destroy
-  GET|HEAD        users/{user}/edit ................................................. users.edit › UserController@edit
+  GET|HEAD        / .......................................................................................... dashboard › routes/web.php:19
+  GET|HEAD        admin/courses ............................................................... admin.courses.index › CourseController@index
+  POST            admin/courses ............................................................... admin.courses.store › CourseController@store
+  GET|HEAD        admin/courses/create ...................................................... admin.courses.create › CourseController@create
+  GET|HEAD        admin/courses/{course} ........................................................ admin.courses.show › CourseController@show
+  PUT|PATCH       admin/courses/{course} .................................................... admin.courses.update › CourseController@update
+  DELETE          admin/courses/{course} .................................................. admin.courses.destroy › CourseController@destroy
+  GET|HEAD        admin/courses/{course}/edit ................................................... admin.courses.edit › CourseController@edit
+  GET|HEAD        admin/users ..................................................................... admin.users.index › UserController@index
+  POST            admin/users ..................................................................... admin.users.store › UserController@store
+  GET|HEAD        admin/users/create ............................................................ admin.users.create › UserController@create
+  GET|HEAD        admin/users/{user} ................................................................ admin.users.show › UserController@show
+  PUT|PATCH       admin/users/{user} ............................................................ admin.users.update › UserController@update
+  DELETE          admin/users/{user} .......................................................... admin.users.destroy › UserController@destroy
+  GET|HEAD        admin/users/{user}/edit ........................................................... admin.users.edit › UserController@edit
+  GET|HEAD        courses ........................................................................... courses.index › CourseController@index
+  POST            courses ........................................................................... courses.store › CourseController@store
+  GET|HEAD        courses/create .................................................................. courses.create › CourseController@create
+  GET|HEAD        courses/{course} .................................................................... courses.show › CourseController@show
+  PUT|PATCH       courses/{course} ................................................................ courses.update › CourseController@update
+  DELETE          courses/{course} .............................................................. courses.destroy › CourseController@destroy
+  GET|HEAD        courses/{course}/edit ............................................................... courses.edit › CourseController@edit
+  GET|HEAD        dev/login/{user} ........................................................................... dev.login › routes/web.php:33
+  GET|HEAD        dev/logout ................................................................................ dev.logout › routes/web.php:38
+  GET|HEAD        dosen/assignments/{assignment} ........................................ dosen.assignments.show › AssignmentController@show
+  PUT|PATCH       dosen/assignments/{assignment} .................................... dosen.assignments.update › AssignmentController@update
+  DELETE          dosen/assignments/{assignment} .................................. dosen.assignments.destroy › AssignmentController@destroy
+  GET|HEAD        dosen/assignments/{assignment}/edit ................................... dosen.assignments.edit › AssignmentController@edit
+  GET|HEAD        dosen/assignments/{assignment}/submissions .............. dosen.assignments.submissions.index › SubmissionController@index
+  GET|HEAD        dosen/courses ............................................................... dosen.courses.index › CourseController@index
+  GET|HEAD        dosen/courses/{course} ........................................................ dosen.courses.show › CourseController@show
+  PUT|PATCH       dosen/courses/{course} .................................................... dosen.courses.update › CourseController@update
+  GET|HEAD        dosen/courses/{course}/assignments .......................... dosen.courses.assignments.index › AssignmentController@index
+  POST            dosen/courses/{course}/assignments .......................... dosen.courses.assignments.store › AssignmentController@store
+  GET|HEAD        dosen/courses/{course}/assignments/create ................. dosen.courses.assignments.create › AssignmentController@create
+  GET|HEAD        dosen/courses/{course}/edit ................................................... dosen.courses.edit › CourseController@edit
+  GET|HEAD        dosen/courses/{course}/materials ................................ dosen.courses.materials.index › MaterialController@index
+  POST            dosen/courses/{course}/materials ................................ dosen.courses.materials.store › MaterialController@store
+  GET|HEAD        dosen/courses/{course}/materials/create ....................... dosen.courses.materials.create › MaterialController@create
+  GET|HEAD        dosen/materials/{material} ................................................ dosen.materials.show › MaterialController@show
+  PUT|PATCH       dosen/materials/{material} ............................................ dosen.materials.update › MaterialController@update
+  DELETE          dosen/materials/{material} .......................................... dosen.materials.destroy › MaterialController@destroy
+  GET|HEAD        dosen/materials/{material}/edit ........................................... dosen.materials.edit › MaterialController@edit
+  GET|HEAD        dosen/submissions/{submission} ........................................ dosen.submissions.show › SubmissionController@show
+  GET|HEAD        login .......................................................................................... login › routes/web.php:27
+  GET|HEAD        mahasiswa/assignments/{assignment} ................................ mahasiswa.assignments.show › AssignmentController@show
+  POST            mahasiswa/assignments/{assignment}/submissions ...... mahasiswa.assignments.submissions.store › SubmissionController@store
+  GET|HEAD        mahasiswa/courses ....................................................... mahasiswa.courses.index › CourseController@index
+  GET|HEAD        mahasiswa/courses/{course} ................................................ mahasiswa.courses.show › CourseController@show
+  GET|HEAD        mahasiswa/courses/{course}/assignments .................. mahasiswa.courses.assignments.index › AssignmentController@index
+  GET|HEAD        mahasiswa/courses/{course}/materials ........................ mahasiswa.courses.materials.index › MaterialController@index
+  GET|HEAD        mahasiswa/materials/{material} ........................................ mahasiswa.materials.show › MaterialController@show
+  GET|HEAD        mahasiswa/submissions/{submission} ................................ mahasiswa.submissions.show › SubmissionController@show
+  GET|HEAD        mata-kuliah ................................................................... mata-kuliah.index › CourseController@index
+  POST            mata-kuliah ................................................................... mata-kuliah.store › CourseController@store
+  GET|HEAD        mata-kuliah/create .......................................................... mata-kuliah.create › CourseController@create
+  GET|HEAD        mata-kuliah/{mata_kuliah} ....................................................... mata-kuliah.show › CourseController@show
+  PUT|PATCH       mata-kuliah/{mata_kuliah} ................................................... mata-kuliah.update › CourseController@update
+  DELETE          mata-kuliah/{mata_kuliah} ................................................. mata-kuliah.destroy › CourseController@destroy
+  GET|HEAD        mata-kuliah/{mata_kuliah}/edit .................................................. mata-kuliah.edit › CourseController@edit
+  GET|HEAD        tentang ...................................................................................... tentang › routes/web.php:23
 ```
 
 ### 2. Daftar Titik Rawan IDOR
 
 Parameter model pada route mengikat data entitas secara otomatis via Route Model Binding. Namun, model binding hanya memastikan record ada di database, tanpa memvalidasi apakah pengguna yang sedang login berhak melihat atau memanipulasinya.
 
-| No. | Method | URI | Parameter Model | Pemilik Sah / Hak Akses Sesuai Spesifikasi | Risiko IDOR Jika Tanpa Otorisasi | Mekanisme Pencegahan Saat Ini (Lapis 1) |
+| No. | Method | URI | Parameter Model | Pemilik Sah / Hak Akses Sesuai Spesifikasi | Risiko IDOR Jika Tanpa Otozrisasi | Mekanisme Pencegahan Saat Ini (Lapis 1) |
 |---:|---|---|---|---|---|---|
 | 1 | GET | `/submissions/{submission}` | `{submission}` | Mahasiswa pemilik berkas, Dosen pengampu mata kuliah terkait, Admin | Mahasiswa lain dapat membaca berkas tugas, jawaban esai, dan nilai mahasiswa lain hanya dengan mengubah angka ID di URL. | `abort_unless($submission->user_id === auth()->id() \|\| auth()->user()->role === 'admin' \|\| $submission->assignment->course->lecturer_id === auth()->id(), 403)` pada [SubmissionController.php](file:///c:/Users/vanes/laragon/www/kampuslms/app/Http/Controllers/SubmissionController.php). |
 | 2 | GET, PUT, DELETE | `/dosen/courses/{course}/edit` | `{course}` | Dosen pengampu mata kuliah (`lecturer_id`), Admin | Dosen A dapat mengubah silabus, deskripsi, atau menghapus mata kuliah milik Dosen B karena keduanya sama-sama memiliki role `dosen`. | `abort_unless($course->lecturer_id === auth()->id() \|\| auth()->user()->role === 'admin', 403)` pada [CourseController.php](file:///c:/Users/vanes/laragon/www/kampuslms/app/Http/Controllers/CourseController.php). |

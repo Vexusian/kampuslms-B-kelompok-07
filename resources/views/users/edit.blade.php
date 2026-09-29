@@ -1,7 +1,14 @@
-<x-layout title="Edit User">
+<x-layout title="Edit User - {{ $user->name }}">
+    <div class="mb-4">
+        <a href="{{ route('admin.users.show', $user->id) }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Kembali ke Detail User
+        </a>
+    </div>
+
     <h1>Edit User: {{ $user->name }}</h1>
 
-    <form action="{{ route('users.update', $user) }}" method="POST" style="max-width: 600px;" class="mt-4">
+    <div style="background: #f8fafc; padding: 1.75rem; border-radius: 8px; border: 1px solid #e2e8f0; max-width: 600px;">
+    <form action="{{ route('admin.users.update', $user->id) }}" method="POST">
         @csrf
         @method('PUT')
 
@@ -29,13 +36,24 @@
             @error('password') <div class="text-error">{{ $message }}</div> @enderror
         </div>
 
+        <div class="form-group">
+            <label for="role">Role <span style="color: #dc2626;">*</span></label>
+            <select id="role" name="role" class="form-control" required>
+                <option value="mahasiswa" {{ old('role', $user->role) === 'mahasiswa' ? 'selected' : '' }}>Mahasiswa</option>
+                <option value="dosen" {{ old('role', $user->role) === 'dosen' ? 'selected' : '' }}>Dosen</option>
+                <option value="admin" {{ old('role', $user->role) === 'admin' ? 'selected' : '' }}>Admin</option>
+            </select>
+            @error('role') <div class="text-error">{{ $message }}</div> @enderror
+        </div>
+
         <div class="flex gap-2 mt-4">
             <button type="submit" class="btn btn-warning">
                 <i class="fas fa-save"></i> Simpan Perubahan
             </button>
-            <a href="{{ route('users.index') }}" class="btn btn-secondary">
+            <a href="{{ route('admin.users.show', $user->id) }}" class="btn btn-secondary">
                 <i class="fas fa-times"></i> Batal
             </a>
         </div>
     </form>
+    </div>
 </x-layout>

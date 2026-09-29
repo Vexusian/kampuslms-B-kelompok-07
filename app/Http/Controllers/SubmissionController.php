@@ -53,7 +53,8 @@ class SubmissionController extends Controller
             ])
         );
 
-        return redirect()->route('submissions.show', $submission)->with('success', 'Tugas berhasil dikumpulkan.');
+        $role = auth()->user()?->role === 'mahasiswa' ? 'mahasiswa' : 'dosen';
+        return redirect()->route($role . '.submissions.show', $submission)->with('success', 'Tugas berhasil dikumpulkan.');
     }
 
     /**

@@ -56,7 +56,8 @@ class MaterialController extends Controller
 
         $material = $course->materials()->create($validated);
 
-        return redirect()->route('materials.show', $material)->with('success', 'Materi berhasil ditambahkan.');
+        $role = auth()->user()?->role === 'mahasiswa' ? 'mahasiswa' : 'dosen';
+        return redirect()->route($role . '.materials.show', $material)->with('success', 'Materi berhasil ditambahkan.');
     }
 
     /**
@@ -106,7 +107,8 @@ class MaterialController extends Controller
 
         $material->update($validated);
 
-        return redirect()->route('materials.show', $material)->with('success', 'Materi berhasil diperbarui.');
+        $role = auth()->user()?->role === 'mahasiswa' ? 'mahasiswa' : 'dosen';
+        return redirect()->route($role . '.materials.show', $material)->with('success', 'Materi berhasil diperbarui.');
     }
 
     /**

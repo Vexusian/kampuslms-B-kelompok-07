@@ -57,7 +57,8 @@ class AssignmentController extends Controller
 
         $assignment = $course->assignments()->create($validated);
 
-        return redirect()->route('assignments.show', $assignment)->with('success', 'Tugas berhasil dibuat.');
+        $role = auth()->user()?->role === 'mahasiswa' ? 'mahasiswa' : 'dosen';
+        return redirect()->route($role . '.assignments.show', $assignment)->with('success', 'Tugas berhasil dibuat.');
     }
 
     /**
@@ -109,7 +110,8 @@ class AssignmentController extends Controller
 
         $assignment->update($validated);
 
-        return redirect()->route('assignments.show', $assignment)->with('success', 'Tugas berhasil diperbarui.');
+        $role = auth()->user()?->role === 'mahasiswa' ? 'mahasiswa' : 'dosen';
+        return redirect()->route($role . '.assignments.show', $assignment)->with('success', 'Tugas berhasil diperbarui.');
     }
 
     /**

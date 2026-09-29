@@ -163,7 +163,7 @@
         <a href="{{ route('dashboard') }}"><i class="fas fa-home"></i> Dashboard</a>
         <a href="{{ route('courses.index') }}"><i class="fas fa-book"></i> Mata Kuliah</a>
         <a href="{{ route('tentang') }}"><i class="fas fa-info-circle"></i> Tentang</a>
-        <a href="{{ route('users.index') }}"><i class="fas fa-users"></i> User</a>
+        <a href="{{ route('admin.users.index') }}"><i class="fas fa-users"></i> User</a>
     </nav>
 
     <main>

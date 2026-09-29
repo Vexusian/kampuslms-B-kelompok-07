@@ -33,7 +33,7 @@
             font-size: 0.95rem;
             transition: color 0.2s;
         }
-        nav a:hover { color: #38bdf8; }
+        nav a:hover, nav a.active { color: #38bdf8; }
         main { 
             max-width: 1100px; 
             margin: 2rem auto; 
@@ -159,11 +159,23 @@
 </head>
 <body>
 
-    <nav>
-        <a href="{{ route('dashboard') }}"><i class="fas fa-home"></i> Dashboard</a>
-        <a href="{{ route('courses.index') }}"><i class="fas fa-book"></i> Mata Kuliah</a>
-        <a href="{{ route('tentang') }}"><i class="fas fa-info-circle"></i> Tentang</a>
-        <a href="{{ route('admin.users.index') }}"><i class="fas fa-users"></i> User</a>
+    <nav style="justify-content: space-between; flex-wrap: wrap;">
+        <div style="display: flex; gap: 1.5rem; align-items: center;">
+            <a href="{{ route('dashboard') }}" class="{{ request()->routeIs('dashboard') ? 'active' : '' }}"><i class="fas fa-home"></i> Dashboard</a>
+            <a href="{{ route('courses.index') }}" class="{{ request()->is('courses*') ? 'active' : '' }}"><i class="fas fa-book"></i> Mata Kuliah</a>
+            <a href="{{ route('tentang') }}" class="{{ request()->routeIs('tentang') ? 'active' : '' }}"><i class="fas fa-info-circle"></i> Tentang</a>
+            <a href="{{ route('admin.users.index') }}" class="{{ request()->is('admin/users*') ? 'active' : '' }}"><i class="fas fa-users"></i> User</a>
+        </div>
+        @auth
+            <div style="display: flex; gap: 1rem; align-items: center; font-size: 0.85rem; color: #94a3b8;">
+                <span><i class="fas fa-user-circle"></i> {{ auth()->user()->name }} ({{ ucfirst(auth()->user()->role) }})</span>
+                @if(app()->environment('local'))
+                    <a href="{{ route('dev.logout') }}" style="color: #f87171; text-decoration: none; font-size: 0.85rem;" title="Logout Simulasi">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </a>
+                @endif
+            </div>
+        @endauth
     </nav>
 
     <main>

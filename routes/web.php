@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AssignmentController;
 use App\Http\Controllers\CourseController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\MaterialController;
 use App\Http\Controllers\SubmissionController;
 use App\Http\Controllers\UserController;
@@ -18,7 +19,9 @@ use Illuminate\Support\Facades\Route;
 // --- Rute Publik / Guest ---
 Route::get('/', function () {
     return view('welcome');
-})->name('dashboard');
+});
+
+Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
 Route::get('/tentang', function () {
     return view('tentang');

@@ -11,6 +11,19 @@ Route::prefix('v1')->group(function () {
     // Autentikasi publik dengan rate limiting 5/menit untuk mencegah brute-force
     Route::post('/auth/login', [AuthController::class, 'login'])->middleware('throttle:5,1');
 
+    // Buat testing CP 1
+    // Versi raw atau model mentah
+    Route::get('/test-user-raw', function(){
+        return \App\Models\User::first();
+    });
+    // Versi resource API
+    Route::get('/test-user-resource', function(){
+        return new \App\Http\Resources\UserResource(
+            \App\Models\User::first()
+            );
+    });
+
+
     // Endpoint terlindungi dengan Sanctum dan rate limiting umum 60/menit
     Route::middleware(['auth:sanctum', 'throttle:60,1'])->group(function () {
         // Auth

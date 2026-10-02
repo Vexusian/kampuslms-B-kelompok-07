@@ -15,7 +15,16 @@ class Grade extends Model
         'graded_by',
         'score',
         'feedback',
+        'graded_at',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'graded_at' => 'datetime',
+            'score' => 'integer',
+        ];
+    }
 
     public function submission(): BelongsTo
     {

@@ -2,16 +2,37 @@
 <x-layout>
     <x-slot:title>Daftar User - Kampus LMS</x-slot:title>
 
-    <h1>Daftar User</h1>
+    <div class="flex flex-between mb-6">
+        <h1>Daftar User</h1>
+        <a href="{{ route('users.create') }}" class="btn btn-success">
+            <i class="fas fa-plus"></i> Tambah User
+        </a>
+    </div>
 
-    {{-- Notifikasi sukses dari redirect()->with('success', ...) --}}
-    @if (session('success'))
-        <p>{{ session('success') }}</p>
-    @endif
+    {{-- Form Pencarian & Filter Role (state dipertahankan di query string) --}}
+    <form method="GET" action="{{ route('users.index') }}" class="mb-4 flex gap-2" style="flex-wrap: wrap; align-items: center; background: #f1f5f9; padding: 1rem; border-radius: 6px;">
+        <div style="flex: 1; min-width: 220px;">
+            <input type="text" name="q" value="{{ request('q') }}" class="form-control" placeholder="Cari nama, email, atau NIM/NIP...">
+        </div>
+        <div style="width: 180px;">
+            <select name="role" class="form-control">
+                <option value="">-- Semua Role --</option>
+                <option value="admin" {{ request('role') === 'admin' ? 'selected' : '' }}>Admin</option>
+                <option value="dosen" {{ request('role') === 'dosen' ? 'selected' : '' }}>Dosen</option>
+                <option value="mahasiswa" {{ request('role') === 'mahasiswa' ? 'selected' : '' }}>Mahasiswa</option>
+            </select>
+        </div>
+        <button type="submit" class="btn btn-secondary">
+            <i class="fas fa-search"></i> Cari
+        </button>
+        @if(request()->hasAny(['q', 'role']))
+            <a href="{{ route('users.index') }}" class="btn btn-secondary" style="background: #94a3b8;" title="Reset Filter">
+                <i class="fas fa-undo"></i> Reset
+            </a>
+        @endif
+    </form>
 
-    <p><a href="{{ route('users.create') }}">+ Tambah User</a></p>
-
-    <table border="1" cellpadding="8">
+    <table>
         <thead>
             <tr>
                 <th>Nama</th>
@@ -28,20 +49,13 @@
                     <td>{{ $user->email }}</td>
                     <td>{{ $user->role }}</td>
                     <td>{{ $user->nim_nip ?? '-' }}</td>
-                    <td>
-                        <a href="{{ route('users.show', $user) }}">Detail</a>
-                        <a href="{{ route('users.edit', $user) }}">Edit</a>
-
-                        {{--
-                            Hapus WAJIB pakai <form> method DELETE, bukan <a href>,
-                            karena route destroy terdaftar sebagai Route::delete().
-                            Browser tidak bisa kirim method DELETE lewat <a> biasa,
-                            makanya butuh @method('DELETE') + @csrf.
-                        --}}
-                        <form action="{{ route('users.destroy', $user) }}" method="POST" style="display:inline">
+                    <td class="flex gap-2">
+                        <a href="{{ route('users.show', $user) }}" class="btn btn-primary btn-sm">Detail</a>
+                        <a href="{{ route('users.edit', $user) }}" class="btn btn-warning btn-sm">Edit</a>
+                        <form action="{{ route('users.destroy', $user) }}" method="POST" class="inline-block">
                             @csrf
                             @method('DELETE')
-                            <button type="submit" onclick="return confirm('Hapus user ini?')">Hapus</button>
+                            <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Hapus user ini?')">Hapus</button>
                         </form>
                     </td>
                 </tr>
@@ -53,6 +67,7 @@
         </tbody>
     </table>
 
-    {{-- Tautan pagination bawaan Laravel, otomatis pakai route() di baliknya --}}
-    {{ $users->links() }}
+    <div class="mt-4">
+        {{ $users->links() }}
+    </div>
 </x-layout>

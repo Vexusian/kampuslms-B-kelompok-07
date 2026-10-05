@@ -26,5 +26,7 @@ Tanpa AI. Buat form tambah mata kuliah, isi dengan data yang pasti tidak valid (
 6. Buka DevTools → Application → Cookies. Temukan cookie session Laravel. Catat namanya.
 > Pada DevTools → Application → Cookies, cookie session Laravel biasanya tampil dengan nama `laravel_session`
 
+contoh 
+
 
 

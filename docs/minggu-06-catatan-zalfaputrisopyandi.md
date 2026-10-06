@@ -118,7 +118,18 @@ Hasil Evaluasi dan Pencocokan Spesifikasi:
 | 7 | Buat pesan login berbeda untuk email salah vs password salah | *User enumeration* — kenapa ini berbahaya |
 
 ## FIX  
-Branch `w06` pada repo `kampuslms-broken` berisi **8 masalah**: model mentah dikembalikan pada dua endpoint, satu endpoint tanpa `auth:sanctum`, status code salah pada `store` dan `destroy`, 403 dikembalikan sebagai 401, login tanpa throttle, pesan login membocorkan keberadaan email, dan N+1 pada endpoint daftar.
+Branch `w06` pada repo `kampuslms-broken` berisi **8 masalah**: model mentah dikembalikan pada dua endpoint, satu endpoint tanpa `auth:sanctum`, status code salah pada `store` dan `destroy`, 403 dikembalikan sebagai 401, login tanpa throttle, pesan login membocorkan keberadaan email, dan N+1 pada endpoint daftar.  
+### Tabel Perbaikan
+| No. | Masalah | Lokasi File | Perubahan yang Dilakukan |
+|---|---|---|---|
+| 1 | Endpoint `/v1/auth/me` mengembalikan model User secara langsung | `app/Http/Controllers/Api/AuthController.php` | Mengubah response agar menggunakan `UserResource`, sehingga data user yang dikembalikan lebih terkontrol. |
+| 2 | Endpoint `/v1/users` mengembalikan model User secara langsung | `app/Http/Controllers/Api/UserController.php` | Mengubah response menjadi `UserResource::collection()` agar data user dikembalikan melalui Resource. |
+| 3 | Endpoint `/v1/users` tidak menggunakan autentikasi `auth:sanctum` | `routes/api.php` | Menambahkan middleware `auth:sanctum` pada route `/v1/users`. |
+| 4 | Endpoint `store` mengembalikan status code `200 OK` | `app/Http/Controllers/Api/CourseController.php` | Mengubah status response menjadi `201 Created` karena berhasil membuat resource baru. |
+| 5 | Endpoint `destroy` mengembalikan status code `200 OK` | `app/Http/Controllers/Api/CourseController.php` | Mengubah response menjadi `204 No Content` karena resource berhasil dihapus dan tidak perlu mengembalikan body. |
+| 6 | Akses yang tidak memiliki izin mengembalikan `401 Unauthorized` | `app/Http/Controllers/Api/CourseController.php` | Mengubah status code menjadi `403 Forbidden` karena user sudah terautentikasi tetapi tidak memiliki hak akses. |
+| 7 | Endpoint login tidak memiliki throttle dan pesan error membocorkan keberadaan email | `app/Http/Controllers/Api/AuthController.php` dan `routes/api.php` | Menambahkan `throttle:5,1` pada login dan menggunakan pesan error yang sama untuk email/password yang salah agar mencegah user enumeration. |
+| 8 | Endpoint daftar course mengalami N+1 query | `app/Http/Controllers/Api/CourseController.php` | Menambahkan eager loading dengan `with('lecturer')` sehingga data lecturer diambil lebih efisien dalam query yang lebih sedikit. |
 
 ## BUILD  
 1. `php artisan install:api`, Sanctum terpasang.

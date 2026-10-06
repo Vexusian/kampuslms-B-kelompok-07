@@ -31,15 +31,19 @@ Route::prefix('v1')->group(function () {
             // Set session agar browser tetap ter-autentikasi di request berikutnya
             \Illuminate\Support\Facades\Auth::login($user);
 
-            // Buat token Sanctum untuk keperluan API client (Postman, dll)
-            $token = $user->createToken('dev-simulation')->plainTextToken;
+            // Redirect ke halaman me (dashboard) setelah login
+            return redirect('/api/v1/me')->with('success', "Login simulasi sebagai: {$user->name} (Role: {$user->role})");
+        })->name('api.dev.login');
+
+        Route::get('/dev/logout', function () {
+            \Illuminate\Support\Facades\Auth::guard('web')->logout();
+            request()->session()->invalidate();
+            request()->session()->regenerateToken();
 
             return response()->json([
-                'message' => "Login simulasi sebagai: {$user->name} (Role: {$user->role})",
-                'token'   => $token,
-                'user'    => new \App\Http\Resources\UserResource($user),
+                'message' => 'Berhasil logout simulasi.',
             ]);
-        })->name('api.dev.login');
+        })->name('api.dev.logout');
     }
 
     // Endpoint terlindungi dengan Sanctum dan rate limiting umum 60/menit

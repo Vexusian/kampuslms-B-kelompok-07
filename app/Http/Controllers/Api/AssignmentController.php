@@ -3,15 +3,12 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Http\Resources\AssignmentResource;
-use App\Http\Resources\SubmissionResource;
 use App\Models\Assignment;
 use App\Models\Course;
 use App\Models\Submission;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Response;
 
 class AssignmentController extends Controller
@@ -33,22 +30,46 @@ class AssignmentController extends Controller
     }
 
     /**
-     * Display a single assignment.
+     * Check if user can view assignment (admin, dosen pemilik, atau mahasiswa terdaftar).
      */
-    public function show(Request $request, Assignment $assignment): AssignmentResource
+    protected function authorizeViewAccess(User $user, Assignment $assignment): void
     {
-        $assignment->load(['course', 'creator']);
+        if ($user->role === 'admin') {
+            return;
+        }
 
-        return new AssignmentResource($assignment);
+        if ($user->role === 'dosen' && $assignment->course->lecturer_id === $user->id) {
+            return;
+        }
+
+        if ($user->role === 'mahasiswa' && $assignment->course->students()->where('user_id', $user->id)->exists()) {
+            return;
+        }
+
+        abort(403, 'Anda tidak memiliki akses ke sumber daya ini.');
     }
 
     /**
-     * Store a newly created assignment (Dosen only).
+     * Display a single assignment (returns view).
+     */
+    public function show(Request $request, Assignment $assignment)
+    {
+        $user = $request->user();
+        $this->authorizeViewAccess($user, $assignment);
+
+        $assignment->load(['course', 'submissions.student']);
+
+        return view('assignments.show', compact('assignment'));
+    }
+
+    /**
+     * Store a newly created assignment (Dosen pemilik atau Admin only).
      */
     public function store(Request $request): JsonResponse
     {
         $user = $request->user();
 
+        // Hanya dosen dan admin yang bisa membuat assignment
         if ($user->role !== 'dosen' && $user->role !== 'admin') {
             abort(403, 'Anda tidak memiliki akses ke sumber daya ini.');
         }
@@ -65,6 +86,7 @@ class AssignmentController extends Controller
 
         $course = Course::findOrFail($validated['course_id']);
 
+        // Dosen hanya bisa buat assignment untuk course miliknya sendiri
         if ($user->role === 'dosen' && $course->lecturer_id !== $user->id) {
             abort(403, 'Anda tidak memiliki akses ke sumber daya ini.');
         }
@@ -77,7 +99,7 @@ class AssignmentController extends Controller
         $assignment = Assignment::create($validated);
         $assignment->load(['course', 'creator']);
 
-        return (new AssignmentResource($assignment))
+        return (new \App\Http\Resources\AssignmentResource($assignment))
             ->response()
             ->setStatusCode(201);
     }
@@ -85,7 +107,7 @@ class AssignmentController extends Controller
     /**
      * Update an assignment (Dosen pemilik only).
      */
-    public function update(Request $request, Assignment $assignment): AssignmentResource
+    public function update(Request $request, Assignment $assignment)
     {
         $this->authorizeLecturerOwner($request->user(), $assignment);
 
@@ -101,7 +123,7 @@ class AssignmentController extends Controller
         $assignment->update($validated);
         $assignment->load(['course', 'creator']);
 
-        return new AssignmentResource($assignment);
+        return new \App\Http\Resources\AssignmentResource($assignment);
     }
 
     /**
@@ -119,7 +141,7 @@ class AssignmentController extends Controller
     /**
      * List all submissions for an assignment (Dosen pemilik only).
      */
-    public function submissions(Request $request, Assignment $assignment): AnonymousResourceCollection
+    public function submissions(Request $request, Assignment $assignment)
     {
         $this->authorizeLecturerOwner($request->user(), $assignment);
 
@@ -128,7 +150,7 @@ class AssignmentController extends Controller
             ->latest('submitted_at')
             ->paginate(15);
 
-        return SubmissionResource::collection($submissions);
+        return view('submissions.index', compact('assignment', 'submissions'));
     }
 
     /**
@@ -179,7 +201,7 @@ class AssignmentController extends Controller
 
         $submission->load(['student', 'assignment', 'grade']);
 
-        return (new SubmissionResource($submission))
+        return (new \App\Http\Resources\SubmissionResource($submission))
             ->response()
             ->setStatusCode($statusCode);
     }

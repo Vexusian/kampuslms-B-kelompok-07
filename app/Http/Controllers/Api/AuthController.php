@@ -44,7 +44,13 @@ class AuthController extends Controller
      */
     public function logout(Request $request): JsonResponse
     {
-        $request->user()->currentAccessToken()->delete();
+        // Hapus token Sanctum jika ada
+        if ($request->user()->currentAccessToken() && method_exists($request->user()->currentAccessToken(), 'delete')) {
+            $request->user()->currentAccessToken()->delete();
+        }
+
+        // Logout dari session juga
+        \Illuminate\Support\Facades\Auth::guard('web')->logout();
 
         return response()->json([
             'message' => 'Berhasil logout.',
@@ -52,12 +58,33 @@ class AuthController extends Controller
     }
 
     /**
-     * Get authenticated user profile.
+     * Get authenticated user profile (returns dashboard view).
      */
-    public function me(Request $request): JsonResponse
+    public function me(Request $request)
     {
-        return response()->json([
-            'data' => new UserResource($request->user()),
-        ]);
+        // Tampilkan dashboard yang sama dengan web route
+        $totalCourses = \App\Models\Course::count();
+        $activeCourses = \App\Models\Course::where('status', 'active')->count();
+        $draftCourses = \App\Models\Course::where('status', 'draft')->count();
+        $totalLecturers = User::where('role', 'dosen')->count();
+        $totalStudents = User::where('role', 'mahasiswa')->count();
+        $totalMaterials = \App\Models\Material::count();
+        $totalAssignments = \App\Models\Assignment::count();
+
+        $recentCourses = \App\Models\Course::with('lecturer')
+            ->latest()
+            ->take(5)
+            ->get();
+
+        return view('dashboard', compact(
+            'totalCourses',
+            'activeCourses',
+            'draftCourses',
+            'totalLecturers',
+            'totalStudents',
+            'totalMaterials',
+            'totalAssignments',
+            'recentCourses'
+        ));
     }
 }

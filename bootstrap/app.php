@@ -25,37 +25,51 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        // API unauthenticated → JSON 401 untuk API client, view 401 untuk browser
+        // API unauthenticated → selalu JSON 401 untuk api/* dan wantsJson()
         $exceptions->render(function (\Illuminate\Auth\AuthenticationException $e, $request) {
-            if ($request->wantsJson() || $request->is('api/*')) {
-                // Cek apakah request berasal dari browser (bukan API client)
-                $acceptsHtml = str_contains($request->header('Accept', ''), 'text/html');
-                if ($acceptsHtml) {
-                    return response()->view('errors.401', [], 401);
-                }
-
+            if ($request->is('api/*') || $request->wantsJson()) {
                 return response()->json([
                     'message' => 'Unauthenticated.',
                 ], 401);
             }
         });
 
+        // 403 Forbidden → AuthorizationException
         $exceptions->render(function (\Illuminate\Auth\Access\AuthorizationException $e, $request) {
             if ($request->is('api/*') || $request->wantsJson()) {
                 return response()->json([
-                    'message' => 'Anda tidak memiliki akses ke sumber daya ini.',
+                    'message' => $e->getMessage() ?: 'Anda tidak memiliki akses ke sumber daya ini.',
                 ], 403);
             }
         });
 
+        // 403 Forbidden → AccessDeniedHttpException
         $exceptions->render(function (\Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException $e, $request) {
             if ($request->is('api/*') || $request->wantsJson()) {
                 return response()->json([
-                    'message' => 'Anda tidak memiliki akses ke sumber daya ini.',
+                    'message' => $e->getMessage() ?: 'Anda tidak memiliki akses ke sumber daya ini.',
                 ], 403);
             }
         });
 
+        // HTTP Exception 401 & 403 (abort(403), abort(401), dll)
+        $exceptions->render(function (\Symfony\Component\HttpKernel\Exception\HttpException $e, $request) {
+            if ($request->is('api/*') || $request->wantsJson()) {
+                if ($e->getStatusCode() === 403) {
+                    return response()->json([
+                        'message' => $e->getMessage() ?: 'Anda tidak memiliki akses ke sumber daya ini.',
+                    ], 403);
+                }
+
+                if ($e->getStatusCode() === 401) {
+                    return response()->json([
+                        'message' => $e->getMessage() ?: 'Unauthenticated.',
+                    ], 401);
+                }
+            }
+        });
+
+        // 422 Validation
         $exceptions->render(function (\Illuminate\Validation\ValidationException $e, $request) {
             if ($request->is('api/*') || $request->wantsJson()) {
                 return response()->json([

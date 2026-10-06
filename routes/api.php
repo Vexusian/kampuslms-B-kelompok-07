@@ -14,25 +14,37 @@ Route::prefix('v1')->group(function () {
 
     // Buat testing CP 1
     // Versi raw atau model mentah
-    Route::get('/test-user-raw', function(){
+    Route::get('/test-user-raw', function () {
         return \App\Models\User::first();
     });
     // Versi resource API
-    Route::get('/test-user-resource', function(){
+    Route::get('/test-user-resource', function () {
         return new \App\Http\Resources\UserResource(
             \App\Models\User::first()
-            );
+        );
     });
 
-    // --- Helper Switch User untuk pengujian / demonstrasi (Local Only) ---
-    // Sama seperti dev/login/{user} di web, tapi juga mengembalikan token Sanctum
+    // --- Helper Switch User untuk pengujian / demonstrasi (Local & Testing) ---
+    // Mendukung pengujian lewat browser (URL login) dan API client
     if (app()->environment('local', 'testing')) {
         Route::get('/dev/login/{user}', function (User $user) {
             // Set session agar browser tetap ter-autentikasi di request berikutnya
             \Illuminate\Support\Facades\Auth::login($user);
 
-            // Redirect ke halaman me (dashboard) setelah login
-            return redirect('/api/v1/me')->with('success', "Login simulasi sebagai: {$user->name} (Role: {$user->role})");
+            // Buat token Sanctum untuk keperluan API client
+            $token = $user->createToken('dev-simulation')->plainTextToken;
+
+            // Jika dipanggil oleh API client / meminta json
+            if (request()->wantsJson()) {
+                return response()->json([
+                    'message' => "Login simulasi sebagai: {$user->name} (Role: {$user->role})",
+                    'token' => $token,
+                    'user' => new \App\Http\Resources\UserResource($user),
+                ]);
+            }
+
+            // Jika diakses via browser URL, redirect ke endpoint profil JSON
+            return redirect('/api/v1/me')->with('token', $token);
         })->name('api.dev.login');
 
         Route::get('/dev/logout', function () {
@@ -46,8 +58,8 @@ Route::prefix('v1')->group(function () {
         })->name('api.dev.logout');
     }
 
-    // Endpoint terlindungi dengan Sanctum dan rate limiting umum 60/menit
-    Route::middleware(['auth:sanctum', 'throttle:60,1'])->group(function () {
+    // Endpoint terlindungi dengan Sanctum/Web session dan rate limiting umum 60/menit
+    Route::middleware(['auth:sanctum,web', 'throttle:60,1'])->group(function () {
         // Auth
         Route::post('/auth/logout', [AuthController::class, 'logout']);
         Route::get('/me', [AuthController::class, 'me']);
@@ -67,6 +79,7 @@ Route::prefix('v1')->group(function () {
         Route::post('/assignments/{assignment}/submissions', [AssignmentController::class, 'storeSubmission']);
 
         // Submissions & Grading
+        Route::get('/submissions/{submission}', [SubmissionController::class, 'show']);
         Route::put('/submissions/{submission}/grade', [SubmissionController::class, 'grade']);
 
         // Notifications

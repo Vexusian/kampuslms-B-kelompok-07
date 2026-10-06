@@ -3,12 +3,15 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\AssignmentResource;
+use App\Http\Resources\SubmissionResource;
 use App\Models\Assignment;
 use App\Models\Course;
 use App\Models\Submission;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Response;
 
 class AssignmentController extends Controller
@@ -50,16 +53,16 @@ class AssignmentController extends Controller
     }
 
     /**
-     * Display a single assignment (returns view).
+     * Display a single assignment.
      */
-    public function show(Request $request, Assignment $assignment)
+    public function show(Request $request, Assignment $assignment): AssignmentResource
     {
         $user = $request->user();
         $this->authorizeViewAccess($user, $assignment);
 
-        $assignment->load(['course', 'submissions.student']);
+        $assignment->load(['course', 'creator']);
 
-        return view('assignments.show', compact('assignment'));
+        return new AssignmentResource($assignment);
     }
 
     /**
@@ -99,7 +102,7 @@ class AssignmentController extends Controller
         $assignment = Assignment::create($validated);
         $assignment->load(['course', 'creator']);
 
-        return (new \App\Http\Resources\AssignmentResource($assignment))
+        return (new AssignmentResource($assignment))
             ->response()
             ->setStatusCode(201);
     }
@@ -107,7 +110,7 @@ class AssignmentController extends Controller
     /**
      * Update an assignment (Dosen pemilik only).
      */
-    public function update(Request $request, Assignment $assignment)
+    public function update(Request $request, Assignment $assignment): AssignmentResource
     {
         $this->authorizeLecturerOwner($request->user(), $assignment);
 
@@ -123,7 +126,7 @@ class AssignmentController extends Controller
         $assignment->update($validated);
         $assignment->load(['course', 'creator']);
 
-        return new \App\Http\Resources\AssignmentResource($assignment);
+        return new AssignmentResource($assignment);
     }
 
     /**
@@ -139,18 +142,30 @@ class AssignmentController extends Controller
     }
 
     /**
-     * List all submissions for an assignment (Dosen pemilik only).
+     * List submissions for an assignment.
+     * Dosen pemilik / Admin: seluruh submissions.
+     * Mahasiswa terdaftar: submission miliknya sendiri.
      */
-    public function submissions(Request $request, Assignment $assignment)
+    public function submissions(Request $request, Assignment $assignment): AnonymousResourceCollection
     {
-        $this->authorizeLecturerOwner($request->user(), $assignment);
+        $user = $request->user();
 
-        $submissions = $assignment->submissions()
+        $query = $assignment->submissions()
             ->with(['student', 'grade.grader'])
-            ->latest('submitted_at')
-            ->paginate(15);
+            ->latest('submitted_at');
 
-        return view('submissions.index', compact('assignment', 'submissions'));
+        if ($user->role === 'admin' || ($user->role === 'dosen' && ($assignment->course->lecturer_id === $user->id || $assignment->created_by === $user->id))) {
+            // Admin & Dosen pemilik akses semua submission
+        } elseif ($user->role === 'mahasiswa' && $assignment->course->students()->where('user_id', $user->id)->exists()) {
+            // Mahasiswa terdaftar hanya melihat submission miliknya
+            $query->where('user_id', $user->id);
+        } else {
+            abort(403, 'Anda tidak memiliki akses ke sumber daya ini.');
+        }
+
+        $submissions = $query->paginate(15);
+
+        return SubmissionResource::collection($submissions);
     }
 
     /**
@@ -201,7 +216,7 @@ class AssignmentController extends Controller
 
         $submission->load(['student', 'assignment', 'grade']);
 
-        return (new \App\Http\Resources\SubmissionResource($submission))
+        return (new SubmissionResource($submission))
             ->response()
             ->setStatusCode($statusCode);
     }

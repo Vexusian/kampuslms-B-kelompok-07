@@ -15,8 +15,31 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'role' => \App\Http\Middleware\EnsureUserHasRole::class,
         ]);
+
+        // Tambahkan session middleware ke API agar browser bisa
+        // mengakses API route dengan session/cookie (login via URL)
+        $middleware->prependToGroup('api', [
+            \Illuminate\Cookie\Middleware\EncryptCookies::class,
+            \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
+            \Illuminate\Session\Middleware\StartSession::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
+        // API unauthenticated → JSON 401 untuk API client, view 401 untuk browser
+        $exceptions->render(function (\Illuminate\Auth\AuthenticationException $e, $request) {
+            if ($request->wantsJson() || $request->is('api/*')) {
+                // Cek apakah request berasal dari browser (bukan API client)
+                $acceptsHtml = str_contains($request->header('Accept', ''), 'text/html');
+                if ($acceptsHtml) {
+                    return response()->view('errors.401', [], 401);
+                }
+
+                return response()->json([
+                    'message' => 'Unauthenticated.',
+                ], 401);
+            }
+        });
+
         $exceptions->render(function (\Illuminate\Auth\Access\AuthorizationException $e, $request) {
             if ($request->is('api/*') || $request->wantsJson()) {
                 return response()->json([

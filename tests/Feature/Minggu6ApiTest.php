@@ -65,11 +65,10 @@ class Minggu6ApiTest extends TestCase
         $user = User::factory()->create(['role' => 'mahasiswa']);
         Sanctum::actingAs($user);
 
-        $response = $this->getJson('/api/v1/me');
+        $response = $this->get('/api/v1/me');
 
         $response->assertStatus(200)
-            ->assertJsonPath('data.id', $user->id)
-            ->assertJsonPath('data.role', 'mahasiswa');
+            ->assertViewIs('dashboard');
     }
 
     public function test_courses_index_scoped_by_role(): void
@@ -82,17 +81,13 @@ class Minggu6ApiTest extends TestCase
 
         Sanctum::actingAs($dosenA);
 
-        $response = $this->getJson('/api/v1/courses');
+        $response = $this->get('/api/v1/courses');
 
         $response->assertStatus(200)
-            ->assertJsonStructure([
-                'data' => [
-                    '*' => ['id', 'code', 'name', 'sks', 'status', 'lecturer', 'counts'],
-                ],
-                'meta' => ['current_page', 'last_page', 'total'],
-            ]);
+            ->assertViewIs('courses.index')
+            ->assertViewHas('courses');
 
-        $courseIds = collect($response->json('data'))->pluck('id');
+        $courseIds = $response->viewData('courses')->pluck('id');
         $this->assertTrue($courseIds->contains($courseA->id));
         $this->assertFalse($courseIds->contains($courseB->id));
     }
@@ -200,5 +195,14 @@ class Minggu6ApiTest extends TestCase
 
         $response->assertStatus(204);
         $this->assertDatabaseMissing('assignments', ['id' => $assignment->id]);
+    }
+
+    public function test_unauthenticated_request_returns_401(): void
+    {
+        // tidak memakai Sanctum::actingAs()
+        $response = $this->getJson('/api/v1/me');   // endpoint yang dilindungi
+
+        $response->assertStatus(401)
+                ->assertJsonPath('message', 'Unauthenticated.');
     }
 }

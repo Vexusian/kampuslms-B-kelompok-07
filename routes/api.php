@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CourseController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\SubmissionController;
+use App\Models\User;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
@@ -23,6 +24,27 @@ Route::prefix('v1')->group(function () {
             );
     });
 
+    // --- Helper Switch User untuk pengujian / demonstrasi (Local Only) ---
+    // Sama seperti dev/login/{user} di web, tapi juga mengembalikan token Sanctum
+    if (app()->environment('local', 'testing')) {
+        Route::get('/dev/login/{user}', function (User $user) {
+            // Set session agar browser tetap ter-autentikasi di request berikutnya
+            \Illuminate\Support\Facades\Auth::login($user);
+
+            // Redirect ke halaman me (dashboard) setelah login
+            return redirect('/api/v1/me')->with('success', "Login simulasi sebagai: {$user->name} (Role: {$user->role})");
+        })->name('api.dev.login');
+
+        Route::get('/dev/logout', function () {
+            \Illuminate\Support\Facades\Auth::guard('web')->logout();
+            request()->session()->invalidate();
+            request()->session()->regenerateToken();
+
+            return response()->json([
+                'message' => 'Berhasil logout simulasi.',
+            ]);
+        })->name('api.dev.logout');
+    }
 
     // Endpoint terlindungi dengan Sanctum dan rate limiting umum 60/menit
     Route::middleware(['auth:sanctum', 'throttle:60,1'])->group(function () {
@@ -37,6 +59,7 @@ Route::prefix('v1')->group(function () {
         Route::get('/courses/{course}/assignments', [CourseController::class, 'assignments']);
 
         // Assignments
+        Route::get('/assignments/{assignment}', [AssignmentController::class, 'show']);
         Route::post('/assignments', [AssignmentController::class, 'store']);
         Route::match(['put', 'patch'], '/assignments/{assignment}', [AssignmentController::class, 'update']);
         Route::delete('/assignments/{assignment}', [AssignmentController::class, 'destroy']);

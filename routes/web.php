@@ -28,7 +28,7 @@ Route::get('/tentang', function () {
 })->name('tentang');
 
 Route::get('/login', function () {
-    return response('Halaman Login (Akan dipasang penuh pada Minggu 7 via Breeze)', 200);
+    return response('401 Unauthenticated', 401);
 })->name('login');
 
 // --- Helper Switch User untuk pengujian / demonstrasi dosen (Local Only) ---

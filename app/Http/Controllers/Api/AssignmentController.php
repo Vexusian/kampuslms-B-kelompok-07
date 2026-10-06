@@ -33,6 +33,16 @@ class AssignmentController extends Controller
     }
 
     /**
+     * Display a single assignment.
+     */
+    public function show(Request $request, Assignment $assignment): AssignmentResource
+    {
+        $assignment->load(['course', 'creator']);
+
+        return new AssignmentResource($assignment);
+    }
+
+    /**
      * Store a newly created assignment (Dosen only).
      */
     public function store(Request $request): JsonResponse

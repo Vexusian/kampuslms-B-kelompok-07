@@ -201,4 +201,13 @@ class Minggu6ApiTest extends TestCase
         $response->assertStatus(204);
         $this->assertDatabaseMissing('assignments', ['id' => $assignment->id]);
     }
+
+    public function test_unauthenticated_request_returns_401(): void
+    {
+        // tidak memakai Sanctum::actingAs()
+        $response = $this->getJson('/api/v1/me');   // endpoint yang dilindungi
+
+        $response->assertStatus(401)
+                ->assertJsonPath('message', 'Unauthenticated.');
+    }
 }

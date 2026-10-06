@@ -58,33 +58,12 @@ class AuthController extends Controller
     }
 
     /**
-     * Get authenticated user profile (returns dashboard view).
+     * Get authenticated user profile.
      */
-    public function me(Request $request)
+    public function me(Request $request): JsonResponse
     {
-        // Tampilkan dashboard yang sama dengan web route
-        $totalCourses = \App\Models\Course::count();
-        $activeCourses = \App\Models\Course::where('status', 'active')->count();
-        $draftCourses = \App\Models\Course::where('status', 'draft')->count();
-        $totalLecturers = User::where('role', 'dosen')->count();
-        $totalStudents = User::where('role', 'mahasiswa')->count();
-        $totalMaterials = \App\Models\Material::count();
-        $totalAssignments = \App\Models\Assignment::count();
-
-        $recentCourses = \App\Models\Course::with('lecturer')
-            ->latest()
-            ->take(5)
-            ->get();
-
-        return view('dashboard', compact(
-            'totalCourses',
-            'activeCourses',
-            'draftCourses',
-            'totalLecturers',
-            'totalStudents',
-            'totalMaterials',
-            'totalAssignments',
-            'recentCourses'
-        ));
+        return response()->json([
+            'data' => new UserResource($request->user()),
+        ]);
     }
 }

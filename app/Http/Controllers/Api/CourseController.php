@@ -3,9 +3,13 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\AssignmentResource;
+use App\Http\Resources\CourseResource;
+use App\Http\Resources\MaterialResource;
 use App\Models\Course;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class CourseController extends Controller
 {
@@ -30,9 +34,9 @@ class CourseController extends Controller
     }
 
     /**
-     * Display a listing of courses scoped by role (returns view).
+     * Display a listing of courses scoped by role.
      */
-    public function index(Request $request)
+    public function index(Request $request): AnonymousResourceCollection
     {
         $user = $request->user();
 
@@ -44,54 +48,59 @@ class CourseController extends Controller
         };
 
         $courses = $query->with('lecturer')
+            ->withCount(['materials', 'assignments', 'students'])
             ->orderBy('id', 'desc')
             ->paginate(15)
             ->withQueryString();
 
-        return view('courses.index', compact('courses'));
+        return CourseResource::collection($courses);
     }
 
     /**
-     * Display the specified course detail (returns view).
+     * Display the specified course detail.
      */
-    public function show(Request $request, Course $course)
+    public function show(Request $request, Course $course): CourseResource
     {
         $this->authorizeCourseAccess($request->user(), $course);
 
-        $course->load('lecturer', 'students', 'assignments');
+        $course->load('lecturer')
+            ->loadCount(['materials', 'assignments', 'students']);
 
-        return view('courses.show', compact('course'));
+        return new CourseResource($course);
     }
 
     /**
-     * Display materials for the specified course (returns view).
+     * Display materials for the specified course.
      */
-    public function materials(Request $request, Course $course)
+    public function materials(Request $request, Course $course): AnonymousResourceCollection
     {
         $this->authorizeCourseAccess($request->user(), $course);
 
-        $materials = $course->materials()->latest()->paginate(15);
+        $materials = $course->materials()
+            ->latest()
+            ->paginate(15);
 
-        return view('materials.index', compact('course', 'materials'));
+        return MaterialResource::collection($materials);
     }
 
     /**
-     * Display assignments for the specified course (returns view).
+     * Display assignments for the specified course.
      */
-    public function assignments(Request $request, Course $course)
+    public function assignments(Request $request, Course $course): AnonymousResourceCollection
     {
         $user = $request->user();
         $this->authorizeCourseAccess($user, $course);
 
         $query = $course->assignments()->with('creator')->withCount('submissions');
 
-        // Mahasiswa hanya lihat yang published
-        if ($user->role === 'mahasiswa') {
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        } elseif ($user->role === 'mahasiswa') {
             $query->where('status', 'published');
         }
 
         $assignments = $query->latest('due_at')->paginate(15);
 
-        return view('assignments.index', compact('course', 'assignments'));
+        return AssignmentResource::collection($assignments);
     }
 }

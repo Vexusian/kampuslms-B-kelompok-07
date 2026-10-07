@@ -6,13 +6,10 @@ use Illuminate\Validation\Rule;
 
 class UpdateCourseRequest extends FormRequest
 {
-    /**
-     * TODO: Ganti dengan Policy pada minggu ke‑7.
-     */
     public function authorize(): bool
     {
-        // Untuk saat ini izinkan semua request yang masuk.
-        return true;
+        $course = $this->route('course');
+        return $this->user()?->can('update', $course) ?? false;
     }
 
     public function rules(): array

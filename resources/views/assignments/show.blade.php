@@ -1,7 +1,6 @@
 <x-layout title="{{ $assignment->title }} - KampusLMS">
     @php
         $user = auth()->user();
-        $isLecturerOrAdmin = $user && ($user->role === 'admin' || ($user->role === 'dosen' && $assignment->course->lecturer_id === $user->id));
         $rolePrefix = ($user && $user->role === 'mahasiswa') ? 'mahasiswa' : 'dosen';
         $isPast = $assignment->due_at && $assignment->due_at->isPast();
 
@@ -77,7 +76,7 @@
     </div>
 
     {{-- Section Dosen: Ringkasan Pengumpulan --}}
-    @if ($isLecturerOrAdmin)
+    @can('viewAny', [App\Models\Submission::class, $assignment])
         <div style="background: #f1f5f9; padding: 1.5rem; border-radius: 8px; border: 1px solid #cbd5e1; margin-bottom: 1.5rem;">
             <div class="flex flex-between" style="flex-wrap: wrap; gap: 1rem;">
                 <div>
@@ -94,23 +93,27 @@
             </div>
         </div>
 
-        <div class="flex gap-2">
-            <a href="{{ route('dosen.assignments.edit', $assignment->id) }}" class="btn btn-warning">
-                <i class="fas fa-edit"></i> Edit Tugas
-            </a>
-            <form action="{{ route('dosen.assignments.destroy', $assignment->id) }}" method="POST" 
-                  onsubmit="return confirm('Apakah Anda yakin ingin menghapus tugas ini?');">
-                @csrf
-                @method('DELETE')
-                <button type="submit" class="btn btn-danger">
-                    <i class="fas fa-trash"></i> Hapus Tugas
-                </button>
-            </form>
+        <div class="flex gap-2 mb-6">
+            @can('update', $assignment)
+                <a href="{{ route('dosen.assignments.edit', $assignment->id) }}" class="btn btn-warning">
+                    <i class="fas fa-edit"></i> Edit Tugas
+                </a>
+            @endcan
+            @can('delete', $assignment)
+                <form action="{{ route('dosen.assignments.destroy', $assignment->id) }}" method="POST" 
+                      onsubmit="return confirm('Apakah Anda yakin ingin menghapus tugas ini?');">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash"></i> Hapus Tugas
+                    </button>
+                </form>
+            @endcan
         </div>
-    @endif
+    @endcan
 
     {{-- Section Mahasiswa: Pengumpulan Tugas Sendiri --}}
-    @if ($user && $user->role === 'mahasiswa')
+    @can('create', [App\Models\Submission::class, $assignment])
         <div style="background: #f8fafc; padding: 1.75rem; border-radius: 8px; border: 1px solid #e2e8f0; margin-top: 1.5rem;">
             <h3 style="font-size: 1.15rem; color: #0f172a; margin-bottom: 1rem;">
                 <i class="fas fa-cloud-upload-alt" style="color: #2563eb; margin-right: 0.4rem;"></i> Status Pengumpulan Tugas Anda
@@ -171,5 +174,5 @@
                 </button>
             </form>
         </div>
-    @endif
+    @endcan
 </x-layout>

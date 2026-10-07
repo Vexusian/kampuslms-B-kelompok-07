@@ -18,11 +18,11 @@
                 Mata Kuliah: <strong>{{ $course->code }} - {{ $course->name }}</strong>
             </p>
         </div>
-        @if ($isLecturerOrAdmin)
+        @can('create', [App\Models\Material::class, $course])
             <a href="{{ route('dosen.courses.materials.create', $course->id) }}" class="btn btn-success">
                 <i class="fas fa-plus"></i> Tambah Materi
             </a>
-        @endif
+        @endcan
     </div>
 
     <table>
@@ -55,12 +55,14 @@
                                 <i class="fas fa-eye"></i> Baca
                             </a>
 
-                            @if ($isLecturerOrAdmin)
+                            @can('update', $material)
                                 <a href="{{ route('dosen.materials.edit', $material->id) }}" 
                                    class="btn btn-sm btn-warning" 
                                    title="Edit Materi">
                                     <i class="fas fa-edit"></i> Edit
                                 </a>
+                            @endcan
+                            @can('delete', $material)
                                 <form action="{{ route('dosen.materials.destroy', $material->id) }}" 
                                       method="POST" 
                                       style="display: inline;" 
@@ -71,7 +73,7 @@
                                         <i class="fas fa-trash"></i> Hapus
                                     </button>
                                 </form>
-                            @endif
+                            @endcan
                         </div>
                     </td>
                 </tr>

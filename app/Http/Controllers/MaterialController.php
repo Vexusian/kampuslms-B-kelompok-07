@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Course;
 use App\Models\Material;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 
 class MaterialController extends Controller
 {
@@ -13,14 +14,7 @@ class MaterialController extends Controller
      */
     public function index(Course $course)
     {
-        $user = auth()->user();
-        if ($user) {
-            $isAdmin = $user->role === 'admin';
-            $isLecturer = $user->role === 'dosen' && $course->lecturer_id === $user->id;
-            $isEnrolled = $user->role === 'mahasiswa' && $course->students()->where('users.id', $user->id)->exists();
-
-            abort_unless($isAdmin || $isLecturer || $isEnrolled, 403, 'Akses ditolak: Anda tidak terdaftar pada mata kuliah ini.');
-        }
+        Gate::authorize('view', $course);
 
         $materials = $course->materials()->latest()->paginate(15);
         return view('materials.index', compact('course', 'materials'));
@@ -31,10 +25,7 @@ class MaterialController extends Controller
      */
     public function create(Course $course)
     {
-        $user = auth()->user();
-        if ($user) {
-            abort_unless($user->role === 'admin' || ($user->role === 'dosen' && $course->lecturer_id === $user->id), 403, 'Akses ditolak: Anda bukan pengampu mata kuliah ini.');
-        }
+        Gate::authorize('create', [Material::class, $course]);
 
         return view('materials.create', compact('course'));
     }
@@ -44,10 +35,7 @@ class MaterialController extends Controller
      */
     public function store(Request $request, Course $course)
     {
-        $user = auth()->user();
-        if ($user) {
-            abort_unless($user->role === 'admin' || ($user->role === 'dosen' && $course->lecturer_id === $user->id), 403, 'Akses ditolak: Anda bukan pengampu mata kuliah ini.');
-        }
+        Gate::authorize('create', [Material::class, $course]);
 
         $validated = $request->validate([
             'title' => 'required|string|max:255',
@@ -61,18 +49,11 @@ class MaterialController extends Controller
     }
 
     /**
-     * Menampilkan detail materi (Route Model Binding dengan proteksi IDOR sementara).
+     * Menampilkan detail materi.
      */
     public function show(Material $material)
     {
-        $user = auth()->user();
-        if ($user) {
-            $isAdmin = $user->role === 'admin';
-            $isLecturer = $user->role === 'dosen' && $material->course->lecturer_id === $user->id;
-            $isEnrolled = $user->role === 'mahasiswa' && $material->course->students()->where('users.id', $user->id)->exists();
-
-            abort_unless($isAdmin || $isLecturer || $isEnrolled, 403, 'Akses ditolak: Anda tidak berhak mengakses materi ini.');
-        }
+        Gate::authorize('view', $material);
 
         return view('materials.show', compact('material'));
     }
@@ -82,10 +63,7 @@ class MaterialController extends Controller
      */
     public function edit(Material $material)
     {
-        $user = auth()->user();
-        if ($user) {
-            abort_unless($user->role === 'admin' || ($user->role === 'dosen' && $material->course->lecturer_id === $user->id), 403, 'Akses ditolak: Anda tidak memiliki izin untuk mengedit materi ini.');
-        }
+        Gate::authorize('update', $material);
 
         return view('materials.edit', compact('material'));
     }
@@ -95,10 +73,7 @@ class MaterialController extends Controller
      */
     public function update(Request $request, Material $material)
     {
-        $user = auth()->user();
-        if ($user) {
-            abort_unless($user->role === 'admin' || ($user->role === 'dosen' && $material->course->lecturer_id === $user->id), 403, 'Akses ditolak: Anda tidak memiliki izin untuk mengedit materi ini.');
-        }
+        Gate::authorize('update', $material);
 
         $validated = $request->validate([
             'title' => 'required|string|max:255',
@@ -116,10 +91,7 @@ class MaterialController extends Controller
      */
     public function destroy(Material $material)
     {
-        $user = auth()->user();
-        if ($user) {
-            abort_unless($user->role === 'admin' || ($user->role === 'dosen' && $material->course->lecturer_id === $user->id), 403, 'Akses ditolak: Anda tidak memiliki izin untuk menghapus materi ini.');
-        }
+        Gate::authorize('delete', $material);
 
         $course = $material->course;
         $material->delete();

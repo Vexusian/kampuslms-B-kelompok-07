@@ -65,10 +65,11 @@ class Minggu6ApiTest extends TestCase
         $user = User::factory()->create(['role' => 'mahasiswa']);
         Sanctum::actingAs($user);
 
-        $response = $this->get('/api/v1/me');
+        $response = $this->getJson('/api/v1/me');
 
         $response->assertStatus(200)
-            ->assertViewIs('dashboard');
+            ->assertJsonPath('data.id', $user->id)
+            ->assertJsonPath('data.role', 'mahasiswa');
     }
 
     public function test_courses_index_scoped_by_role(): void
@@ -81,13 +82,17 @@ class Minggu6ApiTest extends TestCase
 
         Sanctum::actingAs($dosenA);
 
-        $response = $this->get('/api/v1/courses');
+        $response = $this->getJson('/api/v1/courses');
 
         $response->assertStatus(200)
-            ->assertViewIs('courses.index')
-            ->assertViewHas('courses');
+            ->assertJsonStructure([
+                'data' => [
+                    '*' => ['id', 'code', 'name', 'sks', 'status', 'lecturer', 'counts'],
+                ],
+                'meta' => ['current_page', 'last_page', 'total'],
+            ]);
 
-        $courseIds = $response->viewData('courses')->pluck('id');
+        $courseIds = collect($response->json('data'))->pluck('id');
         $this->assertTrue($courseIds->contains($courseA->id));
         $this->assertFalse($courseIds->contains($courseB->id));
     }

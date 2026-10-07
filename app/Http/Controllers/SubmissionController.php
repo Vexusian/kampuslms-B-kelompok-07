@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Assignment;
+use App\Models\Grade;
 use App\Models\Submission;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 
 class SubmissionController extends Controller
 {
@@ -13,14 +15,7 @@ class SubmissionController extends Controller
      */
     public function index(Assignment $assignment)
     {
-        $user = auth()->user();
-        if ($user) {
-            abort_unless(
-                $user->role === 'admin' || ($user->role === 'dosen' && $assignment->course->lecturer_id === $user->id),
-                403,
-                'Akses ditolak: Anda bukan pengampu penugasan ini.'
-            );
-        }
+        Gate::authorize('viewAny', [Submission::class, $assignment]);
 
         $submissions = $assignment->submissions()->with(['student', 'grade'])->latest()->paginate(15);
         return view('submissions.index', compact('assignment', 'submissions'));
@@ -31,51 +26,60 @@ class SubmissionController extends Controller
      */
     public function store(Request $request, Assignment $assignment)
     {
-        $user = auth()->user();
-        if ($user) {
-            $isEnrolled = $assignment->course->students()->where('users.id', $user->id)->exists();
-            abort_unless(
-                $user->role === 'mahasiswa' && $isEnrolled,
-                403,
-                'Akses ditolak: Anda tidak terdaftar pada mata kuliah ini.'
-            );
-        }
+        Gate::authorize('create', [Submission::class, $assignment]);
 
         $validated = $request->validate([
             'content' => 'required|string',
             'file_path' => 'nullable|string',
         ]);
 
+        $user = auth()->user();
+
         $submission = $assignment->submissions()->updateOrCreate(
-            ['user_id' => $user ? $user->id : 1],
+            ['user_id' => $user->id],
             array_merge($validated, [
                 'submitted_at' => now(),
             ])
         );
 
-        $role = auth()->user()?->role === 'mahasiswa' ? 'mahasiswa' : 'dosen';
+        $role = $user->role === 'mahasiswa' ? 'mahasiswa' : 'dosen';
         return redirect()->route($role . '.submissions.show', $submission)->with('success', 'Tugas berhasil dikumpulkan.');
     }
 
     /**
      * Menampilkan detail satu submission (Titik rawan IDOR utama).
-     * Dilindungi dengan pemeriksaan kepemilikan data sementara (Temporary IDOR Protection).
+     * Dilindungi secara ketat oleh SubmissionPolicy (hanya pemilik submission, dosen pengampu, atau admin).
      */
     public function show(Submission $submission)
     {
-        $user = auth()->user();
-        if ($user) {
-            // Pemilik submission, admin, atau dosen pengampu mata kuliah terkait
-            abort_unless(
-                $submission->user_id === $user->id
-                    || $user->role === 'admin'
-                    || $submission->assignment->course->lecturer_id === $user->id,
-                403,
-                'Akses ditolak: Anda tidak memiliki izin untuk melihat pengumpulan tugas ini.'
-            );
-        }
+        Gate::authorize('view', $submission);
 
         $submission->load(['assignment.course', 'student', 'grade']);
         return view('submissions.show', compact('submission'));
+    }
+
+    /**
+     * Penilaian tugas oleh Dosen Pengampu atau Admin.
+     */
+    public function grade(Request $request, Submission $submission)
+    {
+        Gate::authorize('create', [Grade::class, $submission]);
+
+        $validated = $request->validate([
+            'score' => 'required|numeric|between:0,100',
+            'feedback' => 'nullable|string',
+        ]);
+
+        $submission->grade()->updateOrCreate(
+            ['submission_id' => $submission->id],
+            [
+                'graded_by' => auth()->id(),
+                'score' => $validated['score'],
+                'feedback' => $validated['feedback'] ?? null,
+                'graded_at' => now(),
+            ]
+        );
+
+        return back()->with('success', 'Nilai dan umpan balik berhasil disimpan.');
     }
 }

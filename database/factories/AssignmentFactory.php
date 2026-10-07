@@ -15,8 +15,8 @@ class AssignmentFactory extends Factory
     public function definition(): array
     {
         return [
-            'course_id' => null,
-            'created_by' => null,
+            'course_id' => \App\Models\Course::factory(),
+            'created_by' => \App\Models\User::factory()->dosen(),
             'title' => fake()->sentence(4),
             'instructions' => fake()->paragraph(),
             'due_at' => now()->addDays(fake()->numberBetween(1, 14)),

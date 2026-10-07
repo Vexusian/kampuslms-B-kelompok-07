@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AssignmentController;
+use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CourseController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\MaterialController;
@@ -12,7 +13,7 @@ use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
-| Web Routes - KampusLMS
+| Web Routes - KampusLMS (Minggu 7: Autentikasi, Otorisasi, Policy)
 |--------------------------------------------------------------------------
 */
 
@@ -27,25 +28,36 @@ Route::get('/tentang', function () {
     return view('tentang');
 })->name('tentang');
 
-Route::get('/login', function () {
-    return response('401 Unauthenticated', 401);
-})->name('login');
+// --- Autentikasi Web Blade (Minggu 7) ---
+Route::get('/login', [AuthController::class, 'create'])->name('login');
+Route::post('/login', [AuthController::class, 'store'])->name('login.post');
+Route::post('/logout', [AuthController::class, 'destroy'])->name('logout');
 
-// --- Helper Switch User untuk pengujian / demonstrasi dosen (Local Only) ---
-if (app()->environment('local')) {
+// --- Helper Switch User untuk pengujian / demonstrasi demo UTS (Local & Testing) ---
+if (app()->environment('local', 'testing')) {
     Route::get('/dev/login/{user}', function (User $user) {
         Auth::login($user);
+        request()->session()->regenerate();
         return redirect()->route('dashboard')->with('success', "Login simulasi sebagai: {$user->name} (Role: {$user->role})");
     })->name('dev.login');
 
     Route::get('/dev/logout', function () {
         Auth::logout();
+        request()->session()->invalidate();
+        request()->session()->regenerateToken();
         return redirect()->route('dashboard')->with('success', 'Berhasil logout simulasi.');
     })->name('dev.logout');
 }
 
 // --- Rute Terautentikasi (Auth Group) ---
 Route::middleware('auth')->group(function () {
+
+    // Enrollment Mahasiswa ke Kelas (Admin & Dosen pengampu)
+    Route::post('/courses/{course}/enroll', [CourseController::class, 'enroll'])->name('courses.enroll');
+    Route::delete('/courses/{course}/unenroll/{student}', [CourseController::class, 'unenroll'])->name('courses.unenroll');
+
+    // Penilaian Tugas
+    Route::put('/submissions/{submission}/grade', [SubmissionController::class, 'grade'])->name('submissions.grade');
 
     // 1. GRUP ADMIN (prefix: /admin, name: admin.*, middleware: role:admin)
     Route::middleware('role:admin')->prefix('admin')->name('admin.')->group(function () {
@@ -88,6 +100,11 @@ Route::middleware('auth')->group(function () {
 
 });
 
-// --- Rute Kompatibilitas / UI Minggu 4 ---
-Route::resource('courses', CourseController::class);
-Route::resource('mata-kuliah', CourseController::class);
+// --- Rute Kompatibilitas / UI Global (dilindungi Policy di Controller) ---
+Route::middleware('auth')->group(function () {
+    Route::resource('courses', CourseController::class);
+    Route::resource('mata-kuliah', CourseController::class);
+    Route::get('/submissions/{submission}', [SubmissionController::class, 'show'])->name('submissions.show');
+    Route::get('/materials/{material}', [MaterialController::class, 'show'])->name('materials.show');
+    Route::get('/assignments/{assignment}', [AssignmentController::class, 'show'])->name('assignments.show');
+});

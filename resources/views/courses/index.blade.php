@@ -1,9 +1,11 @@
 <x-layout title="Daftar Mata Kuliah">
     <div class="flex flex-between mb-6">
         <h1>Daftar Mata Kuliah</h1>
-        <a href="{{ route('courses.create') }}" class="btn btn-success">
-            <i class="fas fa-plus"></i> Tambah Mata Kuliah
-        </a>
+        @can('create', App\Models\Course::class)
+            <a href="{{ route('courses.create') }}" class="btn btn-success">
+                <i class="fas fa-plus"></i> Tambah Mata Kuliah
+            </a>
+        @endcan
     </div>
 
     {{-- Form Pencarian & Filter (state dipertahankan di query string) --}}
@@ -67,23 +69,27 @@
                                title="Detail">
                                 <i class="fas fa-eye"></i> Detail
                             </a>
-                            <a href="{{ route('courses.edit', $course->id) }}" 
-                               class="btn btn-sm btn-warning"
-                               title="Edit">
-                                <i class="fas fa-edit"></i> Edit
-                            </a>
-                            <form action="{{ route('courses.destroy', $course->id) }}" 
-                                  method="POST" 
-                                  style="display: inline;"
-                                  onsubmit="return confirm('⚠️ Yakin ingin menghapus mata kuliah ini?');">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" 
-                                        class="btn btn-sm btn-danger"
-                                        title="Hapus">
-                                    <i class="fas fa-trash"></i> Hapus
-                                </button>
-                            </form>
+                            @can('update', $course)
+                                <a href="{{ route('courses.edit', $course->id) }}" 
+                                   class="btn btn-sm btn-warning"
+                                   title="Edit">
+                                    <i class="fas fa-edit"></i> Edit
+                                </a>
+                            @endcan
+                            @can('delete', $course)
+                                <form action="{{ route('courses.destroy', $course->id) }}" 
+                                      method="POST" 
+                                      style="display: inline;"
+                                      onsubmit="return confirm('⚠️ Yakin ingin menghapus mata kuliah ini?');">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" 
+                                            class="btn btn-sm btn-danger"
+                                            title="Hapus">
+                                        <i class="fas fa-trash"></i> Hapus
+                                    </button>
+                                </form>
+                            @endcan
                         </div>
                     </td>
                 </tr>
@@ -91,7 +97,7 @@
                 <tr>
                     <td colspan="6" style="text-align: center; padding: 2rem; color: #94a3b8;">
                         <i class="fas fa-inbox" style="font-size: 2rem;"></i>
-                        <p>Belum ada data mata kuliah.</p>
+                        <p>Belum ada data mata kuliah yang sesuai.</p>
                     </td>
                 </tr>
             @endforelse

@@ -1,12 +1,11 @@
 <x-layout title="Detail Pengumpulan Tugas - {{ $submission->assignment->title }}">
     @php
         $user = auth()->user();
-        $isLecturerOrAdmin = $user && ($user->role === 'admin' || ($user->role === 'dosen' && $submission->assignment->course->lecturer_id === $user->id));
         $isLate = $submission->submitted_at && $submission->assignment->due_at && $submission->submitted_at->isAfter($submission->assignment->due_at);
     @endphp
 
     <div class="mb-4">
-        @if ($isLecturerOrAdmin)
+        @can('viewAny', [App\Models\Submission::class, $submission->assignment])
             <a href="{{ route('dosen.assignments.submissions.index', $submission->assignment_id) }}" class="btn btn-secondary">
                 <i class="fas fa-arrow-left"></i> Kembali ke Daftar Pengumpulan
             </a>
@@ -14,7 +13,7 @@
             <a href="{{ route('mahasiswa.assignments.show', $submission->assignment_id) }}" class="btn btn-secondary">
                 <i class="fas fa-arrow-left"></i> Kembali ke Halaman Tugas
             </a>
-        @endif
+        @endcan
     </div>
 
     <h1>Detail Pengumpulan Tugas</h1>
@@ -79,7 +78,7 @@
     </div>
 
     {{-- Status / Hasil Penilaian --}}
-    <div style="background: #f8fafc; padding: 1.5rem; border-radius: 8px; border: 1px solid #e2e8f0;">
+    <div style="background: #f8fafc; padding: 1.5rem; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 2rem;">
         <h3 style="font-size: 1.1rem; color: #0f172a; margin-bottom: 0.75rem;">
             <i class="fas fa-award" style="color: #f59e0b; margin-right: 0.4rem;"></i> Evaluasi & Penilaian
         </h3>
@@ -106,4 +105,34 @@
             </div>
         @endif
     </div>
+
+    {{-- Form Penilaian oleh Dosen Pengampu --}}
+    @can('create', [App\Models\Grade::class, $submission])
+        <div style="background: #ffffff; padding: 1.5rem; border-radius: 8px; border: 1px solid #cbd5e1;">
+            <h3 style="font-size: 1.1rem; color: #0f172a; margin-bottom: 1rem;">
+                <i class="fas fa-edit" style="color: #2563eb; margin-right: 0.4rem;"></i> Form Penilaian Dosen
+            </h3>
+
+            <form action="{{ route('submissions.grade', $submission->id) }}" method="POST">
+                @csrf
+                @method('PUT')
+
+                <div class="form-group" style="max-width: 200px;">
+                    <label for="score">Nilai Angka (0-100) <span style="color: #ef4444;">*</span></label>
+                    <input type="number" id="score" name="score" min="0" max="100" step="1"
+                           class="form-control" value="{{ old('score', $submission->grade?->score) }}" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="feedback">Umpan Balik / Catatan Evaluasi</label>
+                    <textarea id="feedback" name="feedback" rows="4" class="form-control"
+                              placeholder="Tuliskan catatan evaluasi untuk mahasiswa...">{{ old('feedback', $submission->grade?->feedback) }}</textarea>
+                </div>
+
+                <button type="submit" class="btn btn-success">
+                    <i class="fas fa-save"></i> Simpan Penilaian
+                </button>
+            </form>
+        </div>
+    @endcan
 </x-layout>

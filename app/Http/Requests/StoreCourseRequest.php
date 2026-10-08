@@ -5,13 +5,9 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class StoreCourseRequest extends FormRequest
 {
-    /**
-     * TODO: Ganti dengan Policy pada minggu ke‑7.
-     */
     public function authorize(): bool
     {
-        // Untuk saat ini izinkan semua request yang masuk.
-        return true;
+        return $this->user()?->can('create', \App\Models\Course::class) ?? false;
     }
 
     public function rules(): array

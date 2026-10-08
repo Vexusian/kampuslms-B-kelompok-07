@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Assignment;
 use App\Models\Course;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 
 class AssignmentController extends Controller
 {
@@ -13,14 +14,7 @@ class AssignmentController extends Controller
      */
     public function index(Course $course)
     {
-        $user = auth()->user();
-        if ($user) {
-            $isAdmin = $user->role === 'admin';
-            $isLecturer = $user->role === 'dosen' && $course->lecturer_id === $user->id;
-            $isEnrolled = $user->role === 'mahasiswa' && $course->students()->where('users.id', $user->id)->exists();
-
-            abort_unless($isAdmin || $isLecturer || $isEnrolled, 403, 'Akses ditolak: Anda tidak terdaftar pada mata kuliah ini.');
-        }
+        Gate::authorize('view', $course);
 
         $assignments = $course->assignments()->latest()->paginate(15);
         return view('assignments.index', compact('course', 'assignments'));
@@ -31,10 +25,7 @@ class AssignmentController extends Controller
      */
     public function create(Course $course)
     {
-        $user = auth()->user();
-        if ($user) {
-            abort_unless($user->role === 'admin' || ($user->role === 'dosen' && $course->lecturer_id === $user->id), 403, 'Akses ditolak: Anda bukan pengampu mata kuliah ini.');
-        }
+        Gate::authorize('create', [Assignment::class, $course]);
 
         return view('assignments.create', compact('course'));
     }
@@ -44,10 +35,7 @@ class AssignmentController extends Controller
      */
     public function store(Request $request, Course $course)
     {
-        $user = auth()->user();
-        if ($user) {
-            abort_unless($user->role === 'admin' || ($user->role === 'dosen' && $course->lecturer_id === $user->id), 403, 'Akses ditolak: Anda bukan pengampu mata kuliah ini.');
-        }
+        Gate::authorize('create', [Assignment::class, $course]);
 
         $validated = $request->validate([
             'title' => 'required|string|max:255',
@@ -62,18 +50,11 @@ class AssignmentController extends Controller
     }
 
     /**
-     * Menampilkan detail tugas (Route Model Binding dengan proteksi IDOR sementara).
+     * Menampilkan detail tugas dengan proteksi Policy.
      */
     public function show(Assignment $assignment)
     {
-        $user = auth()->user();
-        if ($user) {
-            $isAdmin = $user->role === 'admin';
-            $isLecturer = $user->role === 'dosen' && $assignment->course->lecturer_id === $user->id;
-            $isEnrolled = $user->role === 'mahasiswa' && $assignment->course->students()->where('users.id', $user->id)->exists();
-
-            abort_unless($isAdmin || $isLecturer || $isEnrolled, 403, 'Akses ditolak: Anda tidak memiliki izin untuk melihat tugas ini.');
-        }
+        Gate::authorize('view', $assignment);
 
         $assignment->load(['course', 'submissions.student']);
         return view('assignments.show', compact('assignment'));
@@ -84,10 +65,7 @@ class AssignmentController extends Controller
      */
     public function edit(Assignment $assignment)
     {
-        $user = auth()->user();
-        if ($user) {
-            abort_unless($user->role === 'admin' || ($user->role === 'dosen' && $assignment->course->lecturer_id === $user->id), 403, 'Akses ditolak: Anda tidak memiliki izin untuk mengedit tugas ini.');
-        }
+        Gate::authorize('update', $assignment);
 
         return view('assignments.edit', compact('assignment'));
     }
@@ -97,10 +75,7 @@ class AssignmentController extends Controller
      */
     public function update(Request $request, Assignment $assignment)
     {
-        $user = auth()->user();
-        if ($user) {
-            abort_unless($user->role === 'admin' || ($user->role === 'dosen' && $assignment->course->lecturer_id === $user->id), 403, 'Akses ditolak: Anda tidak memiliki izin untuk mengedit tugas ini.');
-        }
+        Gate::authorize('update', $assignment);
 
         $validated = $request->validate([
             'title' => 'required|string|max:255',
@@ -119,10 +94,7 @@ class AssignmentController extends Controller
      */
     public function destroy(Assignment $assignment)
     {
-        $user = auth()->user();
-        if ($user) {
-            abort_unless($user->role === 'admin' || ($user->role === 'dosen' && $assignment->course->lecturer_id === $user->id), 403, 'Akses ditolak: Anda tidak memiliki izin untuk menghapus tugas ini.');
-        }
+        Gate::authorize('delete', $assignment);
 
         $course = $assignment->course;
         $assignment->delete();

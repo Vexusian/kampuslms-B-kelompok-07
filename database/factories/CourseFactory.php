@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -25,7 +26,7 @@ class CourseFactory extends Factory
             ]),
             'description' => fake()->sentence(12),
             'sks' => fake()->randomElement([2, 3, 4]),
-            'lecturer_id' => null,
+            'lecturer_id' => User::factory()->dosen(),
             'status' => 'active',
         ];
     }

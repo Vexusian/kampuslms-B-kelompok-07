@@ -164,18 +164,34 @@
             <a href="{{ route('dashboard') }}" class="{{ request()->routeIs('dashboard') ? 'active' : '' }}"><i class="fas fa-home"></i> Dashboard</a>
             <a href="{{ route('courses.index') }}" class="{{ request()->is('courses*') ? 'active' : '' }}"><i class="fas fa-book"></i> Mata Kuliah</a>
             <a href="{{ route('tentang') }}" class="{{ request()->routeIs('tentang') ? 'active' : '' }}"><i class="fas fa-info-circle"></i> Tentang</a>
-            <a href="{{ route('admin.users.index') }}" class="{{ request()->is('admin/users*') ? 'active' : '' }}"><i class="fas fa-users"></i> User</a>
+            @if(auth()->check() && auth()->user()->role === 'admin')
+                <a href="{{ route('admin.users.index') }}" class="{{ request()->is('admin/users*') ? 'active' : '' }}"><i class="fas fa-users"></i> Kelola User</a>
+            @endif
         </div>
-        @auth
-            <div style="display: flex; gap: 1rem; align-items: center; font-size: 0.85rem; color: #94a3b8;">
-                <span><i class="fas fa-user-circle"></i> {{ auth()->user()->name }} ({{ ucfirst(auth()->user()->role) }})</span>
-                @if(app()->environment('local'))
-                    <a href="{{ route('dev.logout') }}" style="color: #f87171; text-decoration: none; font-size: 0.85rem;" title="Logout Simulasi">
-                        <i class="fas fa-sign-out-alt"></i> Logout
-                    </a>
-                @endif
-            </div>
-        @endauth
+        <div>
+            @auth
+                <div style="display: flex; gap: 1rem; align-items: center; font-size: 0.85rem; color: #94a3b8;">
+                    <span>
+                        <i class="fas fa-user-circle"></i> 
+                        <strong style="color: #f8fafc;">{{ auth()->user()->name }}</strong> 
+                        <span style="display: inline-block; padding: 0.15rem 0.5rem; border-radius: 999px; font-size: 0.75rem; font-weight: 600; background: {{ auth()->user()->role === 'admin' ? '#ef4444' : (auth()->user()->role === 'dosen' ? '#8b5cf6' : '#10b981') }}; color: white; margin-left: 0.25rem;">
+                            {{ ucfirst(auth()->user()->role) }}
+                        </span>
+                    </span>
+
+                    <form action="{{ route('logout') }}" method="POST" style="display: inline;">
+                        @csrf
+                        <button type="submit" style="background: none; border: none; color: #f87171; cursor: pointer; font-size: 0.85rem; font-weight: 600; display: inline-flex; align-items: center; gap: 0.25rem;">
+                            <i class="fas fa-sign-out-alt"></i> Logout
+                        </button>
+                    </form>
+                </div>
+            @else
+                <a href="{{ route('login') }}" class="btn btn-sm btn-primary" style="font-size: 0.85rem;">
+                    <i class="fas fa-sign-in-alt"></i> Masuk
+                </a>
+            @endauth
+        </div>
     </nav>
 
     <main>

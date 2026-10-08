@@ -52,11 +52,13 @@
         @endif
     </div>
 
-    @if ($isLecturerOrAdmin)
-        <div class="flex gap-2 mt-4">
+    <div class="flex gap-2 mt-4">
+        @can('update', $material)
             <a href="{{ route('dosen.materials.edit', $material->id) }}" class="btn btn-warning">
                 <i class="fas fa-edit"></i> Edit Materi
             </a>
+        @endcan
+        @can('delete', $material)
             <form action="{{ route('dosen.materials.destroy', $material->id) }}" method="POST" 
                   onsubmit="return confirm('Apakah Anda yakin ingin menghapus materi ini?');">
                 @csrf
@@ -65,6 +67,6 @@
                     <i class="fas fa-trash"></i> Hapus Materi
                 </button>
             </form>
-        </div>
-    @endif
+        @endcan
+    </div>
 </x-layout>

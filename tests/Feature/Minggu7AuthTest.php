@@ -339,4 +339,43 @@ class Minggu7AuthTest extends TestCase
         $responseViewAdmin->assertStatus(200);
         $responseViewAdmin->assertSee('95 / 100');
     }
+
+    public function test_student_cannot_resubmit_or_edit_submitted_assignment(): void
+    {
+        $dosen = User::factory()->create(['role' => 'dosen']);
+        $student = User::factory()->create(['role' => 'mahasiswa']);
+        $course = Course::factory()->create(['lecturer_id' => $dosen->id, 'status' => 'active']);
+        $course->students()->attach($student->id, ['enrolled_at' => now()]);
+
+        $assignment = Assignment::factory()->create(['course_id' => $course->id]);
+
+        // Pengumpulan pertama kali -> Berhasil
+        $response1 = $this->actingAs($student)->post("/mahasiswa/assignments/{$assignment->id}/submissions", [
+            'content' => 'Jawaban Pertama Mahasiswa',
+        ]);
+        $response1->assertRedirect();
+        $this->assertDatabaseHas('submissions', [
+            'assignment_id' => $assignment->id,
+            'user_id' => $student->id,
+            'content' => 'Jawaban Pertama Mahasiswa',
+        ]);
+
+        // Coba kumpul ulang / perbarui -> Ditolak / dicegah
+        $response2 = $this->actingAs($student)->post("/mahasiswa/assignments/{$assignment->id}/submissions", [
+            'content' => 'Mencoba Mengubah Jawaban',
+        ]);
+        // Harus ditolak (status 403 oleh Policy atau redirect back dengan error session)
+        $this->assertDatabaseMissing('submissions', [
+            'assignment_id' => $assignment->id,
+            'user_id' => $student->id,
+            'content' => 'Mencoba Mengubah Jawaban',
+        ]);
+
+        // Di halaman assignment, form submit tidak boleh muncul lagi
+        $responseView = $this->actingAs($student)->get("/assignments/{$assignment->id}");
+        $responseView->assertStatus(200);
+        $responseView->assertSee('Sudah Mengumpulkan (Final)');
+        $responseView->assertDontSee('Kirim Tugas Sekarang');
+        $responseView->assertDontSee('Perbarui Tugas');
+    }
 }

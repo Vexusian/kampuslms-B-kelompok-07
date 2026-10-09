@@ -50,6 +50,7 @@ class SubmissionPolicy
     /**
      * Mengumpulkan tugas:
      * - Mahasiswa yang terdaftar pada mata kuliah penugasan tersebut.
+     * - Hanya jika belum pernah mengumpulkan (pengumpulan bersifat final/1 kali).
      */
     public function create(User $user, Assignment $assignment): bool
     {
@@ -57,16 +58,21 @@ class SubmissionPolicy
             return false;
         }
 
-        return $assignment->course->students()->where('users.id', $user->id)->exists();
+        $isEnrolled = $assignment->course->students()->where('users.id', $user->id)->exists();
+        if (!$isEnrolled) {
+            return false;
+        }
+
+        return !$assignment->submissions()->where('user_id', $user->id)->exists();
     }
 
     /**
      * Memperbarui submission:
-     * - Mahasiswa pemilik submission.
+     * - Pengumpulan tugas bersifat final; mahasiswa tidak diperbolehkan mengedit kembali.
      */
     public function update(User $user, Submission $submission): bool
     {
-        return $user->id === $submission->user_id;
+        return false;
     }
 
     /**

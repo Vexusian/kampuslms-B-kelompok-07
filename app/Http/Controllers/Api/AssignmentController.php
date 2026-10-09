@@ -196,23 +196,17 @@ class AssignmentController extends Controller
             ->first();
 
         if ($existing) {
-            $existing->update([
-                'content' => $request->content ?? $existing->content,
-                'file_path' => $filePath ?? $existing->file_path,
-                'submitted_at' => now(),
-            ]);
-            $submission = $existing;
-            $statusCode = 200;
-        } else {
-            $submission = Submission::create([
-                'assignment_id' => $assignment->id,
-                'user_id' => $user->id,
-                'content' => $request->content,
-                'file_path' => $filePath,
-                'submitted_at' => now(),
-            ]);
-            $statusCode = 201;
+            abort(400, 'Tugas sudah dikumpulkan dan tidak dapat diubah kembali.');
         }
+
+        $submission = Submission::create([
+            'assignment_id' => $assignment->id,
+            'user_id' => $user->id,
+            'content' => $request->content,
+            'file_path' => $filePath,
+            'submitted_at' => now(),
+        ]);
+        $statusCode = 201;
 
         $submission->load(['student', 'assignment', 'grade']);
 

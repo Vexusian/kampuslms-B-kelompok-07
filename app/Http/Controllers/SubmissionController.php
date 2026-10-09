@@ -28,16 +28,21 @@ class SubmissionController extends Controller
     {
         Gate::authorize('create', [Submission::class, $assignment]);
 
+        $user = auth()->user();
+
+        // Mencegah mahasiswa mengumpulkan ulang / mengedit tugas yang sudah dikumpulkan
+        if ($assignment->submissions()->where('user_id', $user->id)->exists()) {
+            return back()->with('error', 'Tugas sudah dikumpulkan dan tidak dapat diubah kembali.');
+        }
+
         $validated = $request->validate([
             'content' => 'required|string',
             'file_path' => 'nullable|string',
         ]);
 
-        $user = auth()->user();
-
-        $submission = $assignment->submissions()->updateOrCreate(
-            ['user_id' => $user->id],
+        $submission = $assignment->submissions()->create(
             array_merge($validated, [
+                'user_id' => $user->id,
                 'submitted_at' => now(),
             ])
         );

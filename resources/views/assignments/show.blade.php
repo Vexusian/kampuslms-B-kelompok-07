@@ -113,17 +113,17 @@
     @endcan
 
     {{-- Section Mahasiswa: Pengumpulan Tugas Sendiri --}}
-    @can('create', [App\Models\Submission::class, $assignment])
+    @if ($user && $user->role === 'mahasiswa' && $assignment->course->students->contains('id', $user->id))
         <div style="background: #f8fafc; padding: 1.75rem; border-radius: 8px; border: 1px solid #e2e8f0; margin-top: 1.5rem;">
             <h3 style="font-size: 1.15rem; color: #0f172a; margin-bottom: 1rem;">
                 <i class="fas fa-cloud-upload-alt" style="color: #2563eb; margin-right: 0.4rem;"></i> Status Pengumpulan Tugas Anda
             </h3>
 
             @if ($mySubmission)
-                <div style="background: #ffffff; padding: 1.25rem; border-radius: 6px; border: 1px solid #e2e8f0; margin-bottom: 1.25rem;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                <div style="background: #ffffff; padding: 1.25rem; border-radius: 6px; border: 1px solid #e2e8f0;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
                         <span style="font-size: 0.85rem; font-weight: 600; color: #065f46; background: #d1fae5; padding: 0.25rem 0.6rem; border-radius: 12px;">
-                            <i class="fas fa-check-circle"></i> Sudah Mengumpulkan
+                            <i class="fas fa-check-circle"></i> Sudah Mengumpulkan (Final)
                         </span>
                         <span style="color: #64748b; font-size: 0.85rem;">
                             Dikirim pada: {{ $mySubmission->submitted_at ? $mySubmission->submitted_at->format('d M Y, H:i') : '-' }}
@@ -132,6 +132,11 @@
 
                     <p style="font-weight: 600; color: #334155; margin-bottom: 0.25rem; font-size: 0.9rem;">Jawaban / Catatan Anda:</p>
                     <div style="background: #f8fafc; padding: 1rem; border-radius: 4px; border: 1px solid #e2e8f0; font-size: 0.95rem; white-space: pre-wrap;">{{ $mySubmission->content }}</div>
+
+                    <div style="margin-top: 1rem; padding: 0.75rem 1rem; background: #f1f5f9; border-radius: 6px; border: 1px solid #cbd5e1; font-size: 0.85rem; color: #475569;">
+                        <i class="fas fa-lock" style="color: #64748b; margin-right: 0.25rem;"></i>
+                        Tugas yang sudah dikumpulkan bersifat <strong>final</strong> dan tidak dapat diubah atau dikumpulkan ulang.
+                    </div>
 
                     @if ($mySubmission->grade)
                         <div style="margin-top: 1rem; padding: 1rem; background: #ecfdf5; border-radius: 6px; border: 1px solid #a7f3d0;">
@@ -148,31 +153,35 @@
                         </p>
                     @endif
                 </div>
-            @endif
-
-            {{-- Form Submit / Update Pengumpulan --}}
-            <form action="{{ route('mahasiswa.assignments.submissions.store', $assignment->id) }}" method="POST">
-                @csrf
-                <div class="form-group">
-                    <label for="content">
-                        {{ $mySubmission ? 'Perbarui Jawaban / Tautan Tugas' : 'Tuliskan Jawaban / Tautan Tugas Anda' }} 
-                        <span style="color: #ef4444;">*</span>
-                    </label>
-                    <textarea id="content" 
-                              name="content" 
-                              rows="6" 
-                              class="form-control" 
-                              placeholder="Ketik jawaban tugas, ringkasan, atau tautan Google Drive / GitHub repositori Anda..." 
-                              required>{{ old('content', $mySubmission ? $mySubmission->content : '') }}</textarea>
-                    @error('content')
-                        <div class="text-error">{{ $message }}</div>
-                    @enderror
+            @elseif ($isPast)
+                <div style="padding: 1.25rem; background: #fef2f2; border: 1px solid #fecaca; border-radius: 6px; color: #991b1b;">
+                    <i class="fas fa-exclamation-triangle" style="margin-right: 0.4rem;"></i>
+                    Batas waktu pengumpulan tugas telah berakhir. Anda tidak dapat mengumpulkan tugas ini lagi.
                 </div>
+            @else
+                {{-- Form Submit Pengumpulan Pertama Kali --}}
+                <form action="{{ route('mahasiswa.assignments.submissions.store', $assignment->id) }}" method="POST">
+                    @csrf
+                    <div class="form-group">
+                        <label for="content">
+                            Tuliskan Jawaban / Tautan Tugas Anda <span style="color: #ef4444;">*</span>
+                        </label>
+                        <textarea id="content" 
+                                  name="content" 
+                                  rows="6" 
+                                  class="form-control" 
+                                  placeholder="Ketik jawaban tugas, ringkasan, atau tautan Google Drive / GitHub repositori Anda..." 
+                                  required>{{ old('content') }}</textarea>
+                        @error('content')
+                            <div class="text-error">{{ $message }}</div>
+                        @enderror
+                    </div>
 
-                <button type="submit" class="btn btn-success">
-                    <i class="fas fa-paper-plane"></i> {{ $mySubmission ? 'Perbarui Tugas' : 'Kirim Tugas Sekarang' }}
-                </button>
-            </form>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-paper-plane"></i> Kirim Tugas Sekarang
+                    </button>
+                </form>
+            @endif
         </div>
-    @endcan
+    @endif
 </x-layout>

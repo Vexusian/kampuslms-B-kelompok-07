@@ -22,8 +22,6 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-
 Route::get('/tentang', function () {
     return view('tentang');
 })->name('tentang');
@@ -51,6 +49,7 @@ if (app()->environment('local', 'testing')) {
 
 // --- Rute Terautentikasi (Auth Group) ---
 Route::middleware('auth')->group(function () {
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     // Enrollment Mahasiswa ke Kelas (Admin & Dosen pengampu)
     Route::post('/courses/{course}/enroll', [CourseController::class, 'enroll'])->name('courses.enroll');

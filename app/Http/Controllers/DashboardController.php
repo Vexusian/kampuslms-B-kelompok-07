@@ -19,33 +19,9 @@ class DashboardController extends Controller
     {
         $user = auth()->user();
 
-        // 1. Pengunjung / Tamu
+        // Pengguna belum terautentikasi (wajib login terlebih dahulu)
         if (!$user) {
-            $totalCourses = Course::where('status', 'active')->count();
-            $activeCourses = $totalCourses;
-            $draftCourses = 0;
-            $totalLecturers = User::where('role', 'dosen')->count();
-            $totalStudents = User::where('role', 'mahasiswa')->count();
-            $totalMaterials = Material::count();
-            $totalAssignments = Assignment::count();
-            $totalSubmissions = 0;
-
-            $recentCourses = Course::with('lecturer')->where('status', 'active')->latest()->take(5)->get();
-            $recentAssignments = collect();
-
-            return view('dashboard', compact(
-                'user',
-                'totalCourses',
-                'activeCourses',
-                'draftCourses',
-                'totalLecturers',
-                'totalStudents',
-                'totalMaterials',
-                'totalAssignments',
-                'totalSubmissions',
-                'recentCourses',
-                'recentAssignments'
-            ));
+            return redirect()->route('login');
         }
 
         // 2. Dashboard Mahasiswa (Khusus mata kuliah dan tugas yang diikuti)

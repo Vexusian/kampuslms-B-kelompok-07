@@ -18,13 +18,21 @@ class ExampleTest extends TestCase
         $response->assertStatus(200);
     }
 
+    public function test_guest_is_redirected_to_login_when_accessing_dashboard(): void
+    {
+        $response = $this->get('/dashboard');
+        $response->assertRedirect('/login');
+    }
+
     public function test_dashboard_page_returns_a_successful_response(): void
     {
         $this->withoutVite();
-        $response = $this->get('/dashboard');
+        $admin = \App\Models\User::factory()->create(['role' => 'admin']);
+
+        $response = $this->actingAs($admin)->get('/dashboard');
 
         $response->assertStatus(200);
-        $response->assertSee('Dashboard');
+        $response->assertSee('DASHBOARD');
         $response->assertSee('Total Mata Kuliah');
     }
 
@@ -44,10 +52,10 @@ class ExampleTest extends TestCase
             'status' => 'active',
         ]);
 
-        $response = $this->get('/dashboard');
+        $response = $this->actingAs($dosen)->get('/dashboard');
 
         $response->assertStatus(200);
-        $response->assertSee('Dashboard');
+        $response->assertSee('DASHBOARD');
         $response->assertSee('IF101');
         $response->assertSee('Algoritma dan Pemrograman');
     }

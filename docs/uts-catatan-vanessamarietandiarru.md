@@ -270,6 +270,7 @@ Berdasarkan [modules/01-spesifikasi-proyek-kampuslms.md](file:///c:/Users/vanes/
   ```
 - **Pertahanan di Kode:** [SubmissionPolicy.php](file:///c:/Users/vanes/laragon/www/kampuslms/app/Policies/SubmissionPolicy.php#L32-L48) memverifikasi `$submission->user_id === $user->id` atau kepemilikan pengampu dosen.
 - **Hasil Pengujian:** Permintaan ditolak dengan status **HTTP 403 Forbidden**.
+- **Panduan Lengkap cURL 12 Titik Rawan:** Rincian seluruh command cURL, penjelasan baris demi baris, dan letak kode penahannya tersedia di [modules/05-panduan-uji-keamanan-curl.md](file:///c:/Users/vanes/laragon/www/kampuslms/modules/05-panduan-uji-keamanan-curl.md).
 
 ---
 
@@ -278,4 +279,4 @@ Berdasarkan [modules/01-spesifikasi-proyek-kampuslms.md](file:///c:/Users/vanes/
 - [x] **Fungsionalitas Demo (25%):** `migrate:fresh --seed` berjalan mulus; seluruh alur Admin, Dosen, dan Mahasiswa dapat diperagakan tanpa hambatan.
 - [x] **Penerapan Konsep (25%):** Skema database terstruktur rapi dengan constraint SQL lengkap; otorisasi konsisten di tingkat Form Request, Gate/Policy, dan Route Middleware; scoping data dilakukan di level database SQL.
 - [x] **Pemahaman Individu (30%):** Mampu menerangkan setiap baris kode, arsitektur keputusan, hingga modifikasi kode berbantuan AI.
-- [x] **Keamanan (20%):** Uji tembus IDOR tertolak (HTTP 403); rate limiting login 5x/menit aktif di Web & API; seluruh 37 skenario otomatis lulus 100% (**37 passed** di `php artisan test`).
+- [x] **Keamanan (20%):** Uji tembus IDOR tertolak (HTTP 403); rate limiting login 5x/menit aktif di Web & API; seluruh 39 skenario otomatis lulus 100% (**39 passed** di `php artisan test`).

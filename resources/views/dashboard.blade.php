@@ -2,17 +2,7 @@
     {{-- Header Dashboard Sesuai Peran --}}
     <div class="flex flex-between mb-6" style="flex-wrap: wrap; gap: 1rem; align-items: flex-start;">
         <div>
-            <h1 style="border-bottom: none; margin-bottom: 0.25rem; padding-bottom: 0;">
-                @if(!$user)
-                    Dashboard Publik KampusLMS
-                @elseif($user->role === 'admin')
-                    Dashboard Administrator
-                @elseif($user->role === 'dosen')
-                    Dashboard Dosen Pengampu
-                @else
-                    Dashboard Mahasiswa
-                @endif
-            </h1>
+            <h1 style="border-bottom: none; margin-bottom: 0.25rem; padding-bottom: 0;">DASHBOARD</h1>
             <p style="color: #64748b; font-size: 0.95rem;">
                 @if(!$user)
                     Selamat datang di Sistem Informasi Manajemen Pembelajaran <strong>KampusLMS</strong>.

@@ -53,6 +53,23 @@ class Minggu6ApiTest extends TestCase
             ->assertJsonPath('errors.email.0', 'Email atau kata sandi salah.');
     }
 
+    public function test_login_endpoint_is_throttled_after_5_attempts(): void
+    {
+        for ($i = 0; $i < 5; $i++) {
+            $this->postJson('/api/v1/auth/login', [
+                'email' => 'test@kampuslms.test',
+                'password' => 'wrongpass',
+            ]);
+        }
+
+        $response = $this->postJson('/api/v1/auth/login', [
+            'email' => 'test@kampuslms.test',
+            'password' => 'wrongpass',
+        ]);
+
+        $response->assertStatus(429);
+    }
+
     public function test_unauthenticated_request_to_protected_endpoint_returns_401(): void
     {
         $response = $this->getJson('/api/v1/me');

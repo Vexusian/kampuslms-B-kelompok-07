@@ -40,8 +40,13 @@ class AssignmentController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
+            'instructions' => 'nullable|string',
             'due_at' => 'required|date',
         ]);
+
+        $validated['created_by'] = auth()->id();
+        $validated['instructions'] = $validated['instructions'] ?? $validated['description'] ?? '-';
+        $validated['status'] = $validated['status'] ?? 'published';
 
         $assignment = $course->assignments()->create($validated);
 
@@ -80,8 +85,13 @@ class AssignmentController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
+            'instructions' => 'nullable|string',
             'due_at' => 'required|date',
         ]);
+
+        if (isset($validated['description']) && !isset($validated['instructions'])) {
+            $validated['instructions'] = $validated['description'];
+        }
 
         $assignment->update($validated);
 

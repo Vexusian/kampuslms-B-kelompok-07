@@ -4,13 +4,13 @@
 
     <div class="flex flex-between mb-6">
         <h1>Daftar User</h1>
-        <a href="{{ route('users.create') }}" class="btn btn-success">
+        <a href="{{ route('admin.users.create') }}" class="btn btn-success">
             <i class="fas fa-plus"></i> Tambah User
         </a>
     </div>
 
     {{-- Form Pencarian & Filter Role (state dipertahankan di query string) --}}
-    <form method="GET" action="{{ route('users.index') }}" class="mb-4 flex gap-2" style="flex-wrap: wrap; align-items: center; background: #f1f5f9; padding: 1rem; border-radius: 6px;">
+    <form method="GET" action="{{ route('admin.users.index') }}" class="mb-4 flex gap-2" style="flex-wrap: wrap; align-items: center; background: #f1f5f9; padding: 1rem; border-radius: 6px;">
         <div style="flex: 1; min-width: 220px;">
             <input type="text" name="q" value="{{ request('q') }}" class="form-control" placeholder="Cari nama, email, atau NIM/NIP...">
         </div>
@@ -26,7 +26,7 @@
             <i class="fas fa-search"></i> Cari
         </button>
         @if(request()->hasAny(['q', 'role']))
-            <a href="{{ route('users.index') }}" class="btn btn-secondary" style="background: #94a3b8;" title="Reset Filter">
+            <a href="{{ route('admin.users.index') }}" class="btn btn-secondary" style="background: #94a3b8;" title="Reset Filter">
                 <i class="fas fa-undo"></i> Reset
             </a>
         @endif
@@ -50,9 +50,9 @@
                     <td>{{ $user->role }}</td>
                     <td>{{ $user->nim_nip ?? '-' }}</td>
                     <td class="flex gap-2">
-                        <a href="{{ route('users.show', $user) }}" class="btn btn-primary btn-sm">Detail</a>
-                        <a href="{{ route('users.edit', $user) }}" class="btn btn-warning btn-sm">Edit</a>
-                        <form action="{{ route('users.destroy', $user) }}" method="POST" class="inline-block">
+                        <a href="{{ route('admin.users.show', $user) }}" class="btn btn-primary btn-sm">Detail</a>
+                        <a href="{{ route('admin.users.edit', $user) }}" class="btn btn-warning btn-sm">Edit</a>
+                        <form action="{{ route('admin.users.destroy', $user) }}" method="POST" class="inline-block">
                             @csrf
                             @method('DELETE')
                             <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Hapus user ini?')">Hapus</button>

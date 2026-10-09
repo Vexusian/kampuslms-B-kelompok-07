@@ -59,6 +59,23 @@ class Minggu7AuthTest extends TestCase
         $this->assertGuest();
     }
 
+    public function test_web_login_is_throttled_after_5_attempts(): void
+    {
+        for ($i = 0; $i < 5; $i++) {
+            $this->post('/login', [
+                'email' => 'throttle@kampuslms.test',
+                'password' => 'wrongpass',
+            ]);
+        }
+
+        $response = $this->post('/login', [
+            'email' => 'throttle@kampuslms.test',
+            'password' => 'wrongpass',
+        ]);
+
+        $response->assertStatus(429);
+    }
+
     public function test_user_can_logout_and_session_invalidated(): void
     {
         $user = User::factory()->create(['role' => 'mahasiswa']);
@@ -217,5 +234,109 @@ class Minggu7AuthTest extends TestCase
             'course_id' => $course->id,
             'user_id' => $student->id,
         ]);
+    }
+
+    public function test_admin_can_crud_materials_and_assignments(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $dosen = User::factory()->create(['role' => 'dosen']);
+        $course = Course::factory()->create(['lecturer_id' => $dosen->id]);
+
+        // 1. Admin Create Material
+        $responseMat = $this->actingAs($admin)->post("/dosen/courses/{$course->id}/materials", [
+            'title' => 'Materi Dibuat Admin',
+            'content' => 'Konten materi dari admin',
+        ]);
+        $responseMat->assertRedirect();
+        $this->assertDatabaseHas('materials', [
+            'course_id' => $course->id,
+            'title' => 'Materi Dibuat Admin',
+        ]);
+        $material = Material::where('title', 'Materi Dibuat Admin')->first();
+
+        // 2. Admin Update Material
+        $responseMatUpdate = $this->actingAs($admin)->put("/dosen/materials/{$material->id}", [
+            'title' => 'Materi Diperbarui Admin',
+            'content' => 'Konten diperbarui',
+        ]);
+        $responseMatUpdate->assertRedirect();
+        $this->assertDatabaseHas('materials', [
+            'id' => $material->id,
+            'title' => 'Materi Diperbarui Admin',
+        ]);
+
+        // 3. Admin Delete Material
+        $responseMatDel = $this->actingAs($admin)->delete("/dosen/materials/{$material->id}");
+        $responseMatDel->assertRedirect("/courses/{$course->id}");
+        $this->assertDatabaseMissing('materials', ['id' => $material->id]);
+
+        // 4. Admin Create Assignment
+        $responseAss = $this->actingAs($admin)->post("/dosen/courses/{$course->id}/assignments", [
+            'title' => 'Tugas Dibuat Admin',
+            'description' => 'Petunjuk tugas admin',
+            'due_at' => now()->addDays(7)->toDateTimeString(),
+        ]);
+        $responseAss->assertRedirect();
+        $this->assertDatabaseHas('assignments', [
+            'course_id' => $course->id,
+            'title' => 'Tugas Dibuat Admin',
+        ]);
+        $assignment = Assignment::where('title', 'Tugas Dibuat Admin')->first();
+
+        // 5. Admin Update Assignment
+        $responseAssUpdate = $this->actingAs($admin)->put("/dosen/assignments/{$assignment->id}", [
+            'title' => 'Tugas Diperbarui Admin',
+            'description' => 'Petunjuk tugas diperbarui',
+            'due_at' => now()->addDays(10)->toDateTimeString(),
+        ]);
+        $responseAssUpdate->assertRedirect();
+        $this->assertDatabaseHas('assignments', [
+            'id' => $assignment->id,
+            'title' => 'Tugas Diperbarui Admin',
+        ]);
+
+        // 6. Admin Delete Assignment
+        $responseAssDel = $this->actingAs($admin)->delete("/dosen/assignments/{$assignment->id}");
+        $responseAssDel->assertRedirect("/courses/{$course->id}");
+        $this->assertDatabaseMissing('assignments', ['id' => $assignment->id]);
+    }
+
+    public function test_admin_cannot_grade_submission_per_specification_table_3(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $dosen = User::factory()->create(['role' => 'dosen']);
+        $student = User::factory()->create(['role' => 'mahasiswa']);
+        $course = Course::factory()->create(['lecturer_id' => $dosen->id]);
+        $assignment = Assignment::factory()->create(['course_id' => $course->id]);
+
+        $submission = Submission::create([
+            'assignment_id' => $assignment->id,
+            'user_id' => $student->id,
+            'content' => 'Jawaban mahasiswa',
+            'submitted_at' => now(),
+        ]);
+
+        // Admin mencoba memberi nilai -> Harus 403 Forbidden sesuai Tabel 3 (Memberi nilai: — untuk Admin)
+        $responseGradeAdmin = $this->actingAs($admin)->put("/submissions/{$submission->id}/grade", [
+            'score' => 95,
+            'feedback' => 'Bagus sekali',
+        ]);
+        $responseGradeAdmin->assertStatus(403);
+
+        // Dosen pengampu memberi nilai -> Berhasil
+        $responseGradeDosen = $this->actingAs($dosen)->put("/submissions/{$submission->id}/grade", [
+            'score' => 95,
+            'feedback' => 'Bagus sekali',
+        ]);
+        $responseGradeDosen->assertRedirect();
+        $this->assertDatabaseHas('grades', [
+            'submission_id' => $submission->id,
+            'score' => 95,
+        ]);
+
+        // Admin melihat detail submission & nilai -> Berhasil 200 (Melihat nilai orang lain: ✔ untuk Admin)
+        $responseViewAdmin = $this->actingAs($admin)->get("/submissions/{$submission->id}");
+        $responseViewAdmin->assertStatus(200);
+        $responseViewAdmin->assertSee('95 / 100');
     }
 }

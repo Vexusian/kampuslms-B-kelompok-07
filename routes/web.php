@@ -30,7 +30,7 @@ Route::get('/tentang', function () {
 
 // --- Autentikasi Web Blade (Minggu 7) ---
 Route::get('/login', [AuthController::class, 'create'])->name('login');
-Route::post('/login', [AuthController::class, 'store'])->name('login.post');
+Route::post('/login', [AuthController::class, 'store'])->middleware('throttle:5,1')->name('login.post');
 Route::post('/logout', [AuthController::class, 'destroy'])->name('logout');
 
 // --- Helper Switch User untuk pengujian / demonstrasi demo UTS (Local & Testing) ---
@@ -65,8 +65,9 @@ Route::middleware('auth')->group(function () {
         Route::resource('courses', CourseController::class);
     });
 
-    // 2. GRUP DOSEN (prefix: /dosen, name: dosen.*, middleware: role:dosen)
-    Route::middleware('role:dosen')->prefix('dosen')->name('dosen.')->group(function () {
+    // 2. GRUP DOSEN & PENGELOLA KONTEN (prefix: /dosen, name: dosen.*, middleware: role:admin,dosen)
+    // Sesuai Tabel 3 Spesifikasi: Admin dan Dosen pengampu berhak CRUD materi & tugas
+    Route::middleware('role:admin,dosen')->prefix('dosen')->name('dosen.')->group(function () {
         Route::resource('courses', CourseController::class)->only(['index', 'show', 'edit', 'update']);
 
         // Nested routes untuk materi dan tugas dengan scopeBindings() & shallow()
@@ -104,6 +105,7 @@ Route::middleware('auth')->group(function () {
 Route::middleware('auth')->group(function () {
     Route::resource('courses', CourseController::class);
     Route::resource('mata-kuliah', CourseController::class);
+    Route::resource('users', UserController::class)->middleware('role:admin');
     Route::get('/submissions/{submission}', [SubmissionController::class, 'show'])->name('submissions.show');
     Route::get('/materials/{material}', [MaterialController::class, 'show'])->name('materials.show');
     Route::get('/assignments/{assignment}', [AssignmentController::class, 'show'])->name('assignments.show');

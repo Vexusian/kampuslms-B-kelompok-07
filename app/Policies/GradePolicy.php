@@ -34,42 +34,30 @@ class GradePolicy
 
     /**
      * Memberi nilai:
-     * - Admin atau dosen pengampu mata kuliah terkait.
+     * - Sesuai Tabel 3 Spesifikasi: HANYA Dosen pengampu mata kuliah terkait (Admin = —).
      */
     public function create(User $user, Submission $submission): bool
     {
-        if ($user->role === 'admin') {
-            return true;
-        }
-
         $course = $submission->assignment?->course;
         return $user->role === 'dosen' && $course && $course->lecturer_id === $user->id;
     }
 
     /**
      * Mengubah nilai:
-     * - Admin atau dosen pengampu mata kuliah terkait.
+     * - Sesuai Tabel 3 Spesifikasi: HANYA Dosen pengampu mata kuliah terkait (Admin = —).
      */
     public function update(User $user, Grade $grade): bool
     {
-        if ($user->role === 'admin') {
-            return true;
-        }
-
         $course = $grade->submission?->assignment?->course;
         return $user->role === 'dosen' && $course && $course->lecturer_id === $user->id;
     }
 
     /**
      * Menghapus nilai:
-     * - Admin atau dosen pengampu mata kuliah terkait.
+     * - Sesuai Tabel 3 Spesifikasi: HANYA Dosen pengampu mata kuliah terkait (Admin = —).
      */
     public function delete(User $user, Grade $grade): bool
     {
-        if ($user->role === 'admin') {
-            return true;
-        }
-
         $course = $grade->submission?->assignment?->course;
         return $user->role === 'dosen' && $course && $course->lecturer_id === $user->id;
     }

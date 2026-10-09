@@ -42,7 +42,7 @@ class SubmissionController extends Controller
         $user = $request->user();
 
         $courseLecturerId = $submission->assignment->course->lecturer_id;
-        if ($user->role !== 'admin' && $courseLecturerId !== $user->id) {
+        if ($user->role !== 'dosen' || $courseLecturerId !== $user->id) {
             abort(403, 'Anda tidak memiliki akses ke sumber daya ini.');
         }
 

@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreMaterialRequest;
+use App\Http\Requests\UpdateMaterialRequest;
 use App\Models\Course;
 use App\Models\Material;
 use Illuminate\Http\Request;
@@ -33,16 +35,11 @@ class MaterialController extends Controller
     /**
      * Simpan materi baru.
      */
-    public function store(Request $request, Course $course)
+    public function store(StoreMaterialRequest $request, Course $course)
     {
         Gate::authorize('create', [Material::class, $course]);
 
-        $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'content' => 'nullable|string',
-        ]);
-
-        $material = $course->materials()->create($validated);
+        $material = $course->materials()->create($request->validated());
 
         $role = auth()->user()?->role === 'mahasiswa' ? 'mahasiswa' : 'dosen';
         return redirect()->route($role . '.materials.show', $material)->with('success', 'Materi berhasil ditambahkan.');
@@ -71,16 +68,11 @@ class MaterialController extends Controller
     /**
      * Perbarui materi.
      */
-    public function update(Request $request, Material $material)
+    public function update(UpdateMaterialRequest $request, Material $material)
     {
         Gate::authorize('update', $material);
 
-        $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'content' => 'nullable|string',
-        ]);
-
-        $material->update($validated);
+        $material->update($request->validated());
 
         $role = auth()->user()?->role === 'mahasiswa' ? 'mahasiswa' : 'dosen';
         return redirect()->route($role . '.materials.show', $material)->with('success', 'Materi berhasil diperbarui.');

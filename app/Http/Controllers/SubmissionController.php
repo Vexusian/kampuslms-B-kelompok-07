@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\GradeSubmissionRequest;
+use App\Http\Requests\StoreSubmissionRequest;
 use App\Models\Assignment;
 use App\Models\Grade;
 use App\Models\Submission;
@@ -24,7 +26,7 @@ class SubmissionController extends Controller
     /**
      * Mengumpulkan tugas (khusus mahasiswa yang terdaftar di mata kuliah terkait).
      */
-    public function store(Request $request, Assignment $assignment)
+    public function store(StoreSubmissionRequest $request, Assignment $assignment)
     {
         Gate::authorize('create', [Submission::class, $assignment]);
 
@@ -35,10 +37,7 @@ class SubmissionController extends Controller
             return back()->with('error', 'Tugas sudah dikumpulkan dan tidak dapat diubah kembali.');
         }
 
-        $validated = $request->validate([
-            'content' => 'required|string',
-            'file_path' => 'nullable|string',
-        ]);
+        $validated = $request->validated();
 
         $submission = $assignment->submissions()->create(
             array_merge($validated, [
@@ -66,14 +65,11 @@ class SubmissionController extends Controller
     /**
      * Penilaian tugas oleh Dosen Pengampu atau Admin.
      */
-    public function grade(Request $request, Submission $submission)
+    public function grade(GradeSubmissionRequest $request, Submission $submission)
     {
         Gate::authorize('create', [Grade::class, $submission]);
 
-        $validated = $request->validate([
-            'score' => 'required|numeric|between:0,100',
-            'feedback' => 'nullable|string',
-        ]);
+        $validated = $request->validated();
 
         $submission->grade()->updateOrCreate(
             ['submission_id' => $submission->id],

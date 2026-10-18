@@ -120,23 +120,37 @@
             </h3>
 
             @if ($mySubmission)
-                <div style="background: #ffffff; padding: 1.25rem; border-radius: 6px; border: 1px solid #e2e8f0;">
+                <div style="background: #ffffff; padding: 1.25rem; border-radius: 6px; border: 1px solid #e2e8f0; margin-bottom: 1.5rem;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
                         <span style="font-size: 0.85rem; font-weight: 600; color: #065f46; background: #d1fae5; padding: 0.25rem 0.6rem; border-radius: 12px;">
-                            <i class="fas fa-check-circle"></i> Sudah Mengumpulkan (Final)
+                            <i class="fas fa-check-circle"></i> Sudah Mengumpulkan
                         </span>
                         <span style="color: #64748b; font-size: 0.85rem;">
                             Dikirim pada: {{ $mySubmission->submitted_at ? $mySubmission->submitted_at->format('d M Y, H:i') : '-' }}
+                            @if ($mySubmission->is_late)
+                                <span style="margin-left: 0.4rem; padding: 0.15rem 0.4rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600; background: #fee2e2; color: #991b1b;">
+                                    Terlambat
+                                </span>
+                            @endif
                         </span>
                     </div>
 
-                    <p style="font-weight: 600; color: #334155; margin-bottom: 0.25rem; font-size: 0.9rem;">Jawaban / Catatan Anda:</p>
-                    <div style="background: #f8fafc; padding: 1rem; border-radius: 4px; border: 1px solid #e2e8f0; font-size: 0.95rem; white-space: pre-wrap;">{{ $mySubmission->content }}</div>
+                    @if ($mySubmission->file_path)
+                        <div style="margin-bottom: 1rem; padding: 0.75rem 1rem; background: #f8fafc; border-radius: 6px; border: 1px solid #cbd5e1; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem;">
+                            <div>
+                                <i class="fas fa-file-pdf" style="color: #ef4444; margin-right: 0.4rem;"></i>
+                                <span style="font-size: 0.9rem; color: #334155;">Berkas Anda: <strong>{{ $mySubmission->original_filename ?? basename($mySubmission->file_path) }}</strong></span>
+                            </div>
+                            <a href="{{ route('submissions.download', $mySubmission) }}" class="btn btn-secondary" style="padding: 0.35rem 0.75rem; font-size: 0.85rem;">
+                                <i class="fas fa-download"></i> Unduh Berkas
+                            </a>
+                        </div>
+                    @endif
 
-                    <div style="margin-top: 1rem; padding: 0.75rem 1rem; background: #f1f5f9; border-radius: 6px; border: 1px solid #cbd5e1; font-size: 0.85rem; color: #475569;">
-                        <i class="fas fa-lock" style="color: #64748b; margin-right: 0.25rem;"></i>
-                        Tugas yang sudah dikumpulkan bersifat <strong>final</strong> dan tidak dapat diubah atau dikumpulkan ulang.
-                    </div>
+                    @if ($mySubmission->content)
+                        <p style="font-weight: 600; color: #334155; margin-bottom: 0.25rem; font-size: 0.9rem;">Catatan Pengantar:</p>
+                        <div style="background: #f8fafc; padding: 0.75rem 1rem; border-radius: 4px; border: 1px solid #e2e8f0; font-size: 0.9rem; white-space: pre-wrap;">{{ $mySubmission->content }}</div>
+                    @endif
 
                     @if ($mySubmission->grade)
                         <div style="margin-top: 1rem; padding: 1rem; background: #ecfdf5; border-radius: 6px; border: 1px solid #a7f3d0;">
@@ -153,34 +167,53 @@
                         </p>
                     @endif
                 </div>
-            @elseif ($isPast)
+            @endif
+
+            @if ($isPast && !$assignment->allow_late)
                 <div style="padding: 1.25rem; background: #fef2f2; border: 1px solid #fecaca; border-radius: 6px; color: #991b1b;">
                     <i class="fas fa-exclamation-triangle" style="margin-right: 0.4rem;"></i>
-                    Batas waktu pengumpulan tugas telah berakhir. Anda tidak dapat mengumpulkan tugas ini lagi.
+                    Batas waktu pengumpulan tugas telah berakhir dan pengumpulan terlambat tidak diizinkan.
                 </div>
             @else
-                {{-- Form Submit Pengumpulan Pertama Kali --}}
-                <form action="{{ route('mahasiswa.assignments.submissions.store', $assignment->id) }}" method="POST">
-                    @csrf
-                    <div class="form-group">
-                        <label for="content">
-                            Tuliskan Jawaban / Tautan Tugas Anda <span style="color: #ef4444;">*</span>
-                        </label>
-                        <textarea id="content" 
-                                  name="content" 
-                                  rows="6" 
-                                  class="form-control" 
-                                  placeholder="Ketik jawaban tugas, ringkasan, atau tautan Google Drive / GitHub repositori Anda..." 
-                                  required>{{ old('content') }}</textarea>
-                        @error('content')
-                            <div class="text-error">{{ $message }}</div>
-                        @enderror
-                    </div>
+                <div style="background: #ffffff; padding: 1.5rem; border-radius: 6px; border: 1px solid #e2e8f0;">
+                    <h4 style="font-size: 1rem; color: #0f172a; margin-bottom: 1rem;">
+                        <i class="fas fa-upload" style="color: #2563eb; margin-right: 0.3rem;"></i>
+                        {{ $mySubmission ? 'Kumpulkan Ulang Tugas (Menimpa Submission Sebelumnya)' : 'Unggah Berkas Tugas' }}
+                    </h4>
 
-                    <button type="submit" class="btn btn-success">
-                        <i class="fas fa-paper-plane"></i> Kirim Tugas Sekarang
-                    </button>
-                </form>
+                    @if ($mySubmission)
+                        <div style="margin-bottom: 1rem; padding: 0.6rem 0.8rem; background: #fef3c7; border: 1px solid #fde68a; border-radius: 6px; color: #92400e; font-size: 0.85rem;">
+                            <i class="fas fa-info-circle"></i> Mengunggah berkas baru akan secara otomatis menggantikan berkas lama Anda.
+                        </div>
+                    @endif
+
+                    <form action="{{ route('mahasiswa.assignments.submissions.store', $assignment->id) }}" method="POST" enctype="multipart/form-data">
+                        @csrf
+                        <div class="form-group mb-3">
+                            <label for="file" style="font-weight: 600; color: #334155; margin-bottom: 0.35rem; display: block;">
+                                Pilih Berkas Tugas (PDF, DOC, DOCX - Maks. 5 MB) <span style="color: #ef4444;">*</span>
+                            </label>
+                            <input type="file" id="file" name="file" class="form-control" accept=".pdf,.doc,.docx" required>
+                            @error('file')
+                                <div class="text-error" style="color: #ef4444; font-size: 0.85rem; margin-top: 0.25rem;">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label for="content" style="font-weight: 600; color: #334155; margin-bottom: 0.35rem; display: block;">
+                                Catatan Tambahan (Opsional)
+                            </label>
+                            <textarea id="content" name="content" rows="3" class="form-control" placeholder="Tuliskan catatan atau keterangan singkat untuk dosen jika ada...">{{ old('content', $mySubmission->content ?? '') }}</textarea>
+                            @error('content')
+                                <div class="text-error" style="color: #ef4444; font-size: 0.85rem; margin-top: 0.25rem;">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-paper-plane"></i> {{ $mySubmission ? 'Kirim Ulang Tugas' : 'Kirim Tugas Sekarang' }}
+                        </button>
+                    </form>
+                </div>
             @endif
         </div>
     @endif

@@ -70,9 +70,16 @@
         @endif
 
         @if (!empty($submission->file_path))
-            <div style="margin-top: 1rem; padding: 0.75rem 1rem; background: #f1f5f9; border-radius: 6px; border: 1px solid #cbd5e1; display: inline-flex; align-items: center; gap: 0.5rem;">
-                <i class="fas fa-paperclip" style="color: #64748b;"></i>
-                <span style="color: #334155; font-size: 0.9rem;">Berkas Terlampir: <strong>{{ basename($submission->file_path) }}</strong></span>
+            <div style="margin-top: 1rem; padding: 0.75rem 1rem; background: #f1f5f9; border-radius: 6px; border: 1px solid #cbd5e1; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem;">
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <i class="fas fa-file-arrow-down" style="color: #2563eb; font-size: 1.1rem;"></i>
+                    <span style="color: #334155; font-size: 0.95rem;">
+                        Berkas Tugas: <strong>{{ $submission->original_filename ?? basename($submission->file_path) }}</strong>
+                    </span>
+                </div>
+                <a href="{{ route('submissions.download', $submission) }}" class="btn btn-primary" style="padding: 0.4rem 0.8rem; font-size: 0.875rem;">
+                    <i class="fas fa-download"></i> Unduh Berkas
+                </a>
             </div>
         @endif
     </div>

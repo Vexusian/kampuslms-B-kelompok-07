@@ -80,6 +80,7 @@ Route::prefix('v1')->group(function () {
 
         // Submissions & Grading
         Route::get('/submissions/{submission}', [SubmissionController::class, 'show']);
+        Route::get('/submissions/{submission}/download', [SubmissionController::class, 'download']);
         Route::put('/submissions/{submission}/grade', [SubmissionController::class, 'grade']);
 
         // Notifications

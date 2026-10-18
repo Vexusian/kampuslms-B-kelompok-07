@@ -58,6 +58,9 @@ Route::middleware('auth')->group(function () {
     // Penilaian Tugas
     Route::put('/submissions/{submission}/grade', [SubmissionController::class, 'grade'])->name('submissions.grade');
 
+    // Pengunduhan Berkas Tugas Mahasiswa (dilindungi Policy via Gate::authorize)
+    Route::get('/submissions/{submission}/download', [SubmissionController::class, 'download'])->name('submissions.download');
+
     // 1. GRUP ADMIN (prefix: /admin, name: admin.*, middleware: role:admin)
     Route::middleware('role:admin')->prefix('admin')->name('admin.')->group(function () {
         Route::resource('users', UserController::class);

@@ -62,6 +62,11 @@ class SubmissionPolicy
             return false;
         }
 
+        // Mahasiswa tidak diizinkan mengumpulkan ulang jika sudah mengumpulkan
+        if ($assignment->submissions()->where('user_id', $user->id)->exists()) {
+            return false;
+        }
+
         return $assignment->course->students()->where('users.id', $user->id)->exists();
     }
 

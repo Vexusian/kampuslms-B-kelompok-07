@@ -40,21 +40,22 @@ class SubmissionController extends Controller
         $user = $request->user();
 
         $validated = $request->validate([
-            'file' => ['required', 'file', 'mimes:pdf,doc,docx', 'max:5120'],
+            'file' => ['nullable', 'file', 'mimes:pdf,doc,docx', 'max:5120'],
             'content' => ['nullable', 'string'],
         ], [
-            'file.required' => 'Berkas tugas wajib diunggah.',
             'file.file' => 'Berkas yang diunggah tidak valid.',
             'file.mimes' => 'Format berkas harus berupa PDF, DOC, atau DOCX.',
             'file.max' => 'Ukuran berkas maksimal 5 MB.',
         ]);
 
-        $file = $request->file('file');
-        $originalFilename = $file->getClientOriginalName();
+        $storedPath = null;
+        $originalFilename = null;
 
-        // Simpan ke disk privat 'local' (storage/app/private/submissions/{assignment_id}/<hash>.<ext>)
-        // Laravel file->store() secara otomatis mengacak nama berkas fisik
-        $storedPath = $file->store('submissions/' . $assignment->id, 'local');
+        if ($request->hasFile('file')) {
+            $file = $request->file('file');
+            $originalFilename = $file->getClientOriginalName();
+            $storedPath = $file->store('submissions/' . $assignment->id, 'local');
+        }
 
         // Hitung status keterlambatan di sisi server berdasarkan due_at
         $isLate = $assignment->due_at ? now()->greaterThan($assignment->due_at) : false;

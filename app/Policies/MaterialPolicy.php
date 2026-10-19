@@ -60,6 +60,18 @@ class MaterialPolicy
     }
 
     /**
+     * Mengunduh materi:
+     * - Admin boleh mengunduh semua materi.
+     * - Dosen pengampu mata kuliah terkait.
+     * - Mahasiswa yang terdaftar pada mata kuliah materi tersebut.
+     * - Dosen lain dan mahasiswa tidak terdaftar DITOLAK (403).
+     */
+    public function download(User $user, Material $material): bool
+    {
+        return $this->view($user, $material);
+    }
+
+    /**
      * Menghapus materi:
      * - Admin atau dosen pengampu dari course terkait.
      */

@@ -49,4 +49,21 @@ class Course extends Model
     {
         return $this->hasMany(Assignment::class);
     }
+
+    /**
+     * Penanganan cascade penghapusan berkas fisik:
+     * Saat Course dihapus, database cascadeOnDelete akan menghapus record di DB,
+     * sehingga event deleting() pada Material tidak otomatis terpicu di level DB.
+     * Kita memicu penghapusan model dan pembersihan direktori berkas secara eksplisit.
+     */
+    protected static function booted(): void
+    {
+        static::deleting(function (Course $course) {
+            $course->materials()->each(function (Material $material) {
+                $material->delete();
+            });
+
+            \Illuminate\Support\Facades\Storage::disk('local')->deleteDirectory('materials/' . $course->id);
+        });
+    }
 }

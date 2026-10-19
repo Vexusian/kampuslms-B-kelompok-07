@@ -48,9 +48,13 @@ class SubmissionPolicy
     }
 
     /**
-     * Mengumpulkan tugas:
-     * - Mahasiswa yang terdaftar pada mata kuliah penugasan tersebut.
-     * - Hanya jika belum pernah mengumpulkan (pengumpulan bersifat final/1 kali).
+     * Mengumpulkan / mengumpulkan ulang tugas:
+     * - Hanya mahasiswa yang terdaftar pada mata kuliah penugasan tersebut.
+     *
+     * Catatan: Pengumpulan ulang (re-submit) kini diizinkan.
+     * Controller menggunakan updateOrCreate sehingga berkas lama ditimpa.
+     * Constraint unique composite (assignment_id, user_id) di database
+     * menjamin hanya ada satu submission per mahasiswa per assignment.
      */
     public function create(User $user, Assignment $assignment): bool
     {
@@ -58,17 +62,27 @@ class SubmissionPolicy
             return false;
         }
 
-        $isEnrolled = $assignment->course->students()->where('users.id', $user->id)->exists();
-        if (!$isEnrolled) {
-            return false;
-        }
+        return $assignment->course->students()->where('users.id', $user->id)->exists();
+    }
 
-        return !$assignment->submissions()->where('user_id', $user->id)->exists();
+    /**
+     * Mengunduh berkas submission:
+     * - Mahasiswa pemilik submission.
+     * - Dosen pengampu mata kuliah terkait.
+     * - Admin.
+     *
+     * Logic identik dengan view(), didedikasi agar Gate::authorize('download', ...)
+     * dapat dipanggil secara eksplisit di endpoint download.
+     */
+    public function download(User $user, Submission $submission): bool
+    {
+        return $this->view($user, $submission);
     }
 
     /**
      * Memperbarui submission:
-     * - Pengumpulan tugas bersifat final; mahasiswa tidak diperbolehkan mengedit kembali.
+     * - Pengumpulan ulang ditangani lewat create + updateOrCreate di Controller.
+     * - Method update() tetap false untuk mencegah PATCH/PUT langsung ke submission.
      */
     public function update(User $user, Submission $submission): bool
     {

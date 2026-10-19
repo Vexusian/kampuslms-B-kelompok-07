@@ -182,31 +182,38 @@ class AssignmentController extends Controller
         }
 
         $request->validate([
-            'content' => 'required_without:file|nullable|string',
-            'file' => 'required_without:content|nullable|file|max:10240',
+            'file' => 'required|file|mimes:pdf,doc,docx|max:5120',
+            'content' => 'nullable|string',
         ]);
 
-        $filePath = null;
-        if ($request->hasFile('file')) {
-            $filePath = $request->file('file')->store('submissions');
-        }
+        $file = $request->file('file');
+        $originalFilename = $file->getClientOriginalName();
+        $storedPath = $file->store('submissions/' . $assignment->id, 'local');
+        $isLate = $assignment->due_at ? now()->greaterThan($assignment->due_at) : false;
 
         $existing = Submission::where('assignment_id', $assignment->id)
             ->where('user_id', $user->id)
             ->first();
 
-        if ($existing) {
-            abort(400, 'Tugas sudah dikumpulkan dan tidak dapat diubah kembali.');
+        if ($existing && $existing->file_path && \Illuminate\Support\Facades\Storage::disk('local')->exists($existing->file_path)) {
+            \Illuminate\Support\Facades\Storage::disk('local')->delete($existing->file_path);
         }
 
-        $submission = Submission::create([
-            'assignment_id' => $assignment->id,
-            'user_id' => $user->id,
-            'content' => $request->content,
-            'file_path' => $filePath,
-            'submitted_at' => now(),
-        ]);
-        $statusCode = 201;
+        $submission = Submission::updateOrCreate(
+            [
+                'assignment_id' => $assignment->id,
+                'user_id' => $user->id,
+            ],
+            [
+                'content' => $request->content,
+                'file_path' => $storedPath,
+                'original_filename' => $originalFilename,
+                'submitted_at' => now(),
+                'is_late' => $isLate,
+            ]
+        );
+
+        $statusCode = $existing ? 200 : 201;
 
         $submission->load(['student', 'assignment', 'grade']);
 

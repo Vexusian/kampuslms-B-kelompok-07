@@ -123,7 +123,7 @@
                 <div style="background: #ffffff; padding: 1.25rem; border-radius: 6px; border: 1px solid #e2e8f0; margin-bottom: 1.5rem;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
                         <span style="font-size: 0.85rem; font-weight: 600; color: #065f46; background: #d1fae5; padding: 0.25rem 0.6rem; border-radius: 12px;">
-                            <i class="fas fa-check-circle"></i> Sudah Mengumpulkan
+                            <i class="fas fa-check-circle"></i> Sudah Mengumpulkan (Final)
                         </span>
                         <span style="color: #64748b; font-size: 0.85rem;">
                             Dikirim pada: {{ $mySubmission->submitted_at ? $mySubmission->submitted_at->format('d M Y, H:i') : '-' }}
@@ -167,9 +167,7 @@
                         </p>
                     @endif
                 </div>
-            @endif
-
-            @if ($isPast && !$assignment->allow_late)
+            @elseif ($isPast && !$assignment->allow_late)
                 <div style="padding: 1.25rem; background: #fef2f2; border: 1px solid #fecaca; border-radius: 6px; color: #991b1b;">
                     <i class="fas fa-exclamation-triangle" style="margin-right: 0.4rem;"></i>
                     Batas waktu pengumpulan tugas telah berakhir dan pengumpulan terlambat tidak diizinkan.
@@ -178,7 +176,7 @@
                 <div style="background: #ffffff; padding: 1.5rem; border-radius: 6px; border: 1px solid #e2e8f0;">
                     <h4 style="font-size: 1rem; color: #0f172a; margin-bottom: 1rem;">
                         <i class="fas fa-upload" style="color: #2563eb; margin-right: 0.3rem;"></i>
-                        {{ $mySubmission ? 'Kumpulkan Ulang Tugas (Menimpa Submission Sebelumnya)' : 'Unggah Berkas Tugas' }}
+                        Unggah Berkas Tugas
                     </h4>
 
                     @if ($mySubmission)

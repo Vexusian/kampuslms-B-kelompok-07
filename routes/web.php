@@ -61,6 +61,9 @@ Route::middleware('auth')->group(function () {
     // Pengunduhan Berkas Tugas Mahasiswa (dilindungi Policy via Gate::authorize)
     Route::get('/submissions/{submission}/download', [SubmissionController::class, 'download'])->name('submissions.download');
 
+    // Pengunduhan Berkas Materi Kuliah (dilindungi Policy via Gate::authorize)
+    Route::get('/materials/{material}/download', [MaterialController::class, 'download'])->name('materials.download');
+
     // 1. GRUP ADMIN (prefix: /admin, name: admin.*, middleware: role:admin)
     Route::middleware('role:admin')->prefix('admin')->name('admin.')->group(function () {
         Route::resource('users', UserController::class);

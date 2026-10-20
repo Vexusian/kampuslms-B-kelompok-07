@@ -209,7 +209,7 @@ public function update(User $user, Course $course): bool
 - **Fungsi:** Mencegah serangan **Session Fixation**.
 - **Mekanisme:** Penyerang yang menyematkan ID sesi kosong sebelum korban login tidak akan dapat membajak akun korban, karena Laravel menghancurkan ID sesi lama dan menerbitkan ID sesi baru yang acak segera setelah kredensial terverifikasi.
 
----
+--- bv
 
 ### Q11: Di mana middleware didaftarkan pada Laravel 12? Kenapa beda dari tutorial?
 

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\SubmissionGraded;
 use App\Models\Assignment;
 use App\Models\Grade;
 use App\Models\Submission;
@@ -131,7 +132,7 @@ class SubmissionController extends Controller
             'feedback' => 'nullable|string',
         ]);
 
-        $submission->grade()->updateOrCreate(
+        $grade = $submission->grade()->updateOrCreate(
             ['submission_id' => $submission->id],
             [
                 'graded_by' => auth()->id(),
@@ -140,6 +141,9 @@ class SubmissionController extends Controller
                 'graded_at' => now(),
             ]
         );
+
+        // Dispatch event → Listener akan mengirim notifikasi ke mahasiswa via queue
+        SubmissionGraded::dispatch($grade);
 
         return back()->with('success', 'Nilai dan umpan balik berhasil disimpan.');
     }

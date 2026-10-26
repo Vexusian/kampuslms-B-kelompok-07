@@ -32,8 +32,8 @@ class StoreSubmissionRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'content'   => ['required', 'string'],
-            'file_path' => ['nullable', 'string'],
+            'file'      => ['nullable', 'file', 'mimes:pdf,doc,docx', 'max:5120'],
+            'content'   => ['nullable', 'string'],
         ];
     }
 
@@ -43,8 +43,10 @@ class StoreSubmissionRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'content.required' => 'Jawaban atau catatan pengumpulan tugas wajib diisi.',
-            'content.string'   => 'Jawaban tugas harus berupa teks.',
+            'file.file'      => 'Berkas yang diunggah tidak valid.',
+            'file.mimes'     => 'Format berkas harus berupa PDF, DOC, atau DOCX.',
+            'file.max'       => 'Ukuran berkas maksimal 5 MB.',
+            'content.string' => 'Catatan pengantar harus berupa teks.',
         ];
     }
 }

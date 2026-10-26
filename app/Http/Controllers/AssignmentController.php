@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\AssignmentPublished;
 use App\Http\Requests\StoreAssignmentRequest;
 use App\Http\Requests\UpdateAssignmentRequest;
 use App\Models\Assignment;
@@ -45,6 +46,9 @@ class AssignmentController extends Controller
         $validated['status'] = $validated['status'] ?? 'published';
 
         $assignment = $course->assignments()->create($validated);
+
+        // Dispatch event → Listener akan mengirim notifikasi ke mahasiswa via queue
+        AssignmentPublished::dispatch($assignment);
 
         $role = auth()->user()?->role === 'mahasiswa' ? 'mahasiswa' : 'dosen';
         return redirect()->route($role . '.assignments.show', $assignment)->with('success', 'Tugas berhasil dibuat.');

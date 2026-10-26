@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\SubmissionGraded;
 use App\Http\Requests\GradeSubmissionRequest;
 use App\Http\Requests\StoreSubmissionRequest;
 use App\Models\Assignment;
@@ -21,7 +22,11 @@ class SubmissionController extends Controller
         Gate::authorize('viewAny', [Submission::class, $assignment]);
 
         $submissions = $assignment->submissions()->with(['student', 'grade'])->latest('submitted_at')->paginate(15);
-        return view('submissions.index', compact('assignment', 'submissions'));
+        $enrolledStudents = $assignment->course->students()->orderBy('name')->get();
+        $submittedUserIds = $assignment->submissions()->pluck('user_id')->toArray();
+        $unsubmittedStudents = $enrolledStudents->whereNotIn('id', $submittedUserIds);
+
+        return view('submissions.index', compact('assignment', 'submissions', 'enrolledStudents', 'unsubmittedStudents'));
     }
 
     /**
@@ -61,6 +66,11 @@ class SubmissionController extends Controller
 
         // Hitung status keterlambatan di sisi server berdasarkan due_at
         $isLate = $assignment->due_at ? now()->greaterThan($assignment->due_at) : false;
+
+        // Tolak jika batas waktu berakhir dan pengumpulan terlambat dilarang
+        if (! $assignment->allow_late && $isLate) {
+            return back()->withErrors(['file' => 'Batas waktu pengumpulan tugas telah berakhir dan pengumpulan terlambat tidak diizinkan.'])->withInput();
+        }
 
         // Cari submission lama jika ada, lalu hapus berkas fisik lamanya agar tidak menjadi berkas yatim (orphan)
         $existing = Submission::where('assignment_id', $assignment->id)
@@ -130,7 +140,7 @@ class SubmissionController extends Controller
 
         $validated = $request->validated();
 
-        $submission->grade()->updateOrCreate(
+        $grade = $submission->grade()->updateOrCreate(
             ['submission_id' => $submission->id],
             [
                 'graded_by' => auth()->id(),
@@ -139,6 +149,9 @@ class SubmissionController extends Controller
                 'graded_at' => now(),
             ]
         );
+
+        // Dispatch event → Listener akan mengirim notifikasi ke mahasiswa via queue
+        SubmissionGraded::dispatch($grade);
 
         return back()->with('success', 'Nilai dan umpan balik berhasil disimpan.');
     }

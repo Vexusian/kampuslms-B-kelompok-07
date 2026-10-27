@@ -114,6 +114,8 @@ Route::middleware('auth')->group(function () {
 
 // --- Rute Kompatibilitas / UI Global (dilindungi Policy di Controller) ---
 Route::middleware('auth')->group(function () {
+    Route::get('/courses/{course}/grades', [CourseController::class, 'grades'])
+        ->name('courses.grades');
     Route::resource('courses', CourseController::class);
     Route::resource('mata-kuliah', CourseController::class);
     Route::resource('users', UserController::class)->middleware('role:admin');

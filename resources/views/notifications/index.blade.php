@@ -30,6 +30,10 @@
                 $isUnread = $notification->unread();
                 $type = $data['type'] ?? 'general';
                 $isAssignment = $type === 'new_assignment';
+                $title = $data['assignment_title'] ?? 'Tugas';
+                $message = $isAssignment
+                    ? "Tugas baru \"{$title}\" telah dipublikasikan."
+                    : "Tugas \"{$title}\" telah dinilai. Silakan periksa hasil penilaian.";
             @endphp
             <div style="display: flex; justify-content: space-between; align-items: center; padding: 1.25rem; border-radius: 8px; border: 1px solid {{ $isUnread ? '#bfdbfe' : '#e2e8f0' }}; background: {{ $isUnread ? '#eff6ff' : '#ffffff' }}; transition: all 0.2s; gap: 1rem; flex-wrap: wrap;">
                 <div style="display: flex; gap: 1rem; align-items: flex-start; flex: 1; min-width: 250px;">
@@ -51,13 +55,8 @@
                             </span>
                         </div>
                         <p style="color: #1e293b; font-size: 0.95rem; margin-bottom: 0.25rem; font-weight: {{ $isUnread ? '600' : '400' }};">
-                            {{ $data['message'] ?? 'Ada pembaruan pada aktivitas perkuliahan Anda.' }}
+                            {{ $message }} 
                         </p>
-                        @if(!empty($data['course_name']))
-                            <p style="color: #64748b; font-size: 0.85rem; margin: 0;">
-                                <i class="fas fa-book-open" style="font-size: 0.8rem;"></i> {{ $data['course_name'] }}
-                            </p>
-                        @endif
                     </div>
                 </div>
 

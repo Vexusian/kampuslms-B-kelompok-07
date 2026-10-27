@@ -6,6 +6,7 @@ use App\Models\Grade;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Notification;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Notifikasi: Nilai Diberikan untuk Submission Mahasiswa.
@@ -20,6 +21,12 @@ use Illuminate\Notifications\Notification;
 class GradeSubmittedNotification extends Notification implements ShouldQueue
 {
     use Queueable;
+    public int $tries = 3;
+
+public function backoff(): array
+{
+    return [10, 30, 60];
+}
 
     /**
      * Create a new notification instance.
@@ -49,19 +56,24 @@ class GradeSubmittedNotification extends Notification implements ShouldQueue
      */
     public function toArray(object $notifiable): array
     {
-        $this->grade->loadMissing('submission.assignment.course');
+        
+        $this->grade->loadMissing('submission.assignment');
 
         $submission = $this->grade->submission;
         $assignment = $submission?->assignment;
 
         return [
-            'type'             => 'grade_submitted',
-            'submission_id'    => $submission?->id,
-            'assignment_id'    => $assignment?->id,
+            'type' => 'grade_submitted',
+            'submission_id' => $this->grade->submission_id,
             'assignment_title' => $assignment?->title ?? 'Tugas',
-            'course_name'      => $assignment?->course?->name ?? 'Mata Kuliah',
-            'graded_at'        => $this->grade->graded_at?->toIso8601String(),
-            'message'          => "Tugas \"{$assignment?->title}\" telah dinilai. Silakan periksa hasil penilaian di halaman detail.",
-        ];
+];
     }
+    public function failed(\Throwable $exception): void
+{
+    Log::error('Pengiriman notifikasi nilai gagal.', [
+        'grade_id' => $this->grade->id,
+        'submission_id' => $this->grade->submission_id,
+        'error' => $exception->getMessage(),
+    ]);
+}
 }

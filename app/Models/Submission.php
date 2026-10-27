@@ -47,6 +47,37 @@ class Submission extends Model
         return $this->hasOne(Grade::class);
     }
 
+    /**
+     * Format ukuran berkas ke satuan yang mudah dibaca pengguna (KB, MB, dll).
+     */
+    public function getFormattedFileSizeAttribute(): string
+    {
+        if (! $this->file_path || ! Storage::disk('local')->exists($this->file_path)) {
+            return '-';
+        }
+
+        $bytes = Storage::disk('local')->size($this->file_path);
+        $units = ['B', 'KB', 'MB', 'GB'];
+        $pow = floor(($bytes ? log($bytes) : 0) / log(1024));
+        $pow = min($pow, count($units) - 1);
+        $bytes /= pow(1024, $pow);
+
+        return round($bytes, 2) . ' ' . $units[$pow];
+    }
+
+    /**
+     * Ikon FontAwesome untuk berkas submission.
+     */
+    public function getFileIconAttribute(): string
+    {
+        $ext = strtolower(pathinfo($this->original_filename ?? $this->file_path ?? '', PATHINFO_EXTENSION));
+        return match ($ext) {
+            'pdf' => 'fa-file-pdf',
+            'docx', 'doc' => 'fa-file-word',
+            default => 'fa-file-alt',
+        };
+    }
+
     // ─── Lifecycle: Hapus berkas fisik saat record dihapus ──────
     //
     // Menggunakan event model `deleting` melalui booted().

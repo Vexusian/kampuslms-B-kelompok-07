@@ -137,9 +137,12 @@
 
                     @if ($mySubmission->file_path)
                         <div style="margin-bottom: 1rem; padding: 0.75rem 1rem; background: #f8fafc; border-radius: 6px; border: 1px solid #cbd5e1; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem;">
-                            <div>
-                                <i class="fas fa-file-pdf" style="color: #ef4444; margin-right: 0.4rem;"></i>
-                                <span style="font-size: 0.9rem; color: #334155;">Berkas Anda: <strong>{{ $mySubmission->original_filename ?? basename($mySubmission->file_path) }}</strong></span>
+                            <div style="display: flex; align-items: center; gap: 0.6rem;">
+                                <i class="fas {{ $mySubmission->file_icon }}" style="color: #2563eb; font-size: 1.3rem;"></i>
+                                <div>
+                                    <div style="font-size: 0.9rem; font-weight: 600; color: #334155;">{{ $mySubmission->original_filename ?? basename($mySubmission->file_path) }}</div>
+                                    <div style="font-size: 0.78rem; color: #64748b;">Ukuran: {{ $mySubmission->formatted_file_size }}</div>
+                                </div>
                             </div>
                             <a href="{{ route('submissions.download', $mySubmission) }}" class="btn btn-secondary" style="padding: 0.35rem 0.75rem; font-size: 0.85rem;">
                                 <i class="fas fa-download"></i> Unduh Berkas

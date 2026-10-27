@@ -52,4 +52,21 @@ class Assignment extends Model
     {
         return $this->belongsTo(User::class, 'created_by');
     }
+
+    /**
+     * Penanganan cascade penghapusan berkas fisik:
+     * Saat Assignment dihapus, database cascadeOnDelete akan menghapus record submissions di DB,
+     * sehingga event deleting() pada model Submission tidak otomatis terpicu.
+     * Kita memicu penghapusan model dan membersihkan direktori penyimpanan privat secara eksplisit.
+     */
+    protected static function booted(): void
+    {
+        static::deleting(function (Assignment $assignment) {
+            $assignment->submissions()->each(function (Submission $submission) {
+                $submission->delete();
+            });
+
+            \Illuminate\Support\Facades\Storage::disk('local')->deleteDirectory('submissions/' . $assignment->id);
+        });
+    }
 }

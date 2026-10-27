@@ -64,6 +64,10 @@ class Course extends Model
             });
 
             \Illuminate\Support\Facades\Storage::disk('local')->deleteDirectory('materials/' . $course->id);
+
+            $course->assignments()->each(function (Assignment $assignment) {
+                $assignment->delete();
+            });
         });
     }
 }

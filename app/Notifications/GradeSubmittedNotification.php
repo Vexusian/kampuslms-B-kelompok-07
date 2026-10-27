@@ -56,7 +56,7 @@ class GradeSubmittedNotification extends Notification implements ShouldQueue
 
         return [
             'type'             => 'grade_submitted',
-            'submission_id'    => $submission?->id,
+            'submission_id'    => $this->grade->submission_id,
             'assignment_id'    => $assignment?->id,
             'assignment_title' => $assignment?->title ?? 'Tugas',
             'course_name'      => $assignment?->course?->name ?? 'Mata Kuliah',

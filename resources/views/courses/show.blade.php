@@ -135,6 +135,12 @@
         </div>
     </div>
 
+    <div class="mb-6">
+    <a href="{{ route('courses.grades', $course) }}" class="btn btn-secondary">
+        <i class="fas fa-chart-column"></i> Lihat Rekap Nilai
+    </a>
+    </div>
+
     {{-- Manajemen Enrollment Mahasiswa (Khusus Admin & Dosen Pengampu untuk Demo UTS) --}}
     @can('enroll', $course)
         <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1.5rem; margin-bottom: 2rem;">
@@ -221,21 +227,53 @@
                 <thead>
                     <tr>
                         <th>Judul Materi</th>
-                        <th>Tanggal Rilis</th>
-                        <th style="text-align: center; width: 120px;">Aksi</th>
+                        <th style="width: 140px;">Bentuk</th>
+                        <th style="width: 130px;">Tanggal Rilis</th>
+                        <th style="text-align: center; width: 180px;">Aksi</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach ($course->materials->sortByDesc('created_at')->take(3) as $material)
                         <tr>
-                            <td>{{ $material->title }}</td>
-                            <td style="color: #64748b; font-size: 0.9rem;">
+                            <td>
+                                <strong style="color: #0f172a;">{{ $material->title }}</strong>
+                                @if($material->description)
+                                    <p style="color: #64748b; font-size: 0.8rem; margin: 0.15rem 0 0;">{{ \Illuminate\Support\Str::limit($material->description, 60) }}</p>
+                                @endif
+                            </td>
+                            <td>
+                                @if ($material->type === 'link')
+                                    <span style="background: #d1fae5; color: #065f46; font-size: 0.75rem; font-weight: 600; padding: 0.15rem 0.5rem; border-radius: 4px; display: inline-flex; align-items: center; gap: 0.25rem;">
+                                        <i class="fas fa-link"></i> Tautan
+                                    </span>
+                                @elseif ($material->file_path)
+                                    <span style="background: #dbeafe; color: #1e40af; font-size: 0.75rem; font-weight: 600; padding: 0.15rem 0.5rem; border-radius: 4px; display: inline-flex; align-items: center; gap: 0.25rem;">
+                                        <i class="fas {{ $material->file_icon }}"></i> {{ strtoupper(pathinfo($material->original_name ?? $material->file_path, PATHINFO_EXTENSION)) }}
+                                    </span>
+                                @else
+                                    <span style="background: #f1f5f9; color: #475569; font-size: 0.75rem; font-weight: 600; padding: 0.15rem 0.5rem; border-radius: 4px; display: inline-flex; align-items: center; gap: 0.25rem;">
+                                        <i class="fas fa-file-alt"></i> Teks
+                                    </span>
+                                @endif
+                            </td>
+                            <td style="color: #64748b; font-size: 0.85rem;">
                                 {{ $material->created_at ? $material->created_at->format('d M Y') : '-' }}
                             </td>
                             <td style="text-align: center;">
-                                <a href="{{ route($rolePrefix . '.materials.show', $material->id) }}" class="btn btn-sm" style="background: #3b82f6;">
-                                    <i class="fas fa-eye"></i> Baca
-                                </a>
+                                <div class="flex gap-1" style="justify-content: center;">
+                                    <a href="{{ route($rolePrefix . '.materials.show', $material->id) }}" class="btn btn-sm" style="background: #3b82f6; padding: 0.25rem 0.5rem; font-size: 0.8rem;">
+                                        <i class="fas fa-eye"></i> Detail
+                                    </a>
+                                    @if ($material->type === 'file' && $material->file_path)
+                                        <a href="{{ route('materials.download', $material->id) }}" class="btn btn-sm btn-primary" style="background: #0284c7; padding: 0.25rem 0.5rem; font-size: 0.8rem;" title="Unduh Berkas">
+                                            <i class="fas fa-download"></i>
+                                        </a>
+                                    @elseif ($material->type === 'link' && $material->external_url)
+                                        <a href="{{ $material->external_url }}" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-success" style="background: #059669; padding: 0.25rem 0.5rem; font-size: 0.8rem;" title="Buka Tautan">
+                                            <i class="fas fa-external-link-alt"></i>
+                                        </a>
+                                    @endif
+                                </div>
                             </td>
                         </tr>
                     @endforeach

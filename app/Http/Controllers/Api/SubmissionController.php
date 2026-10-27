@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Events\GradeSubmitted;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\GradeResource;
 use App\Http\Resources\SubmissionResource;
@@ -65,10 +66,29 @@ class SubmissionController extends Controller
 
         $grade->load('grader');
 
+        GradeSubmitted::dispatch($grade);
+
         $statusCode = $gradeExists ? 200 : 201;
 
         return (new GradeResource($grade))
             ->response()
             ->setStatusCode($statusCode);
+    }
+
+    /**
+     * Download submission file dari disk privat.
+     */
+    public function download(Submission $submission)
+    {
+        \Illuminate\Support\Facades\Gate::authorize('download', $submission);
+
+        if (! $submission->file_path || ! \Illuminate\Support\Facades\Storage::disk('local')->exists($submission->file_path)) {
+            abort(404, 'Berkas submission tidak ditemukan pada penyimpanan privat.');
+        }
+
+        return \Illuminate\Support\Facades\Storage::disk('local')->download(
+            $submission->file_path,
+            $submission->original_filename ?? basename($submission->file_path)
+        );
     }
 }

@@ -64,7 +64,7 @@
                         <div style="color: #64748b; font-size: 0.75rem;">admin@kampuslms.test</div>
                     </div>
                     @if(app()->environment('local'))
-                        <a href="{{ route('dev.login', 1) }}" class="btn btn-sm btn-secondary" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">1-Click Login</a>
+                        <a href="{{ route('dev.login', 1) }}" class="btn btn-sm btn-secondary" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">Click u/ Login</a>
                     @endif
                 </div>
 
@@ -74,7 +74,7 @@
                         <div style="color: #64748b; font-size: 0.75rem;">dosen@kampuslms.test</div>
                     </div>
                     @if(app()->environment('local'))
-                        <a href="{{ route('dev.login', 2) }}" class="btn btn-sm btn-secondary" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">1-Click Login</a>
+                        <a href="{{ route('dev.login', 2) }}" class="btn btn-sm btn-secondary" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">Click u/ Login</a>
                     @endif
                 </div>
 
@@ -84,7 +84,7 @@
                         <div style="color: #64748b; font-size: 0.75rem;">mahasiswa@kampuslms.test</div>
                     </div>
                     @if(app()->environment('local'))
-                        <a href="{{ route('dev.login', 5) }}" class="btn btn-sm btn-secondary" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">1-Click Login</a>
+                        <a href="{{ route('dev.login', 5) }}" class="btn btn-sm btn-secondary" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">Click /u Login</a>
                     @endif
                 </div>
             </div>

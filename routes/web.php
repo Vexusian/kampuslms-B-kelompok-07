@@ -5,6 +5,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CourseController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\MaterialController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\SubmissionController;
 use App\Http\Controllers\UserController;
 use App\Models\User;
@@ -51,12 +52,23 @@ if (app()->environment('local', 'testing')) {
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
+    // Notifikasi
+    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::patch('/notifications/{id}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
+    Route::patch('/notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.markAllAsRead');
+
     // Enrollment Mahasiswa ke Kelas (Admin & Dosen pengampu)
     Route::post('/courses/{course}/enroll', [CourseController::class, 'enroll'])->name('courses.enroll');
     Route::delete('/courses/{course}/unenroll/{student}', [CourseController::class, 'unenroll'])->name('courses.unenroll');
 
     // Penilaian Tugas
     Route::put('/submissions/{submission}/grade', [SubmissionController::class, 'grade'])->name('submissions.grade');
+
+    // Pengunduhan Berkas Tugas Mahasiswa (dilindungi Policy via Gate::authorize)
+    Route::get('/submissions/{submission}/download', [SubmissionController::class, 'download'])->name('submissions.download');
+
+    // Pengunduhan Berkas Materi Kuliah (dilindungi Policy via Gate::authorize)
+    Route::get('/materials/{material}/download', [MaterialController::class, 'download'])->name('materials.download');
 
     // 1. GRUP ADMIN (prefix: /admin, name: admin.*, middleware: role:admin)
     Route::middleware('role:admin')->prefix('admin')->name('admin.')->group(function () {
@@ -102,6 +114,8 @@ Route::middleware('auth')->group(function () {
 
 // --- Rute Kompatibilitas / UI Global (dilindungi Policy di Controller) ---
 Route::middleware('auth')->group(function () {
+    Route::get('/courses/{course}/grades', [CourseController::class, 'grades'])
+        ->name('courses.grades');
     Route::resource('courses', CourseController::class);
     Route::resource('mata-kuliah', CourseController::class);
     Route::resource('users', UserController::class)->middleware('role:admin');

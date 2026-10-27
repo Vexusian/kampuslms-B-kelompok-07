@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Events\SubmissionGraded;
+use App\Events\GradeSubmitted;
 use App\Http\Requests\GradeSubmissionRequest;
 use App\Http\Requests\StoreSubmissionRequest;
 use App\Models\Assignment;
@@ -151,7 +151,7 @@ class SubmissionController extends Controller
         );
 
         // Dispatch event → Listener akan mengirim notifikasi ke mahasiswa via queue
-        SubmissionGraded::dispatch($grade);
+        GradeSubmitted::dispatch($grade);
 
         return back()->with('success', 'Nilai dan umpan balik berhasil disimpan.');
     }

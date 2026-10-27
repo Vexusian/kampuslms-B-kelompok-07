@@ -40,9 +40,10 @@ class NotificationController extends Controller
         $data = $notification->data;
 
         return match ($data['type'] ?? null) {
-            'new_assignment' => redirect()->route('assignments.show', $data['assignment_id']),
-            'grade_received' => redirect()->route('submissions.show', $data['submission_id']),
-            default          => redirect()->route('notifications.index'),
+            'new_assignment'  => redirect()->route('assignments.show', $data['assignment_id']),
+            'grade_submitted',
+            'grade_received'  => redirect()->route('submissions.show', $data['submission_id']),
+            default           => redirect()->route('notifications.index'),
         };
     }
 

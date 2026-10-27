@@ -17,12 +17,6 @@
         @endif
     </div>
 
-    @if (session('success'))
-        <div class="alert alert-success mb-4">
-            <i class="fas fa-check-circle"></i> {{ session('success') }}
-        </div>
-    @endif
-
     <div style="display: flex; flex-direction: column; gap: 0.75rem;">
         @forelse ($notifications as $notification)
             @php

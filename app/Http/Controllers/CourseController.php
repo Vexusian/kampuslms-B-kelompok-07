@@ -121,24 +121,26 @@ class CourseController extends Controller
     }
 
     public function grades(Course $course)
-{
-    Gate::authorize('view', $course);
+    {
+        Gate::authorize('view', $course);
 
-    $user = auth()->user();
+        $user = auth()->user();
 
-    $assignments = $course->assignments()
-        ->with(['submissions' => function ($query) use ($user) {
-            $query->with(['student', 'grade']);
+        $course->loadMissing(['lecturer', 'students']);
 
-            if ($user->role === 'mahasiswa') {
-                $query->where('user_id', $user->id);
-            }
-        }])
-        ->orderBy('title')
-        ->get();
+        $assignments = $course->assignments()
+            ->with(['submissions' => function ($query) use ($user) {
+                $query->with(['student', 'grade']);
 
-    return view('grades.course', compact('course', 'assignments', 'user'));
-}
+                if ($user->role === 'mahasiswa') {
+                    $query->where('user_id', $user->id);
+                }
+            }])
+            ->orderBy('title')
+            ->get();
+
+        return view('grades.course', compact('course', 'assignments', 'user'));
+    }
 
     /**
      * Form edit mata kuliah.

@@ -4,98 +4,197 @@
 
 **Kampus LMS**
 
-Kampus LMS merupakan proyek aplikasi web yang dikembangkan menggunakan Laravel 12.x.
+Kampus LMS merupakan sistem manajemen pembelajaran (*Learning Management System*) yang dikembangkan menggunakan **Laravel 12.x**. Sistem ini memfasilitasi interaksi antara dosen dan mahasiswa dalam pengelolaan mata kuliah, materi, penugasan, pengumpulan berkas tugas privat, penilaian, serta sistem notifikasi asinkron berbasis event dan antrean (*queue*).
+
+---
 
 ## Anggota Kelompok
 
 | No. | Nama | NIM | Peran |
-|---|---|---| --- |
+|---|---|---|---|
 | 1 | Tresia Uyang | 10241072 | UI/UX |
 | 2 | Vanessa Marie Tandiarru | 10251118 | Frontend |
 | 3 | Wahyu Ramadan | 10241074 | Backend |
 | 4 | Zalfa Putri Sopyandi | 10241076 | Database |
 
-## Cara Instalasi
+---
 
-### Requirements
+## Kebutuhan Sistem (System Requirements)
 
-- PHP 8.3+
-- Composer
-- Laravel 12.x
-- MySQL 8 / MariaDB 11
-- Node.js dan npm
+- **PHP**: ^8.2 atau 8.3+
+- **Composer**: ^2.x
+- **Basis Data**: MySQL 8.x / MariaDB 11.x (atau SQLite untuk testing)
+- **Node.js & npm**: Node 18+ & npm 9+
+- **Ekstensi PHP**: `pdo`, `pdo_mysql`, `fileinfo`, `mbstring`, `openssl`, `curl`
 
-### Installation
+---
 
-1. Clone repository:
+## Cara Instalasi & Menjalankan Proyek
+
+1. **Clone Repository:**
+   ```bash
+   git clone https://github.com/Vexusian/kampuslms-B-kelompok-07.git
+   cd kampuslms-B-kelompok-07
+   ```
+
+2. **Pasang Dependensi PHP & Frontend:**
+   ```bash
+   composer install
+   npm install
+   ```
+
+3. **Salin Konfigurasi Environment:**
+   ```bash
+   cp .env.example .env
+   php artisan key:generate
+   ```
+
+4. **Konfigurasi Basis Data & Queue di `.env`:**
+   Sesuaikan kredensial database dan pastikan koneksi queue disetel ke `database`:
+   ```env
+   DB_CONNECTION=mysql
+   DB_HOST=127.0.0.1
+   DB_PORT=3306
+   DB_DATABASE=kampuslms
+   DB_USERNAME=root
+   DB_PASSWORD=
+
+   QUEUE_CONNECTION=database
+   ```
+
+5. **Jalankan Migrasi & Seeder Database:**
+   ```bash
+   php artisan migrate
+   # (Opsional) jika ingin mengisi dummy data:
+   # php artisan db:seed
+   ```
+
+6. **Tautkan Storage (Symlink Berkas Publik):**
+   ```bash
+   php artisan storage:link
+   ```
+
+7. **Jalankan Aplikasi & Asset Bundler:**
+   - Jalankan web server Laravel:
+     ```bash
+     php artisan serve
+     ```
+   - Jalankan Vite (di terminal terpisah):
+     ```bash
+     npm run dev
+     ```
+
+---
+
+## Konfigurasi Antrean (Queue) & Background Worker
+
+LMS ini menggunakan arsitektur **Event-Driven Architecture** yang dipadukan dengan **Laravel Database Queue Worker**. Hal ini memastikan pengiriman notifikasi massal (misalnya ke puluhan mahasiswa di dalam satu mata kuliah) berjalan di latar belakang (*background*) tanpa membebani atau memperlambat respon HTTP (*HTTP response time*) bagi dosen.
+
+### 1. Pengaturan `.env`
+Koneksi antrean diatur pada berkas `.env`:
+```env
+QUEUE_CONNECTION=database
+```
+Nilai ini memberitahu Laravel untuk menyimpan antrean job ke tabel `jobs` di basis data MySQL.
+
+### 2. Tabel Antrean (`jobs`)
+Tabel antrean telah disediakan melalui migration resmi Laravel:
+```bash
+# Membuat migrasi tabel jobs (jika memulai dari scratch):
+php artisan queue:table
+
+# Menjalankan migrasi untuk membuat tabel 'jobs', 'failed_jobs', dan 'job_batches':
+php artisan migrate
+```
+
+### 3. Implementasi `ShouldQueue` pada Komponen Notifikasi
+Seluruh listener dan notifikasi mengimplementasikan kontrak `Illuminate\Contracts\Queue\ShouldQueue`:
+
+- **Peristiwa A: Tugas Baru Dipublikasikan**
+  - **Event**: `App\Events\AssignmentPublished`
+  - **Listener**: `App\Listeners\SendAssignmentPublishedNotification implements ShouldQueue`
+  - **Notification**: `App\Notifications\NewAssignmentNotification implements ShouldQueue`
+  - **Mekanisme**: Saat dosen mempublikasikan tugas baru, listener dieksekusi secara asinkron di antrean untuk mengambil seluruh mahasiswa terdaftar dan mengirim `NewAssignmentNotification` ke database mereka.
+
+- **Peristiwa B: Nilai Diberikan**
+  - **Event**: `App\Events\GradeSubmitted`
+  - **Listener**: `App\Listeners\SendGradeSubmittedNotification implements ShouldQueue`
+  - **Notification**: `App\Notifications\GradeSubmittedNotification implements ShouldQueue`
+  - **Mekanisme**: Saat dosen menyimpan nilai dan umpan balik, listener berjalan di background untuk mengirimkan notifikasi khusus ke mahasiswa pemilik tugas.
+
+- **Ketahanan & Retry Policy**:
+  - `public int $tries = 3;` (Job akan dicoba maksimal 3 kali jika terjadi kegagalan jaringan/database).
+  - `backoff(): array [10, 30, 60]` (Jeda percobaan ulang eksponensial: 10s, 30s, 60s).
+  - `failed()` method mencatat kegagalan permanen ke berkas `storage/logs/laravel.log`.
+
+---
+
+### 4. Cara Menjalankan Background Worker
+
+Agar antrean yang masuk ke tabel `jobs` dapat segera diproses dan notifikasi terkirim, jalankan background worker pada terminal terpisah:
+
+#### A. Mode Standar (Production & Uji Coba)
+Menjalankan worker antrean secara berkelanjutan:
+```bash
+php artisan queue:work
+```
+
+#### B. Mode Development / Hot-Reload (Sangat Disarankan saat Koding)
+Memuat ulang kode PHP secara otomatis saat Anda mengubah file tanpa perlu me-restart worker:
+```bash
+php artisan queue:listen
+```
+
+#### C. Menjalankan Worker dengan Opsi Spesifik
+Menentukan batas percobaan ulang (*tries*), batas waktu timeout (*timeout*), dan koneksi queue:
+```bash
+php artisan queue:work database --queue=default --tries=3 --timeout=60
+```
+
+#### D. Memproses Satu Job Saja (Untuk Debugging/Testing Manual)
+```bash
+php artisan queue:work --once
+```
+
+---
+
+### 5. Manajemen Job Gagal (*Failed Jobs*)
+
+Jika terjadi kendala eksternal yang menyebabkan job gagal setelah 3 kali percobaan:
+
+- **Melihat daftar job yang gagal:**
+  ```bash
+  php artisan queue:failed
+  ```
+- **Menjalankan ulang seluruh job yang gagal:**
+  ```bash
+  php artisan queue:retry all
+  ```
+- **Menjalankan ulang satu job tertentu berdasarkan ID/UUID:**
+  ```bash
+  php artisan queue:retry <id_atau_uuid>
+  ```
+- **Membersihkan / menghapus seluruh riwayat job yang gagal:**
+  ```bash
+  php artisan queue:flush
+  ```
+
+---
+
+## Menjalankan Pengujian Otomatis (Testing)
+
+Proyek ini dilengkapi dengan unit test dan feature test otomatis untuk memverifikasi autentikasi, otorisasi IDOR, pengunggahan berkas privat, serta alur Event, Listener, dan Notification:
 
 ```bash
-git clone https://github.com/Vexusian/kampuslms-B-kelompok-07.git
+# Menjalankan seluruh pengujian (Feature & Unit)
+php artisan test
 
+# Menjalankan pengujian khusus alur Event, Listener, dan Notifikasi
+php artisan test --filter=NotificationWorkflowTest
 ```
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+---
 
-## About Laravel
+## Lisensi
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
-
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
-
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
-
-## Learning Laravel
-
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
-
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
-
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
-
-## Laravel Sponsors
-
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
-
-### Premium Partners
-
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
-
-## Contributing
-
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
-
-## Code of Conduct
-
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
-
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+Proyek ini dilisensikan di bawah [MIT License](LICENSE).

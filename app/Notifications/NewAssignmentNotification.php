@@ -8,22 +8,29 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Notification;
 
 /**
- * Notifikasi: Tugas baru telah dipublikasikan di mata kuliah Anda.
+ * Notifikasi: Tugas baru telah dipublikasikan di mata kuliah.
  *
  * Saluran  : database
- * Penerima : mahasiswa yang terdaftar di mata kuliah
- * Payload  : TIDAK mengandung data sensitif (tanpa nilai/feedback)
+ * Penerima : mahasiswa yang terdaftar di mata kuliah terkait
  */
 class NewAssignmentNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
+    /**
+     * Create a new notification instance.
+     *
+     * @param Assignment $assignment
+     */
     public function __construct(
         public Assignment $assignment
     ) {}
 
     /**
-     * Saluran pengiriman notifikasi.
+     * Saluran pengiriman notifikasi (database).
+     *
+     * @param object $notifiable
+     * @return array<int, string>
      */
     public function via(object $notifiable): array
     {
@@ -32,18 +39,22 @@ class NewAssignmentNotification extends Notification implements ShouldQueue
 
     /**
      * Payload yang disimpan di tabel `notifications.data`.
-     * Hanya informasi non-sensitif yang diperlukan untuk tampilan UI.
+     *
+     * @param object $notifiable
+     * @return array<string, mixed>
      */
     public function toArray(object $notifiable): array
     {
+        $this->assignment->loadMissing('course');
+
         return [
-            'type'            => 'new_assignment',
-            'assignment_id'   => $this->assignment->id,
-            'assignment_title'=> $this->assignment->title,
-            'course_id'       => $this->assignment->course_id,
-            'course_name'     => $this->assignment->course->name,
-            'due_at'          => $this->assignment->due_at?->toIso8601String(),
-            'message'         => "Tugas baru \"{$this->assignment->title}\" telah dipublikasikan di {$this->assignment->course->name}.",
+            'type'             => 'new_assignment',
+            'assignment_id'    => $this->assignment->id,
+            'assignment_title' => $this->assignment->title,
+            'course_id'        => $this->assignment->course_id,
+            'course_name'      => $this->assignment->course?->name ?? 'Mata Kuliah',
+            'due_at'           => $this->assignment->due_at?->toIso8601String(),
+            'message'          => "Tugas baru \"{$this->assignment->title}\" telah dipublikasikan di {$this->assignment->course?->name}.",
         ];
     }
 }

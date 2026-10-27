@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Events\AssignmentPublished;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\AssignmentResource;
 use App\Http\Resources\SubmissionResource;
@@ -101,6 +102,8 @@ class AssignmentController extends Controller
 
         $assignment = Assignment::create($validated);
         $assignment->load(['course', 'creator']);
+
+        AssignmentPublished::dispatch($assignment);
 
         return (new AssignmentResource($assignment))
             ->response()

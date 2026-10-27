@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -13,8 +14,10 @@ class GradeFactory extends Factory
     {
         return [
             'submission_id' => null,
-            'score' => fake()->randomFloat(2, 60, 100),
+            'graded_by' => User::factory(),
+            'score' => fake()->numberBetween(60, 100),
             'feedback' => fake()->optional()->sentence(),
+            'graded_at' => now(),
         ];
     }
 }

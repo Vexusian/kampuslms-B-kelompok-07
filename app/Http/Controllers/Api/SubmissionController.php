@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Events\GradeSubmitted;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\GradeResource;
 use App\Http\Resources\SubmissionResource;
@@ -64,6 +65,8 @@ class SubmissionController extends Controller
         );
 
         $grade->load('grader');
+
+        GradeSubmitted::dispatch($grade);
 
         $statusCode = $gradeExists ? 200 : 201;
 

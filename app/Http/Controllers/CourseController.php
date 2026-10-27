@@ -120,6 +120,28 @@ class CourseController extends Controller
         return view('courses.show', compact('course', 'availableStudents'));
     }
 
+    public function grades(Course $course)
+    {
+        Gate::authorize('view', $course);
+
+        $user = auth()->user();
+
+        $course->loadMissing(['lecturer', 'students']);
+
+        $assignments = $course->assignments()
+            ->with(['submissions' => function ($query) use ($user) {
+                $query->with(['student', 'grade']);
+
+                if ($user->role === 'mahasiswa') {
+                    $query->where('user_id', $user->id);
+                }
+            }])
+            ->orderBy('title')
+            ->get();
+
+        return view('grades.course', compact('course', 'assignments', 'user'));
+    }
+
     /**
      * Form edit mata kuliah.
      */

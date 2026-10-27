@@ -6,6 +6,7 @@ use App\Models\Assignment;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Notification;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Notifikasi: Tugas baru telah dipublikasikan di mata kuliah.
@@ -16,6 +17,12 @@ use Illuminate\Notifications\Notification;
 class NewAssignmentNotification extends Notification implements ShouldQueue
 {
     use Queueable;
+    public int $tries = 3;
+
+public function backoff(): array
+{
+    return [10, 30, 60];
+}
 
     /**
      * Create a new notification instance.
@@ -57,4 +64,18 @@ class NewAssignmentNotification extends Notification implements ShouldQueue
             'message'          => "Tugas baru \"{$this->assignment->title}\" telah dipublikasikan di {$this->assignment->course?->name}.",
         ];
     }
+    { 
+       return [
+           'type' => 'new_assignment',
+           'assignment_id' => $this->assignment->id,
+           'assignment_title' => $this->assignment->title,
+];
+    }
+    public function failed(\Throwable $exception): void
+{
+    Log::error('Pengiriman notifikasi tugas baru gagal.', [
+        'assignment_id' => $this->assignment->id,
+        'error' => $exception->getMessage(),
+    ]);
+}
 }

@@ -135,6 +135,12 @@
         </div>
     </div>
 
+    <div class="mb-6">
+    <a href="{{ route('courses.grades', $course) }}" class="btn btn-secondary">
+        <i class="fas fa-chart-column"></i> Lihat Rekap Nilai
+    </a>
+    </div>
+
     {{-- Manajemen Enrollment Mahasiswa (Khusus Admin & Dosen Pengampu untuk Demo UTS) --}}
     @can('enroll', $course)
         <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1.5rem; margin-bottom: 2rem;">

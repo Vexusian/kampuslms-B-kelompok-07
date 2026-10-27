@@ -51,6 +51,19 @@ public function backoff(): array
      * @return array<string, mixed>
      */
     public function toArray(object $notifiable): array
+    {
+        $this->assignment->loadMissing('course');
+
+        return [
+            'type'             => 'new_assignment',
+            'assignment_id'    => $this->assignment->id,
+            'assignment_title' => $this->assignment->title,
+            'course_id'        => $this->assignment->course_id,
+            'course_name'      => $this->assignment->course?->name ?? 'Mata Kuliah',
+            'due_at'           => $this->assignment->due_at?->toIso8601String(),
+            'message'          => "Tugas baru \"{$this->assignment->title}\" telah dipublikasikan di {$this->assignment->course?->name}.",
+        ];
+    }
     { 
        return [
            'type' => 'new_assignment',

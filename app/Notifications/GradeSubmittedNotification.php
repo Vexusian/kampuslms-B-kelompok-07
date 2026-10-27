@@ -56,13 +56,21 @@ public function backoff(): array
      */
     public function toArray(object $notifiable): array
     {
-        
-        $this->grade->loadMissing('submission.assignment');
+        $this->grade->loadMissing('submission.assignment.course');
 
         $submission = $this->grade->submission;
         $assignment = $submission?->assignment;
 
         return [
+            'type'             => 'grade_submitted',
+            'submission_id'    => $this->grade->submission_id,
+            'assignment_id'    => $assignment?->id,
+            'assignment_title' => $assignment?->title ?? 'Tugas',
+            'course_name'      => $assignment?->course?->name ?? 'Mata Kuliah',
+            'graded_at'        => $this->grade->graded_at?->toIso8601String(),
+            'message'          => "Tugas \"{$assignment?->title}\" telah dinilai. Silakan periksa hasil penilaian di halaman detail.",
+        ];
+    }
             'type' => 'grade_submitted',
             'submission_id' => $this->grade->submission_id,
             'assignment_title' => $assignment?->title ?? 'Tugas',

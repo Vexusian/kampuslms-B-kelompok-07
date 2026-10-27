@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Events\AssignmentPublished;
+use App\Http\Requests\StoreAssignmentRequest;
+use App\Http\Requests\UpdateAssignmentRequest;
 use App\Models\Assignment;
 use App\Models\Course;
 use Illuminate\Http\Request;
@@ -34,17 +36,11 @@ class AssignmentController extends Controller
     /**
      * Simpan penugasan baru.
      */
-    public function store(Request $request, Course $course)
+    public function store(StoreAssignmentRequest $request, Course $course)
     {
         Gate::authorize('create', [Assignment::class, $course]);
 
-        $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'instructions' => 'nullable|string',
-            'due_at' => 'required|date',
-        ]);
-
+        $validated = $request->validated();
         $validated['created_by'] = auth()->id();
         $validated['instructions'] = $validated['instructions'] ?? $validated['description'] ?? '-';
         $validated['status'] = $validated['status'] ?? 'published';
@@ -82,16 +78,11 @@ class AssignmentController extends Controller
     /**
      * Perbarui tugas.
      */
-    public function update(Request $request, Assignment $assignment)
+    public function update(UpdateAssignmentRequest $request, Assignment $assignment)
     {
         Gate::authorize('update', $assignment);
 
-        $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'instructions' => 'nullable|string',
-            'due_at' => 'required|date',
-        ]);
+        $validated = $request->validated();
 
         if (isset($validated['description']) && !isset($validated['instructions'])) {
             $validated['instructions'] = $validated['description'];

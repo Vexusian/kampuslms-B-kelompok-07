@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Events\GradeSubmitted;
+use App\Http\Requests\GradeSubmissionRequest;
+use App\Http\Requests\StoreSubmissionRequest;
 use App\Models\Assignment;
 use App\Models\Grade;
 use App\Models\Submission;
@@ -20,7 +22,11 @@ class SubmissionController extends Controller
         Gate::authorize('viewAny', [Submission::class, $assignment]);
 
         $submissions = $assignment->submissions()->with(['student', 'grade'])->latest('submitted_at')->paginate(15);
-        return view('submissions.index', compact('assignment', 'submissions'));
+        $enrolledStudents = $assignment->course->students()->orderBy('name')->get();
+        $submittedUserIds = $assignment->submissions()->pluck('user_id')->toArray();
+        $unsubmittedStudents = $enrolledStudents->whereNotIn('id', $submittedUserIds);
+
+        return view('submissions.index', compact('assignment', 'submissions', 'enrolledStudents', 'unsubmittedStudents'));
     }
 
     /**
@@ -31,10 +37,11 @@ class SubmissionController extends Controller
      * - Nama berkas fisik diacak oleh sistem (hash); nama asli disimpan di original_filename.
      * - Validasi berkas: wajib ada, mimes pdf/doc/docx, maksimal 5 MB (5120 KB).
      * - Perhitungan is_late dihitung di server terhadap due_at.
+     * - Tolak jika allow_late bernilai false dan sudah melewati due_at.
      * - Terapkan updateOrCreate dengan composite key (assignment_id, user_id).
      * - Berkas lama dihapus dari storage jika melakukan pengumpulan ulang (re-submit).
      */
-    public function store(Request $request, Assignment $assignment)
+    public function store(StoreSubmissionRequest $request, Assignment $assignment)
     {
         Gate::authorize('create', [Submission::class, $assignment]);
 
@@ -49,6 +56,14 @@ class SubmissionController extends Controller
             'file.max' => 'Ukuran berkas maksimal 5 MB.',
         ]);
 
+        // Hitung status keterlambatan di sisi server berdasarkan due_at
+        $isLate = $assignment->due_at ? now()->greaterThan($assignment->due_at) : false;
+
+        // Tolak jika batas waktu berakhir dan pengumpulan terlambat dilarang
+        if (! $assignment->allow_late && $isLate) {
+            return back()->withErrors(['file' => 'Batas waktu pengumpulan tugas telah berakhir dan pengumpulan terlambat tidak diizinkan.'])->withInput();
+        }
+
         $storedPath = null;
         $originalFilename = null;
 
@@ -61,6 +76,10 @@ class SubmissionController extends Controller
         // Hitung status keterlambatan di sisi server berdasarkan due_at
         $isLate = $assignment->due_at ? now()->greaterThan($assignment->due_at) : false;
 
+        // Tolak jika batas waktu berakhir dan pengumpulan terlambat dilarang
+        if (! $assignment->allow_late && $isLate) {
+            return back()->withErrors(['file' => 'Batas waktu pengumpulan tugas telah berakhir dan pengumpulan terlambat tidak diizinkan.'])->withInput();
+        }
         // Cari submission lama jika ada, lalu hapus berkas fisik lamanya agar tidak menjadi berkas yatim (orphan)
         $existing = Submission::where('assignment_id', $assignment->id)
             ->where('user_id', $user->id)
@@ -123,14 +142,11 @@ class SubmissionController extends Controller
     /**
      * Penilaian tugas oleh Dosen Pengampu atau Admin.
      */
-    public function grade(Request $request, Submission $submission)
+    public function grade(GradeSubmissionRequest $request, Submission $submission)
     {
         Gate::authorize('create', [Grade::class, $submission]);
 
-        $validated = $request->validate([
-            'score' => 'required|numeric|between:0,100',
-            'feedback' => 'nullable|string',
-        ]);
+        $validated = $request->validated();
 
         $grade = $submission->grade()->updateOrCreate(
             ['submission_id' => $submission->id],

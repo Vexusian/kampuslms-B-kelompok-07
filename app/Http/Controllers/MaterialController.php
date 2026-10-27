@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreMaterialRequest;
+use App\Http\Requests\UpdateMaterialRequest;
 use App\Models\Course;
 use App\Models\Material;
 use Illuminate\Http\Request;
@@ -39,7 +41,7 @@ class MaterialController extends Controller
      * - Unggah berkas fisik: PDF, PPTX, DOCX, maks 20 MB (20480 KB), disk privat ('local').
      * - Atau alternatif berupa tautan eksternal (external_url).
      */
-    public function store(Request $request, Course $course)
+    public function store(StoreMaterialRequest $request, Course $course)
     {
         Gate::authorize('create', [Material::class, $course]);
 
@@ -139,7 +141,7 @@ class MaterialController extends Controller
      * Perbarui materi.
      * Jika ada berkas baru diunggah atau tipe diubah ke tautan, berkas lama dihapus dari disk privat.
      */
-    public function update(Request $request, Material $material)
+    public function update(UpdateMaterialRequest $request, Material $material)
     {
         Gate::authorize('update', $material);
 

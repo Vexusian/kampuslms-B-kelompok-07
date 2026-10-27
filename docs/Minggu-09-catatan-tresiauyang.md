@@ -46,8 +46,8 @@ Perbaiki, kirim PR. Sertakan bukti: URL yang tadinya bisa dibuka tanpa login, da
 
 ## 9.4 Checkpoint Minggu 9
 
-- [ ] Kenapa submission tidak boleh disimpan di `storage/app/public`? Peragakan kebocorannya.   
-> submission tidak boleh disimpan di `stroage/app/public` karena user yang tidak memiliki akses terhadap file tersebut akan bisa meilihat file submission tanpa harus login 
+- [ ] Kenapa submission tidak boleh disimpan di `storage/app/public`? Peragakan kebocorannya.
+> Berkas submission atau pengumpulan tugas mahasiswa tidak boleh disimpan di `storage/app/public` karena berkas di lokasi tersebut bisa diakses langsung melalui URL. Orang yang mengetahui alamat berkasnya dapat mengunduhnya tanpa harus melewati pemeriksaan login atau hak akses.
 
 - [ ] Kenapa nama berkas fisik dibuat acak? Serangan apa yang dicegah?
 - [ ] Apa beda validasi `mimes` dan `extensions`? Mana yang lebih aman dan kenapa?

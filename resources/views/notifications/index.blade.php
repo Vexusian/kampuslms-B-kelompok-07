@@ -49,6 +49,15 @@
                             </span>
                         </div>
                         <p style="color: #1e293b; font-size: 0.95rem; margin-bottom: 0.25rem; font-weight: {{ $isUnread ? '600' : '400' }};">
+                            {{ $message ?? ($data['message'] ?? 'Ada pembaruan pada aktivitas perkuliahan Anda.') }}
+                            </p>
+
+                            @if (!empty($data['course_name']))
+                                <p style="color: #64748b; font-size: 0.85rem; margin: 0;">
+                                    <i class="fas fa-book-open" style="font-size: 0.8rem;"></i>
+                                    {{ $data['course_name'] }}
+                                </p>
+                            @endif
                             {{ $message }} 
                         </p>
                     </div>

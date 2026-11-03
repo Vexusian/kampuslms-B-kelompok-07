@@ -15,7 +15,7 @@ class DemoAccountSeeder extends Seeder
             [
                 'name' => 'Admin Demo',
                 'password' => Hash::make(
-                    env('DEMO_PASSWORD', 'password')
+                    config('app.demo_password', 'password')
                 ),
                 'role' => 'admin',
                 'nim_nip' => null,
@@ -28,7 +28,7 @@ class DemoAccountSeeder extends Seeder
             [
                 'name' => 'Dosen Demo',
                 'password' => Hash::make(
-                    env('DEMO_PASSWORD', 'password')
+                    config('app.demo_password', 'password')
                 ),
                 'role' => 'dosen',
                 'nim_nip' => '1990000001',
@@ -41,7 +41,7 @@ class DemoAccountSeeder extends Seeder
             [
                 'name' => 'Mahasiswa Demo',
                 'password' => Hash::make(
-                    env('DEMO_PASSWORD', 'password')
+                    config('app.demo_password', 'password')
                 ),
                 'role' => 'mahasiswa',
                 'nim_nip' => '1025000001',

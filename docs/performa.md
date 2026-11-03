@@ -1,123 +1,98 @@
-# Dokumentasi Optimisasi & Pengukuran Performa KampusLMS
+# Dokumentasi Pengukuran Performa KampusLMS (Minggu 11)
 
-Dokumentasi ini mencatat hasil pengujian dan pengukuran performa aplikasi **KampusLMS** sebelum dan sesudah dilakukan optimisasi query Eloquent, penanganan masalah *N+1 query problem*, serta pengaktifan fitur pencegahan lazy loading (`Model::preventLazyLoading()`).
-
----
-
-## 1. Lingkungan & Kondisi Basis Data Pengujian
-
-Pengukuran dilakukan pada kondisi basis data **penuh** (*populated database*) setelah menjalankan seeder komprehensif (`DatabaseSeeder`), bukan saat basis data masih kosong:
-
-* **Jumlah Akun Pengguna (`users`)**: 35 pengguna (1 Admin, 3 Dosen pengampu, 30+ Mahasiswa, 1 Mahasiswa Demo).
-* **Jumlah Mata Kuliah (`courses`)**: 5 mata kuliah aktif dan draft dengan relasi dosen pengampu.
-* **Jumlah Penugasan (`assignments`)**: 25 tugas (terbagi dalam kategori aktif, lewat batas waktu/past, dan draft).
-* **Jumlah Pengumpulan Tugas (`submissions`)**: 230 data submission mahasiswa lengkap dengan berkas dan catatan teks.
-* **Jumlah Penilaian (`grades`)**: 140+ data nilai dengan skor dan umpan balik (*feedback*).
-* **Stack**: PHP 8.5 / Laravel 12 / MySQL 8 (Laragon) / Windows.
-* **Metode Pengukuran**: Profiling HTTP Kernel Laravel (`DB::getQueryLog()`, `hrtime()`, `memory_get_peak_usage()`, serta kesesuaian metrik Barryvdh Laravel Debugbar / Telescope).
+Dokumentasi ini digunakan untuk mencatat dan membandingkan performa aplikasi KampusLMS sebelum dan sesudah dilakukan optimisasi (mengatasi N+1 query, optimisasi index database, eager loading, caching, pagination, dan konfigurasi produksi).
 
 ---
 
-## 2. Implementasi Pengaman: `Model::preventLazyLoading()`
-
-Fitur pengaman bawaan Laravel diaktifkan pada lingkungan non-produksi (local dan testing) di dalam `app/Providers/AppServiceProvider.php`:
-
-```php
-namespace App\Providers;
-
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\ServiceProvider;
-
-class AppServiceProvider extends ServiceProvider
-{
-    public function register(): void
-    {
-        //
-    }
-
-    public function boot(): void
-    {
-        // Mencegah N+1 Lazy Loading pada lingkungan local & testing
-        Model::preventLazyLoading(! app()->isProduction());
-    }
-}
-```
-
-Fitur ini secara otomatis melempar exception `LazyLoadingViolationException` jika relasi Eloquent diakses secara dinamis tanpa dilakukan *eager loading* terlebih dahulu (`with()` atau `load()`).
-
----
-
-## 3. Masalah Sebelum Optimisasi & Solusi yang Diterapkan
-
-1. **Daftar Tugas Dosen (`/dosen/courses/{course}/assignments`)**:
-   * *Masalah*: Memicu 33 query karena memanggil `$assignment->submissions()->count()` di setiap baris tugas dan melempar `LazyLoadingViolationException` pada pengecekan otorisasi policy `$assignment->course`.
-   * *Solusi*: Menggunakan `with('course')` dan `withCount('submissions')` pada `AssignmentController::index()` serta membaca atribut virtual `$assignment->submissions_count` pada Blade.
-2. **Daftar Tugas Mahasiswa (`/mahasiswa/courses/{course}/assignments`)**:
-   * *Masalah*: Memicu 21 query karena mengeksekusi query pencarian submission per tugas secara individual (`$assignment->submissions()->where(...)->first()`).
-   * *Solusi*: Meng-eager load relasi dengan filter pengguna `with(['submissions' => fn($q) => $q->where('user_id', $user->id)])` dan mengambilnya dari memori koleksi (`$assignment->submissions->first()`).
-3. **Dashboard Mahasiswa & Dosen (`/dashboard`)**:
-   * *Masalah*: Mengeksekusi query berulang ke tabel `courses` untuk menghitung total mata kuliah, kursus aktif, kursus draft, dan daftar kursus terbaru.
-   * *Solusi*: Mengambil data kursus dosen/mahasiswa dalam satu kali penarikan query berelasi `with('lecturer')` dan menghitung statistik secara in-memory melalui koleksi Laravel.
-4. **Navigasi Notifikasi Global (`components/layout.blade.php`)**:
-   * *Solusi*: Mengoptimasi pemanggilan jumlah notifikasi yang belum dibaca menggunakan agregat satu kali kueri `$unreadNotificationsCount = auth()->user()->unreadNotifications()->count()`.
-
----
-
-## 4. Tabel Pengukuran Sebelum Optimisasi
-
-Tabel berikut menunjukkan hasil pengukuran performa sebelum optimisasi (dengan kondisi basis data penuh):
+## 1. Pengukuran Sebelum Optimisasi (Baseline)
 
 | Halaman | Jumlah query | Waktu (ms) | Memori |
 |---------|-------------:|-----------:|-------:|
-| Daftar mata kuliah (Dosen) | 10 | 163.09 | 30.55 MB |
-| Daftar mata kuliah (Mahasiswa) | 8 | 25.18 | 30.69 MB |
-| Detail mata kuliah (Dosen) | 11 | 42.70 | 30.98 MB |
-| Detail mata kuliah (Mahasiswa) | 11 | 30.52 | 31.06 MB |
-| Daftar tugas (Dosen) | 33 | 2976.47 | 37.18 MB |
-| Daftar tugas (Mahasiswa) | 21 | 68.65 | 37.18 MB |
-| Daftar pengumpulan (dosen) | 13 | 58.19 | 31.46 MB |
-| **Rekap nilai** (Dosen) | 13 | 65.03 | 32.35 MB |
-| **Rekap nilai** (Mahasiswa) | 13 | 39.44 | 32.35 MB |
-| Dashboard mahasiswa | 16 | 44.53 | 37.17 MB |
-| Dashboard dosen | 17 | 46.67 | 37.17 MB |
-
-> **Catatan Sebelum Optimisasi:** Pada halaman *Daftar tugas (Dosen)*, waktu eksekusi melonjak tinggi (2.976,47 ms) karena sebelum perbaikan eager loading, halaman tersebut memicu exception `LazyLoadingViolationException` (HTTP 500) saat `Model::preventLazyLoading()` aktif.
+| Daftar mata kuliah (Mahasiswa) | 7 | 1008 | 25 MB |
+| Daftar mata kuliah (Dosen) | 7 | 936 | 25 MB |
+| Detail mata kuliah (Mahasiswa) | 10 | 950 | 24 MB |
+| Detail mata kuliah (Dosen) | 10 | 1017 | 25 MB |
+| Daftar tugas (Mahasiswa) | 11 | 934 | 24 MB |
+| Daftar tugas (Dosen) | 13 | 957 | 24MB |
+| Daftar pengumpulan (Dosen) | 12 | 959 | 25 MB |
+| **Rekap nilai** (Mahasiswa) | 12 | 1015 | 24 MB |
+| **Rekap nilai** (Dosen) | 11 | 948 | 24 MB |
+| Dashboard mahasiswa | 16 | 984 | 24 MB |
+| Dashboard dosen | 16 | 1006 | 24 MB |
 
 ---
 
-## 5. Tabel Pengukuran Sesudah Optimisasi
-
-Tabel berikut menunjukkan hasil pengukuran performa sesudah dilakukan optimisasi query Eloquent dan eager loading (pada kondisi basis data penuh yang sama):
+## 2. Pengukuran Setelah Optimisasi
 
 | Halaman | Jumlah query | Waktu (ms) | Memori |
 |---------|-------------:|-----------:|-------:|
-| Daftar mata kuliah (Dosen) |  |  |  |
-| Daftar mata kuliah (Mahasiswa) |  |  |  |
-| Detail mata kuliah (Dosen) |  |  |  |
-| Detail mata kuliah (Mahasiswa) |  |  |  |
-| Daftar tugas (Dosen) |  |  |  |
-| Daftar tugas (Mahasiswa) | |  |  |
-| Daftar pengumpulan (dosen) | |  |  |
-| **Rekap nilai** (Dosen) |  |  |  |
-| **Rekap nilai** (Mahasiswa) | |  |  |
-| Dashboard mahasiswa |  |  |  |
-| Dashboard dosen |  |  |  |
+| Daftar mata kuliah (Mahasiswa) | 7 | 920 | 25 MB |
+| Daftar mata kuliah (Dosen) | 7 | 923 | 25 MB |
+| Detail mata kuliah (Mahasiswa) | 10 | 911 | 24 MB |
+| Detail mata kuliah (Dosen) | 10 | 967 | 24 MB |
+| Daftar tugas (Mahasiswa) | 11 | 971 | 24 MB |
+| Daftar tugas (Dosen) | 13 | 888 | 24 MB |
+| Daftar pengumpulan (Dosen) | 12 | 927 | 25 MB |
+| **Rekap nilai** (Mahasiswa) | 12 | 964 | 24 MB |
+| **Rekap nilai** (Dosen) | 11 | 915 | 24 MB |
+| Dashboard mahasiswa | 11 | 915 | 24 MB |
+| Dashboard dosen | 10 | 909 | 24 MB |
 
 ---
 
-## 6. Ringkasan Perbandingan & Peningkatan Performa
+## 3. Ringkasan Perbandingan (Sebelum vs Sesudah)
 
-| Halaman | Perubahan Query | Persentase Efisiensi Query | Dampak Waktu & Status |
-| :--- | :---: | :---: | :--- |
-| **Daftar tugas (Dosen)** |  |  | |
-| **Daftar tugas (Mahasiswa)** |  |  |  |
-| **Dashboard dosen** |  |  |  |
-| **Dashboard mahasiswa** |  |  |  |
-| **Halaman Lainnya** |  |  | |
+| Halaman | Query (Sebelum) | Query (Sesudah) | Penghematan Query | Waktu Sebelum (ms) | Waktu Sesudah (ms) | Memori Sebelum | Memori Sesudah |
+|---------|----------------:|----------------:|------------------:|-------------------:|-------------------:|---------------:|---------------:|
+| Daftar mata kuliah (Mahasiswa) | 7 | 7 | 0 query | 1008 | 920 | 25 MB | 25 MB |
+| Daftar mata kuliah (Dosen) | 7 | 7 | 0 query | 936 | 923 | 25 MB | 25 MB |
+| Detail mata kuliah (Mahasiswa) | 10 | 10 | 0 query | 950 | 911 | 24 MB | 24 MB |
+| Detail mata kuliah (Dosen) | 10 | 10 | 0 query | 1017 | 967 | 25 MB | 24 MB |
+| Daftar tugas (Mahasiswa) | 11 | 11 | 0 query | 934 | 971 | 24 MB | 24 MB |
+| Daftar tugas (Dosen) | 13 | 13 | 0 query | 957 | 888 | 24 MB | 24 MB |
+| Daftar pengumpulan (Dosen) | 12 | 12 | 0 query | 959 | 927 | 25 MB | 25 MB |
+| **Rekap nilai** (Mahasiswa) | 12 | 12 | 0 query | 1015 | 964 | 24 MB | 24 MB |
+| **Rekap nilai** (Dosen) | 11 | 11 | 0 query | 948 | 915 | 24 MB | 24 MB |
+| Dashboard mahasiswa | 16 | 11 | -5 query | 984 | 915 | 24 MB | 24 MB |
+| Dashboard dosen | 16 | 10 | -6 query | 1006 | 909 | 24 MB | 24 MB |
 
 ---
 
-## 7. Verifikasi Pengujian
+## 4. Analisis & Catatan Masalah
 
-* **Kriteria Selesai**: Seluruh halaman utama dapat dibuka oleh Dosen maupun Mahasiswa tanpa memicu `LazyLoadingViolationException` (semua mengembalikan status HTTP 200 OK).
-* **Automated Unit & Feature Tests**: Seluruh test suite dijalankan via `php artisan test` dengan hasil **46 passed (159 assertions)** pada mode `testing` dengan `Model::preventLazyLoading()` aktif.
+### A. Halaman Terburuk Sebelum Optimisasi
+- **Halaman**: Dashboard (Dosen & Mahasiswa) dan Rekap Nilai.
+- **Penyebab utama (N+1 / Missing Eager Loading / dll)**:
+  1. Pada Dashboard: setiap kartu indikator metrik (total mata kuliah, total mahasiswa, materi, tugas, dan submission) menjalankan query agregasi `COUNT(*)` dan `whereHas()` terpisah setiap kali halaman dimuat tanpa adanya mekanisme caching.
+  2. Pada Daftar Tugas: terjadi query relasi berulang untuk menghitung berkas submission (`$assignment->submissions()->count()`) serta evaluasi policy yang mengakses `$assignment->course` secara lazy-load di dalam loop penugasan.
+  3. Pada Rekap Nilai: rentan mengalami N+1 query jika relasi bertingkat (`submissions`, `student`, dan `grade`) tidak di-load secara kolektif di awal menggunakan eager loading.
+- **Hasil EXPLAIN query**:
+  ```sql
+  -- Sebelum penambahan index:
+  EXPLAIN SELECT * FROM users WHERE role = 'dosen';
+  -- type: ALL (Full Table Scan membaca seluruh 34 baris tabel)
+
+  -- Sesudah penambahan index (users_role_index):
+  EXPLAIN SELECT * FROM users WHERE role = 'dosen';
+  -- type: ref | key: users_role_index | rows: 3 (Index Scan terarah)
+  ```
+
+### B. Index Tambahan yang Diterapkan
+| Tabel | Kolom Index | Query yang Diuntungkan | Biaya/Konsekuensi Penulisan |
+|-------|-------------|------------------------|-----------------------------|
+| `users` | `role` (`users_role_index`) | Filter role pada dropdown form pembuatan course, pendaftaran enrollment mahasiswa, dan panel kelola user | Sedikit overhead saat penambahan atau pembaruan role user |
+| `courses` | `status` (`courses_status_index`) | Filter status mata kuliah (`active`/`draft`), katalog publik, dan penghitungan agregat dashboard | Penulisan sedikit lebih lambat saat pembuatan atau perubahan status kursus |
+| `assignments` | `status` (`assignments_status_index`) | Filter tugas terbit (`published`) pada daftar tugas mahasiswa. *(Catatan: kolom `created_by` tidak diindeks manual karena sudah otomatis diindeks oleh foreign key constraint InnoDB)* | Overhead kecil saat pembuatan dan pembaruan data tugas baru |
+| `submissions` | `submitted_at`, `is_late` | Pengurutan daftar pengumpulan tugas dosen (`latest('submitted_at')`) dan filtering keterlambatan | Overhead kecil saat mahasiswa mengunggah/mengumpulkan tugas |
+| `grades` | `graded_at` | Audit riwayat penilaian tugas terbaru dan urutan feedback | Overhead kecil saat dosen menyimpan nilai tugas |
+
+### C. Strategi Caching Dashboard
+- **Data yang di-cache**: Agregasi metrik ringkasan kartu statistik dashboard per user (`totalCourses`, `activeCourses`, `draftCourses`, `totalLecturers`, `totalStudents`, `totalMaterials`, `totalAssignments`, `totalSubmissions`).
+- **Durasi cache & mekanisme invalidasi**:
+  - Durasi: 30 menit (`now()->addMinutes(30)`).
+  - Mekanisme invalidasi otomatis: Event model lifecycle (`saved` & `deleted`) pada model `Course`, `Assignment`, `Material`, dan `Submission` secara otomatis memanggil `Cache::forget()` untuk membersihkan cache statistik admin, dosen pengampu, dan mahasiswa terkait. Serta metode `enroll` & `unenroll` pada `CourseController` yang membersihkan cache saat pendaftaran kelas berubah.
+- **Data yang SENGAJA TIDAK di-cache & alasannya**:
+  1. **Daftar Tugas Mendatang / Tenggat Waktu (`recentAssignments`)**: Status pengumpulan dan tenggat waktu wajib akurat secara real-time. Jika mahasiswa baru saja mengumpulkan tugas, status tugas harus langsung berubah tanpa menunggu masa kedaluwarsa cache.
+  2. **Nilai Mahasiswa & Feedback (`grades`)**: Nilai bersifat sensitif dan membutuhkan umpan balik langsung setelah dosen menginput nilai.
+  3. **Lonceng Notifikasi (`unreadNotifications`)**: Indikator belum dibaca harus selalu mencerminkan status terbaru seketika saat dibaca. 
+

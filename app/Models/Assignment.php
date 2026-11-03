@@ -61,6 +61,22 @@ class Assignment extends Model
      */
     protected static function booted(): void
     {
+        static::saved(function (Assignment $assignment) {
+            \Illuminate\Support\Facades\Cache::forget('dashboard.stats.admin');
+            $lecturerId = $assignment->course?->lecturer_id ?? $assignment->created_by;
+            if ($lecturerId) {
+                \Illuminate\Support\Facades\Cache::forget("dashboard.stats.dosen.{$lecturerId}");
+            }
+        });
+
+        static::deleted(function (Assignment $assignment) {
+            \Illuminate\Support\Facades\Cache::forget('dashboard.stats.admin');
+            $lecturerId = $assignment->course?->lecturer_id ?? $assignment->created_by;
+            if ($lecturerId) {
+                \Illuminate\Support\Facades\Cache::forget("dashboard.stats.dosen.{$lecturerId}");
+            }
+        });
+
         static::deleting(function (Assignment $assignment) {
             $assignment->submissions()->each(function (Submission $submission) {
                 $submission->delete();

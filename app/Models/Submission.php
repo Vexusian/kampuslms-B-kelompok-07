@@ -111,6 +111,28 @@ class Submission extends Model
     //
     protected static function booted(): void
     {
+        static::saved(function (Submission $submission) {
+            \Illuminate\Support\Facades\Cache::forget('dashboard.stats.admin');
+            if ($submission->user_id) {
+                \Illuminate\Support\Facades\Cache::forget("dashboard.stats.mahasiswa.{$submission->user_id}");
+            }
+            $lecturerId = $submission->assignment?->course?->lecturer_id;
+            if ($lecturerId) {
+                \Illuminate\Support\Facades\Cache::forget("dashboard.stats.dosen.{$lecturerId}");
+            }
+        });
+
+        static::deleted(function (Submission $submission) {
+            \Illuminate\Support\Facades\Cache::forget('dashboard.stats.admin');
+            if ($submission->user_id) {
+                \Illuminate\Support\Facades\Cache::forget("dashboard.stats.mahasiswa.{$submission->user_id}");
+            }
+            $lecturerId = $submission->assignment?->course?->lecturer_id;
+            if ($lecturerId) {
+                \Illuminate\Support\Facades\Cache::forget("dashboard.stats.dosen.{$lecturerId}");
+            }
+        });
+
         static::deleting(function (Submission $submission) {
             if ($submission->file_path && Storage::disk('local')->exists($submission->file_path)) {
                 Storage::disk('local')->delete($submission->file_path);

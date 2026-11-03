@@ -58,6 +58,20 @@ class Course extends Model
      */
     protected static function booted(): void
     {
+        static::saved(function (Course $course) {
+            \Illuminate\Support\Facades\Cache::forget('dashboard.stats.admin');
+            if ($course->lecturer_id) {
+                \Illuminate\Support\Facades\Cache::forget("dashboard.stats.dosen.{$course->lecturer_id}");
+            }
+        });
+
+        static::deleted(function (Course $course) {
+            \Illuminate\Support\Facades\Cache::forget('dashboard.stats.admin');
+            if ($course->lecturer_id) {
+                \Illuminate\Support\Facades\Cache::forget("dashboard.stats.dosen.{$course->lecturer_id}");
+            }
+        });
+
         static::deleting(function (Course $course) {
             $course->materials()->each(function (Material $material) {
                 $material->delete();

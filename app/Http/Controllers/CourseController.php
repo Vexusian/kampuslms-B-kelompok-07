@@ -195,6 +195,10 @@ class CourseController extends Controller
 
         if (!$course->students()->where('users.id', $student->id)->exists()) {
             $course->students()->attach($student->id, ['enrolled_at' => now()]);
+            \Illuminate\Support\Facades\Cache::forget("dashboard.stats.mahasiswa.{$student->id}");
+            if ($course->lecturer_id) {
+                \Illuminate\Support\Facades\Cache::forget("dashboard.stats.dosen.{$course->lecturer_id}");
+            }
         }
 
         return redirect()->route('courses.show', $course)
@@ -209,6 +213,10 @@ class CourseController extends Controller
         Gate::authorize('enroll', $course);
 
         $course->students()->detach($student->id);
+        \Illuminate\Support\Facades\Cache::forget("dashboard.stats.mahasiswa.{$student->id}");
+        if ($course->lecturer_id) {
+            \Illuminate\Support\Facades\Cache::forget("dashboard.stats.dosen.{$course->lecturer_id}");
+        }
 
         return redirect()->route('courses.show', $course)
             ->with('success', "Mahasiswa {$student->name} berhasil dikeluarkan dari mata kuliah.");

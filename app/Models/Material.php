@@ -73,6 +73,22 @@ class Material extends Model
      */
     protected static function booted(): void
     {
+        static::saved(function (Material $material) {
+            \Illuminate\Support\Facades\Cache::forget('dashboard.stats.admin');
+            $lecturerId = $material->course?->lecturer_id;
+            if ($lecturerId) {
+                \Illuminate\Support\Facades\Cache::forget("dashboard.stats.dosen.{$lecturerId}");
+            }
+        });
+
+        static::deleted(function (Material $material) {
+            \Illuminate\Support\Facades\Cache::forget('dashboard.stats.admin');
+            $lecturerId = $material->course?->lecturer_id;
+            if ($lecturerId) {
+                \Illuminate\Support\Facades\Cache::forget("dashboard.stats.dosen.{$lecturerId}");
+            }
+        });
+
         static::deleting(function (Material $material) {
             if ($material->file_path && \Illuminate\Support\Facades\Storage::disk('local')->exists($material->file_path)) {
                 \Illuminate\Support\Facades\Storage::disk('local')->delete($material->file_path);

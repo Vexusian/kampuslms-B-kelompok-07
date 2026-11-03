@@ -38,7 +38,7 @@
    - Berkas konfigurasi telah diuji dengan `php artisan config:cache` tanpa kendala.
 
 8. **Target Kinerja Rekap Nilai**:
-   - Halaman rekap nilai berhasil ditekan menjadi **10 query** (jauh di bawah target maksimal 15 query).
+   - Halaman rekap nilai berhasil ditekan menjadi **11–12 query** (di bawah target maksimal 15 query).
 
 ---
 

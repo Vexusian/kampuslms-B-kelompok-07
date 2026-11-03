@@ -26,17 +26,17 @@ Dokumentasi ini digunakan untuk mencatat dan membandingkan performa aplikasi Kam
 
 | Halaman | Jumlah query | Waktu (ms) | Memori |
 |---------|-------------:|-----------:|-------:|
-| Daftar mata kuliah (Mahasiswa) | 7 | 920 | 25 MB |
-| Daftar mata kuliah (Dosen) | 7 | 923 | 25 MB |
-| Detail mata kuliah (Mahasiswa) | 10 | 911 | 24 MB |
+| Daftar mata kuliah (Mahasiswa) | 7 | 328 | 25 MB |
+| Daftar mata kuliah (Dosen) | 7 | 799 | 25 MB |
+| Detail mata kuliah (Mahasiswa) | 10 | 657 | 24 MB |
 | Detail mata kuliah (Dosen) | 10 | 967 | 24 MB |
-| Daftar tugas (Mahasiswa) | 11 | 971 | 24 MB |
-| Daftar tugas (Dosen) | 13 | 888 | 24 MB |
+| Daftar tugas (Mahasiswa) | 10 | 727 | 24 MB |
+| Daftar tugas (Dosen) | 8 | 716 | 24 MB |
 | Daftar pengumpulan (Dosen) | 12 | 927 | 25 MB |
-| **Rekap nilai** (Mahasiswa) | 12 | 964 | 24 MB |
-| **Rekap nilai** (Dosen) | 11 | 915 | 24 MB |
-| Dashboard mahasiswa | 11 | 915 | 24 MB |
-| Dashboard dosen | 10 | 909 | 24 MB |
+| **Rekap nilai** (Mahasiswa) | 12 | 813 | 24 MB |
+| **Rekap nilai** (Dosen) | 11 | 802 | 24 MB |
+| Dashboard mahasiswa | 11 | 308 | 24 MB |
+| Dashboard dosen | 11 | 782 | 24 MB |
 
 ---
 
@@ -44,33 +44,33 @@ Dokumentasi ini digunakan untuk mencatat dan membandingkan performa aplikasi Kam
 
 | Halaman | Query (Sebelum) | Query (Sesudah) | Penghematan Query | Waktu Sebelum (ms) | Waktu Sesudah (ms) | Memori Sebelum | Memori Sesudah |
 |---------|----------------:|----------------:|------------------:|-------------------:|-------------------:|---------------:|---------------:|
-| Daftar mata kuliah (Mahasiswa) | 7 | 7 | 0 query | 1008 | 920 | 25 MB | 25 MB |
-| Daftar mata kuliah (Dosen) | 7 | 7 | 0 query | 936 | 923 | 25 MB | 25 MB |
-| Detail mata kuliah (Mahasiswa) | 10 | 10 | 0 query | 950 | 911 | 24 MB | 24 MB |
+| Daftar mata kuliah (Mahasiswa) | 7 | 7 | 0 query | 1008 | 328 | 25 MB | 25 MB |
+| Daftar mata kuliah (Dosen) | 7 | 7 | 0 query | 936 | 799 | 25 MB | 25 MB |
+| Detail mata kuliah (Mahasiswa) | 10 | 10 | 0 query | 950 | 657 | 24 MB | 24 MB |
 | Detail mata kuliah (Dosen) | 10 | 10 | 0 query | 1017 | 967 | 25 MB | 24 MB |
-| Daftar tugas (Mahasiswa) | 11 | 11 | 0 query | 934 | 971 | 24 MB | 24 MB |
-| Daftar tugas (Dosen) | 13 | 13 | 0 query | 957 | 888 | 24 MB | 24 MB |
+| Daftar tugas (Mahasiswa) | 11 | 10 | -1 query | 934 | 727 | 24 MB | 24 MB |
+| Daftar tugas (Dosen) | 13 | 8 | -5 query | 957 | 716 | 24 MB | 24 MB |
 | Daftar pengumpulan (Dosen) | 12 | 12 | 0 query | 959 | 927 | 25 MB | 25 MB |
-| **Rekap nilai** (Mahasiswa) | 12 | 12 | 0 query | 1015 | 964 | 24 MB | 24 MB |
-| **Rekap nilai** (Dosen) | 11 | 11 | 0 query | 948 | 915 | 24 MB | 24 MB |
-| Dashboard mahasiswa | 16 | 11 | -5 query | 984 | 915 | 24 MB | 24 MB |
-| Dashboard dosen | 16 | 10 | -6 query | 1006 | 909 | 24 MB | 24 MB |
+| **Rekap nilai** (Mahasiswa) | 12 | 12 | 0 query | 1015 | 813 | 24 MB | 24 MB |
+| **Rekap nilai** (Dosen) | 11 | 11 | 0 query | 948 | 802 | 24 MB | 24 MB |
+| Dashboard mahasiswa | 16 | 11 | -5 query | 984 | 308 | 24 MB | 24 MB |
+| Dashboard dosen | 16 | 11 | -5 query | 1006 | 782 | 24 MB | 24 MB |
 
 ---
 
 ## 4. Analisis & Catatan Masalah
 
 ### A. Halaman Terburuk Sebelum Optimisasi
-- **Halaman**: Dashboard (Dosen & Mahasiswa) dan Rekap Nilai.
+- **Halaman**: Dashboard (Dosen & Mahasiswa: 16 query), Daftar Tugas (Dosen: 13 query), Rekap Nilai (11–12 query), dan Daftar Pengumpulan (12 query).
 - **Penyebab utama (N+1 / Missing Eager Loading / dll)**:
-  1. Pada Dashboard: setiap kartu indikator metrik (total mata kuliah, total mahasiswa, materi, tugas, dan submission) menjalankan query agregasi `COUNT(*)` dan `whereHas()` terpisah setiap kali halaman dimuat tanpa adanya mekanisme caching.
-  2. Pada Daftar Tugas: terjadi query relasi berulang untuk menghitung berkas submission (`$assignment->submissions()->count()`) serta evaluasi policy yang mengakses `$assignment->course` secara lazy-load di dalam loop penugasan.
-  3. Pada Rekap Nilai: rentan mengalami N+1 query jika relasi bertingkat (`submissions`, `student`, dan `grade`) tidak di-load secara kolektif di awal menggunakan eager loading.
+  1. **Dashboard**: Setiap kartu indikator metrik (total mata kuliah, total mahasiswa, materi, tugas, dan submission) menjalankan query agregasi `COUNT(*)` dan `whereHas()` terpisah secara independen setiap kali halaman dimuat tanpa adanya mekanisme caching. Setelah penerapan cache, query berkurang drastis (-5 query) dan waktu respon Dashboard Mahasiswa terpangkas dari 984 ms menjadi 308 ms.
+  2. **Daftar Tugas**: Terjadi query relasi berulang di dalam loop penugasan untuk menghitung berkas submission (`$assignment->submissions()->count()`) serta evaluasi policy yang mengakses `$assignment->course` secara lazy-load. Dengan eager loading `with('course')` dan `withCount('submissions')`, query Daftar Tugas Dosen berhasil dipangkas dari 13 query menjadi hanya 8 query (-5 query).
+  3. **Rekap Nilai**: Memuat struktur relasi bertingkat (`course -> assignments -> submissions -> student & grade`). Eager loading terarah memastikan query tetap stabil di angka 11–12 query (di bawah target maksimal 15 query).
 - **Hasil EXPLAIN query**:
   ```sql
   -- Sebelum penambahan index:
   EXPLAIN SELECT * FROM users WHERE role = 'dosen';
-  -- type: ALL (Full Table Scan membaca seluruh 34 baris tabel)
+  -- type: ALL (Full Table Scan membaca seluruh baris tabel)
 
   -- Sesudah penambahan index (users_role_index):
   EXPLAIN SELECT * FROM users WHERE role = 'dosen';

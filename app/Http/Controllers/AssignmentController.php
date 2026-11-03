@@ -19,7 +19,19 @@ class AssignmentController extends Controller
     {
         Gate::authorize('view', $course);
 
-        $assignments = $course->assignments()->latest()->paginate(15);
+        $user = auth()->user();
+
+        $query = $course->assignments()
+            ->with('course')
+            ->withCount('submissions');
+
+        if ($user && $user->role === 'mahasiswa') {
+            $query->with(['submissions' => function ($q) use ($user) {
+                $q->where('user_id', $user->id);
+            }]);
+        }
+
+        $assignments = $query->latest()->paginate(15);
         return view('assignments.index', compact('course', 'assignments'));
     }
 
@@ -61,7 +73,12 @@ class AssignmentController extends Controller
     {
         Gate::authorize('view', $assignment);
 
-        $assignment->load(['course', 'submissions.student']);
+        $assignment->load([
+            'course.lecturer',
+            'course.students',
+            'submissions.student',
+            'submissions.grade',
+        ]);
         return view('assignments.show', compact('assignment'));
     }
 

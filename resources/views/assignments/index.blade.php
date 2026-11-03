@@ -67,11 +67,11 @@
                                class="btn btn-sm" 
                                style="background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1;" 
                                title="Lihat Mahasiswa yang Mengumpulkan">
-                                <i class="fas fa-inbox"></i> {{ $assignment->submissions()->count() }} Berkas
+                                <i class="fas fa-inbox"></i> {{ $assignment->submissions_count ?? $assignment->submissions()->count() }} Berkas
                             </a>
                         @else
                             @php
-                                $mySub = $assignment->submissions()->where('user_id', auth()->id())->first();
+                                $mySub = $assignment->submissions ? $assignment->submissions->first() : null;
                             @endphp
                             @if($mySub)
                                 <a href="{{ route('mahasiswa.submissions.show', $mySub->id) }}" class="btn btn-sm" style="background: #d1fae5; color: #065f46; font-size: 0.75rem;">

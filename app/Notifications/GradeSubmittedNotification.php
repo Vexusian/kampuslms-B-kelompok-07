@@ -71,7 +71,7 @@ public function backoff(): array
             'message'          => "Tugas \"{$assignment?->title}\" telah dinilai. Silakan periksa hasil penilaian di halaman detail.",
         ];
     }
-    
+
     public function failed(\Throwable $exception): void
 {
     Log::error('Pengiriman notifikasi nilai gagal.', [

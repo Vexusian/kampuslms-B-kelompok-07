@@ -64,7 +64,7 @@ public function backoff(): array
             'message'          => "Tugas baru \"{$this->assignment->title}\" telah dipublikasikan di {$this->assignment->course?->name}.",
         ];
     }
-    
+
     public function failed(\Throwable $exception): void
 {
     Log::error('Pengiriman notifikasi tugas baru gagal.', [

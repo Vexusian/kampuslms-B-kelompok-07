@@ -109,11 +109,11 @@ Tabel berikut menunjukkan hasil pengukuran performa sesudah dilakukan optimisasi
 
 | Halaman | Perubahan Query | Persentase Efisiensi Query | Dampak Waktu & Status |
 | :--- | :---: | :---: | :--- |
-| **Daftar tugas (Dosen)** | 33 $\rightarrow$ **9** | **Turun 72.7%** | Waktu turun dari 2.976 ms (Crash 500) menjadi **42.23 ms (HTTP 200 OK)** |
-| **Daftar tugas (Mahasiswa)** | 21 $\rightarrow$ **11** | **Turun 47.6%** | Waktu berkurang dari 68.65 ms menjadi **41.28 ms** |
-| **Dashboard dosen** | 17 $\rightarrow$ **13** | **Turun 23.5%** | Waktu berkurang dari 46.67 ms menjadi **34.84 ms** |
-| **Dashboard mahasiswa** | 16 $\rightarrow$ **13** | **Turun 18.8%** | Waktu berkurang dari 44.53 ms menjadi **31.72 ms** |
-| **Halaman Lainnya** | Stabil | Kueri Terkontrol | Seluruh halaman berjalan bebas error lazy loading |
+| **Daftar tugas (Dosen)** |  |  | |
+| **Daftar tugas (Mahasiswa)** |  |  |  |
+| **Dashboard dosen** |  |  |  |
+| **Dashboard mahasiswa** |  |  |  |
+| **Halaman Lainnya** |  |  | |
 
 ---
 

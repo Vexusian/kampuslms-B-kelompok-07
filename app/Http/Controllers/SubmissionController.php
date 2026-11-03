@@ -21,6 +21,8 @@ class SubmissionController extends Controller
     {
         Gate::authorize('viewAny', [Submission::class, $assignment]);
 
+        $assignment->loadMissing('course');
+
         $submissions = $assignment->submissions()->with(['student', 'grade'])->latest('submitted_at')->paginate(15);
         $enrolledStudents = $assignment->course->students()->orderBy('name')->get();
         $submittedUserIds = $assignment->submissions()->pluck('user_id')->toArray();

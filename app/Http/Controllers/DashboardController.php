@@ -26,19 +26,19 @@ class DashboardController extends Controller
 
         // 2. Dashboard Mahasiswa (Khusus mata kuliah dan tugas yang diikuti)
         if ($user->role === 'mahasiswa') {
-            $enrolledCoursesQuery = $user->courses();
-            $totalCourses = $enrolledCoursesQuery->count();
-            $activeCourses = (clone $enrolledCoursesQuery)->where('status', 'active')->count();
+            $enrolledCourses = $user->courses()->with('lecturer')->latest()->get();
+            $totalCourses = $enrolledCourses->count();
+            $activeCourses = $enrolledCourses->where('status', 'active')->count();
             $draftCourses = 0;
-            $totalLecturers = (clone $enrolledCoursesQuery)->distinct('lecturer_id')->count('lecturer_id');
+            $totalLecturers = $enrolledCourses->pluck('lecturer_id')->filter()->unique()->count();
             $totalStudents = 0;
 
-            $enrolledCourseIds = $user->courses()->pluck('courses.id');
+            $enrolledCourseIds = $enrolledCourses->pluck('id');
             $totalMaterials = Material::whereIn('course_id', $enrolledCourseIds)->count();
             $totalAssignments = Assignment::whereIn('course_id', $enrolledCourseIds)->count();
             $totalSubmissions = $user->submissions()->count();
 
-            $recentCourses = $user->courses()->with('lecturer')->latest()->take(5)->get();
+            $recentCourses = $enrolledCourses->take(5);
             $recentAssignments = Assignment::whereIn('course_id', $enrolledCourseIds)
                 ->with(['course', 'submissions' => function ($q) use ($user) {
                     $q->where('user_id', $user->id);
@@ -64,13 +64,13 @@ class DashboardController extends Controller
 
         // 3. Dashboard Dosen (Khusus mata kuliah yang diampu)
         if ($user->role === 'dosen') {
-            $taughtCoursesQuery = $user->taughtCourses();
-            $totalCourses = $taughtCoursesQuery->count();
-            $activeCourses = (clone $taughtCoursesQuery)->where('status', 'active')->count();
-            $draftCourses = (clone $taughtCoursesQuery)->where('status', 'draft')->count();
+            $taughtCourses = $user->taughtCourses()->with('lecturer')->latest()->get();
+            $totalCourses = $taughtCourses->count();
+            $activeCourses = $taughtCourses->where('status', 'active')->count();
+            $draftCourses = $taughtCourses->where('status', 'draft')->count();
             $totalLecturers = 1;
 
-            $taughtCourseIds = $user->taughtCourses()->pluck('id');
+            $taughtCourseIds = $taughtCourses->pluck('id');
             $totalStudents = User::whereHas('courses', function ($q) use ($taughtCourseIds) {
                 $q->whereIn('courses.id', $taughtCourseIds);
             })->count();
@@ -81,7 +81,7 @@ class DashboardController extends Controller
                 $q->whereIn('course_id', $taughtCourseIds);
             })->count();
 
-            $recentCourses = $user->taughtCourses()->with('lecturer')->latest()->take(5)->get();
+            $recentCourses = $taughtCourses->take(5);
             $recentAssignments = Assignment::whereIn('course_id', $taughtCourseIds)
                 ->with('course')
                 ->latest()

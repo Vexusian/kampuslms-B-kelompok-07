@@ -168,11 +168,14 @@
                 <a href="{{ route('admin.users.index') }}" class="{{ request()->is('admin/users*') ? 'active' : '' }}"><i class="fas fa-users"></i> Kelola User</a>
             @endif
             @auth
+                @php
+                    $unreadNotificationsCount = auth()->user()->unreadNotifications()->count();
+                @endphp
                 <a href="{{ route('notifications.index') }}" class="{{ request()->routeIs('notifications*') ? 'active' : '' }}" style="position: relative; display: inline-flex; align-items: center; gap: 0.35rem;">
                     <i class="fas fa-bell"></i> Notifikasi
-                    @if(auth()->user()->unreadNotifications->count() > 0)
+                    @if($unreadNotificationsCount > 0)
                         <span style="background: #ef4444; color: white; border-radius: 999px; padding: 0.1rem 0.45rem; font-size: 0.7rem; font-weight: 700; line-height: 1;">
-                            {{ auth()->user()->unreadNotifications->count() }}
+                            {{ $unreadNotificationsCount }}
                         </span>
                     @endif
                 </a>

@@ -24,7 +24,7 @@
 
 4. **Migrasi Penambahan Index Database**:
    - Dibuat melalui berkas migrasi `database/migrations/2026_11_03_000001_add_performance_indexes.php`.
-   - Menambahkan index pada kolom yang sering difilter atau diurutkan: `users.role`, `courses.status`, `assignments.status`, `assignments.created_by`, `submissions.submitted_at`, `submissions.is_late`, dan `grades.graded_at`.
+   - Menambahkan index pada kolom yang sering difilter atau diurutkan: `users.role`, `courses.status`, `assignments.status`, `submissions.submitted_at`, `submissions.is_late`, dan `grades.graded_at`. (Catatan: foreign key seperti `assignments.created_by` tidak diindeks manual karena sudah otomatis diindeks oleh engine InnoDB).
 
 5. **Pagination pada Seluruh Halaman Daftar**:
    - Seluruh daftar data menggunakan pagination (`paginate(15)` / `paginate(20)`), termasuk daftar mata kuliah, tugas, materi, submissions, pengguna admin, dan notifikasi. Tidak ada query yang memuat seluruh tabel sekaligus ke memori.
@@ -84,7 +84,7 @@ Halaman terburuk sebelum optimisasi adalah **Dashboard (Dosen & Mahasiswa)** den
 Index ditambahkan melalui migrasi `2026_11_03_000001_add_performance_indexes.php`, di antaranya:
 - `users.role` (`users_role_index`)
 - `courses.status` (`courses_status_index`)
-- `assignments.status` dan `assignments.created_by`
+- `assignments.status` (`assignments_status_index`) *(kolom `created_by` tidak diindeks manual karena sudah memiliki indeks bawaan foreign key)*
 - `submissions.submitted_at` dan `submissions.is_late`
 - `grades.graded_at`
 

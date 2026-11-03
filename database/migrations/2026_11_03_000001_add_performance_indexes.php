@@ -30,13 +30,13 @@ return new class extends Migration
             $table->index('status', 'courses_status_index');
         });
 
-        // 3. Indeks pada tabel assignments: status dan created_by
+        // 3. Indeks pada tabel assignments: status
+        // Catatan: kolom 'created_by' TIDAK ditambahkan manual di sini karena sudah otomatis
+        // memiliki indeks dari foreign key constraint InnoDB di migrasi awal.
         // Query yang diuntungkan:
         // - Assignment::where('status', 'published') (daftar tugas terbit mahasiswa)
-        // - Assignment::where('created_by', $user->id) / Policy verifikasi dosen pembuat tugas
         Schema::table('assignments', function (Blueprint $table) {
             $table->index('status', 'assignments_status_index');
-            $table->index('created_by', 'assignments_created_by_index');
         });
 
         // 4. Indeks pada tabel submissions: submitted_at dan is_late
@@ -71,7 +71,6 @@ return new class extends Migration
 
         Schema::table('assignments', function (Blueprint $table) {
             $table->dropIndex('assignments_status_index');
-            $table->dropIndex('assignments_created_by_index');
         });
 
         Schema::table('submissions', function (Blueprint $table) {

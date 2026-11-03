@@ -82,7 +82,7 @@ Dokumentasi ini digunakan untuk mencatat dan membandingkan performa aplikasi Kam
 |-------|-------------|------------------------|-----------------------------|
 | `users` | `role` (`users_role_index`) | Filter role pada dropdown form pembuatan course, pendaftaran enrollment mahasiswa, dan panel kelola user | Sedikit overhead saat penambahan atau pembaruan role user |
 | `courses` | `status` (`courses_status_index`) | Filter status mata kuliah (`active`/`draft`), katalog publik, dan penghitungan agregat dashboard | Penulisan sedikit lebih lambat saat pembuatan atau perubahan status kursus |
-| `assignments` | `status`, `created_by` | Filter tugas terbit (`published`), otorisasi kepemilikan tugas oleh dosen pembuat | Overhead saat pembuatan dan pembaruan data tugas baru |
+| `assignments` | `status` (`assignments_status_index`) | Filter tugas terbit (`published`) pada daftar tugas mahasiswa. *(Catatan: kolom `created_by` tidak diindeks manual karena sudah otomatis diindeks oleh foreign key constraint InnoDB)* | Overhead kecil saat pembuatan dan pembaruan data tugas baru |
 | `submissions` | `submitted_at`, `is_late` | Pengurutan daftar pengumpulan tugas dosen (`latest('submitted_at')`) dan filtering keterlambatan | Overhead kecil saat mahasiswa mengunggah/mengumpulkan tugas |
 | `grades` | `graded_at` | Audit riwayat penilaian tugas terbaru dan urutan feedback | Overhead kecil saat dosen menyimpan nilai tugas |
 

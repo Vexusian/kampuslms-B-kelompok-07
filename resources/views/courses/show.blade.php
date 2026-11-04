@@ -80,9 +80,9 @@
                 </td>
             </tr>
             <tr>
-                <td style="padding: 0.5rem 1rem 0.5rem 0; font-weight: 600; border: none; color: #64748b;">Jumlah Mahasiswa</td>
+                <td style="padding: 0.5rem 1rem 0   .5rem 0; font-weight: 600; border: none; color: #64748b;">Jumlah Mahasiswa</td>
                 <td style="padding: 0.5rem; border: none;">
-                    <i class="fas fa-user-graduate" style="color: #2563eb;"></i> {{ $course->students->count() }} Mahasiswa Terdaftar
+                    <i class="fas fa-user-graduate" style="color: #2563eb;"></i> {{ $course->students_count ?? $course->students->count() }} Mahasiswa Terdaftar
                 </td>
             </tr>
         </table>
@@ -97,7 +97,7 @@
                 </div>
                 <div>
                     <strong style="color: #0f172a; font-size: 1rem;">Materi Perkuliahan</strong>
-                    <p style="color: #64748b; font-size: 0.85rem; margin: 0.15rem 0 0;">{{ $course->materials->count() }} Materi tersedia</p>
+                    <p style="color: #64748b; font-size: 0.85rem; margin: 0.15rem 0 0;">{{ $course->materials_count ?? $course->materials->count() }} Materi tersedia</p>
                 </div>
             </div>
             <div class="flex gap-2">
@@ -119,7 +119,7 @@
                 </div>
                 <div>
                     <strong style="color: #0f172a; font-size: 1rem;">Penugasan / Tugas</strong>
-                    <p style="color: #64748b; font-size: 0.85rem; margin: 0.15rem 0 0;">{{ $course->assignments->count() }} Tugas terdaftar</p>
+                    <p style="color: #64748b; font-size: 0.85rem; margin: 0.15rem 0 0;">{{ $course->assignments_count ?? $course->assignments->count() }} Tugas terdaftar</p>
                 </div>
             </div>
             <div class="flex gap-2">
@@ -149,7 +149,7 @@
                     <i class="fas fa-user-plus" style="color: #10b981;"></i> Manajemen Peserta Kelas (Enrollment Mahasiswa)
                 </h3>
                 <span style="font-size: 0.85rem; color: #64748b;">
-                    Total: <strong>{{ $course->students->count() }}</strong> mahasiswa terdaftar
+                    Total: <strong>{{ $course->students_count ?? $course->students->count() }}</strong> mahasiswa terdaftar
                 </span>
             </div>
 

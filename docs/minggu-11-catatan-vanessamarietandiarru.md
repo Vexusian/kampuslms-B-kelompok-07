@@ -47,11 +47,9 @@
 ### 1. Buka `docs/performa.md`. Halaman mana yang terburuk sebelum optimisasi? Kenapa halaman itu?
 
 **Jawaban:**
-Halaman terburuk sebelum optimisasi adalah **Dashboard (Dosen & Mahasiswa)** dengan 16 query, disusul **Daftar Tugas** (13 query) dan **Rekap Nilai** (12 query).
-
-**Penyebabnya:**
-- Pada Dashboard, setiap kartu metrik statistik menjalankan query agregasi `COUNT(*)` dan `whereHas()` terpisah secara independen setiap kali halaman dibuka tanpa adanya cache.
-- Pada Daftar Tugas dan Rekap Nilai, terdapat masalah N+1 query akibat pemanggilan relasi di dalam perulangan view (seperti query count pengumpulan dan lazy loading relasi course pada evaluasi policy).
+- **Halaman Terburuk:** **Halaman Dashboard** (baik Dashboard Mahasiswa maupun Dashboard Dosen), dengan jumlah query terbanyak yaitu **16 query** dan waktu respon sekitar ~1000 ms.
+- **Penyebabnya:** 
+  Pada halaman Dashboard terdapat banyak kartu metrik statistik (*Total Mata Kuliah, MK Aktif, Total Mahasiswa, Total Materi, Total Tugas, dan Total Pengumpulan*). Setiap kartu metrik tersebut menjalankan query hitung (`COUNT(*)`) sendiri-sendiri ke database. Karena sebelumnya belum menerapkan **caching**, setiap kali halaman Dashboard dibuka atau di-refresh, Laravel mengeksekusi 16 query SQL terpisah dari awal ke database.
 
 ---
 

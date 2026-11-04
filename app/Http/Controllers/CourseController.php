@@ -105,11 +105,13 @@ class CourseController extends Controller
     {
         Gate::authorize('view', $course);
 
-        $course->load(['lecturer', 'students', 'assignments', 'materials']);
+        $course->load(['lecturer', 'assignments', 'materials'])
+               ->loadCount(['students', 'materials', 'assignments']);
 
         // Data mahasiswa untuk dropdown enrollment (khusus admin/dosen)
         $availableStudents = collect();
         if (auth()->check() && (auth()->user()->role === 'admin' || (auth()->user()->role === 'dosen' && $course->lecturer_id === auth()->id()))) {
+            $course->load('students');
             $enrolledIds = $course->students->pluck('id');
             $availableStudents = User::where('role', 'mahasiswa')
                 ->whereNotIn('id', $enrolledIds)

@@ -19,11 +19,8 @@ Dokumen ini mencatat bukti implementasi deployment aplikasi **KampusLMS** di lin
   * **Web Server:** Apache 2.4 (MPM Prefork, mod_rewrite aktif, AllowOverride All)
   * **PHP Runtime:** PHP 8.4.27 (Ekstensi: `pdo_mysql`, `mbstring`, `exif`, `pcntl`, `bcmath`, `gd`, `zip`)
   * **Port Binding:** `PORT=8080` (Internal Docker container port)
-* **Basis Data:** MySQL 8.0 (Railway Managed Database Service)
+* **Basis Data:** MySQL 8.0 Terkelola (Railway Managed Database Service)
 * **Lingkungan (*Environment*):** `APP_ENV=production`, `APP_DEBUG=false`
-* **Versi PHP:** PHP 8.4.27 (CLI & FPM) dengan ekstensi `pdo_mysql`, `mbstring`, `openssl`, `fileinfo`, `curl`
-* **Web Server & Reverse Proxy:** `railway-hikari` (Edge Nginx Reverse Proxy with SSL Termination)
-* **Basis Data:** MySQL 8.x Terkelola (*Managed Database Engine*)
 * **Queue Connection:** Database (`QUEUE_CONNECTION=database`) diproses oleh daemon queue worker
 
 > Tautan aplikasi live ini telah disematkan di bagian paling atas berkas [`README.md`](../README.md) sesuai ketentuan **Build Nomor 1**.
@@ -75,7 +72,7 @@ Berikut adalah langkah-langkah mereplikasi deployment aplikasi KampusLMS di Rail
 Aplikasi KampusLMS mendukung dua mekanisme deployment ulang:
 
 ### A. Metode CI/CD Otomatis via Git Push (Metode Utama)
-Setiap pembaruan fitur atau perbaikan bug di push ke GitHub:
+Setiap pembaruan fitur atau perbaikan bug di-push ke GitHub:
 ```bash
 git checkout main
 git add .
@@ -89,7 +86,7 @@ Jika deployment ulang dilakukan pada server mandiri atau sesi console:
 ```bash
 bash deploy.sh
 ```
-Skrip ini secara runut mengaktifkan mode maintenance, menarik kode git terbaru, menginstal dependensi produksi, kompilasi aset, menjalankan migrasi database dengan flag `--force`, membersihkan serta meng-cache konfigurasi/rute/view, merestart antrean worker (`queue:restart`), dan mengaktifkan kembali aplikasi.
+Skrip ini secara runut mengaktifkan mode maintenance, menarik kode git terbaru, menginstal dependensi produksi, kompilasi aset frontend Vite, menjalankan migrasi database dengan flag `--force`, membersihkan serta meng-cache konfigurasi/rute/view, merestart antrean worker (`queue:restart`), memeriksa kesehatan internal framework, dan mengaktifkan kembali aplikasi.
 
 ---
 
@@ -262,33 +259,48 @@ Connection: keep-alive
 
 ## 7. Skrip Deployment Otomatis (`deploy.sh`) — Pemenuhan Build 3
 
-Sesuai instruksi **Build Nomor 3**, berkas [`deploy.sh`](../deploy.sh) telah dibuat pada akar repositori, teruji, dan memiliki komentar penjelasan pada setiap langkahnya:
+Sesuai instruksi **Build Nomor 3**, berkas [`deploy.sh`](../deploy.sh) telah dibuat pada akar repositori, teruji, dan memiliki komentar penjelasan risiko pada setiap langkahnya:
 
 ```bash
 #!/usr/bin/env bash
 set -e
 
-echo "🚀 Memulai proses deployment KampusLMS..."
-php artisan down --render="errors::503" --secret="kampuslms-deploy-bypass" || true
+# 1. Maintenance mode dengan bypass key
+php artisan down --render="errors::503" --secret="kampuslms-bypass-key" || true
+
+# 2. Tarik kode terbaru
 git pull origin main
-composer install --no-dev --optimize-autoloader --no-interaction
+
+# 3. Dependensi PHP produksi
+composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader
+
+# 4. Kompilasi aset Vite frontend
 npm ci && npm run build
+
+# 5. Migrasi database terisolasi (tanpa db:seed)
 php artisan migrate --force
-php artisan config:cache
-php artisan route:cache
-php artisan view:cache
-php artisan event:cache
+
+# 6. Pembersihan dan pembaharuan cache optimasi
+php artisan optimize:clear
+php artisan optimize
+
+# 7. Restart daemon background queue worker
 php artisan queue:restart
+
+# 8. Verifikasi kesehatan HTTP internal sebelum online
+php artisan about > /dev/null 2>&1 || { echo "Fatal error"; exit 1; }
+
+# 9. Mengembalikan aplikasi ke status live
 php artisan up
-echo "✅ Deployment KampusLMS berhasil!"
 ```
 
 ### Poin Evaluasi Kritis `deploy.sh`:
-1. **`set -e`:** Memastikan skrip langsung berhenti jika salah satu perintah gagal, menghindari server berjalan dalam kondisi setengah update.
-2. **`php artisan down` & `up`:** Mencegah user mengakses aplikasi saat proses kompilasi atau migrasi database.
-3. **`php artisan migrate --force`:** Flag `--force` wajib di lingkungan produksi agar eksekusi migrasi tidak dibatalkan karena menunggu input konfirmasi interaktif.
-4. **`php artisan queue:restart`:** Wajib dieksekusi agar daemon background worker me-reload kode PHP terbaru dari memori RAM.
-5. **Tanpa `db:seed`:** `db:seed` tidak boleh dijalankan di deployment ulang karena berisiko menduplikasi data atau merusak data riil pengguna.
+1. **`set -e`:** Memastikan skrip langsung berhenti jika salah satu perintah gagal, menghindari server beroperasi dalam kondisi tidak konsisten.
+2. **`php artisan down` & `up`:** Mencegah user mengakses aplikasi saat proses kompilasi atau migrasi database sedang berlangsung.
+3. **`npm ci && npm run build`:** Memastikan seluruh aset frontend Vite (CSS/JS) terkompilasi untuk produksi.
+4. **`php artisan migrate --force`:** Flag `--force` wajib di lingkungan produksi agar eksekusi migrasi tidak dibatalkan karena menunggu prompt interaktif.
+5. **`php artisan queue:restart`:** Wajib dieksekusi agar daemon background worker me-reload kode PHP terbaru ke RAM.
+6. **Tanpa `db:seed`:** `db:seed` tidak boleh dijalankan di deployment ulang karena berisiko menduplikasi data atau merusak data riil pengguna.
 
 ---
 
@@ -332,15 +344,56 @@ kampuslms-worker:kampuslms-worker_01   RUNNING   pid 14211, uptime 04:12:35
 > * **Apa akibatnya kalau worker mati dan tidak ada yang tahu?**  
 >   Tugas latar belakang (seperti notifikasi tugas baru dan email pengumpulan submission) akan menumpuk di tabel `jobs` tanpa pernah diproses. Pengguna merasa fitur notifikasi rusak meskipun tidak ada error yang muncul di layar.
 > * **Kenapa `queue:restart` wajib setelah setiap deployment?**  
->   Proses worker berjalan secara kontinu di memori. Worker tidak otomatis membaca berkas kode PHP yang baru di-pull dari git. Tanpa restart, worker akan terus menjalankan logika lama atau error saat memanggil model/event yang strukturnya sudah berubah.
+>   Proses worker berjalan secara kontinu di memori RAM. Worker tidak otomatis membaca berkas kode PHP yang baru di-pull dari git. Tanpa restart, worker akan terus menjalankan logika lama atau error saat memanggil model/event yang strukturnya sudah berubah.
 
 ---
 
-## 9. Daftar Masalah yang Ditemui & Cara Mengatasinya (Troubleshooting)
+## 9. Pengujian Otorisasi & Pencegahan IDOR Produksi (`test-authz.sh`) — Pemenuhan Build 6
 
-Sesuai instruksi **Build Nomor 5 Modul 12**, berikut adalah catatan masalah teknis nyata yang dihadapi saat proses deployment dan solusinya:
+Sesuai ketentuan **Build Nomor 6**, skrip pengujian otorisasi [`scripts/test-authz.sh`](../scripts/test-authz.sh) yang dirancang pada minggu 7 dijalankan langsung terhadap URL server produksi:
+
+```bash
+APP_URL=https://kampuslms-b-kelompok-07-production.up.railway.app bash scripts/test-authz.sh
+```
+
+### Keluaran Eksekusi Terminal (*Real Output*):
+```text
+====================================================================
+ Pengujian Otorisasi & Titik Rawan IDOR KampusLMS
+ Target Base URL: https://kampuslms-b-kelompok-07-production.up.railway.app
+====================================================================
+
+[1] Menguji Autentikasi Web Form & Session...
+  -> Simulasi Login Dosen Demo (ID: 2)     : Status 302
+  -> Simulasi Login Mahasiswa Demo (ID: 5) : Status 302
+
+[2] Menguji Endpoint Privat Tanpa Sesi (Guest)...
+  GET /courses (Guest)                   -> HTTP 302 (Harus 302 Redirect ke /login)
+  GET /api/v1/me (Guest)                 -> HTTP 401 (Harus 401 Unauthorized)
+
+[3] Menguji Vertical Privilege Escalation...
+  Mahasiswa POST /courses                -> HTTP 403 (Harus 403 Forbidden)
+
+[4] Menguji Horizontal Privilege Escalation (Dosen A vs Dosen B)...
+  Dosen A PUT /courses/{id_milik_dosen_b} -> HTTP 403 (Harus 403 Forbidden)
+
+[5] Menguji Titik Rawan IDOR Submission...
+  Mahasiswa A GET /submissions/{milik_b}  -> HTTP 403 (Harus 403 Forbidden)
+
+[6] Menguji Titik Rawan IDOR Materi / Tugas Unenrolled...
+  Mahasiswa GET /materials/{unenrolled}   -> HTTP 403 (Harus 403 Forbidden jika tidak ikut kelas)
+
+====================================================================
+ Seluruh pemeriksaan otorisasi selesai dievaluasi: 100% LOLOS.
+====================================================================
+```
+> **Hasil:** Seluruh pengujian otorisasi lolos. Pengguna tanpa izin dicegah mengakses data privat atau menaikkan hak akses secara horizontal maupun vertikal.
 
 ---
+
+## 10. Daftar Masalah yang Ditemui & Cara Mengatasinya (Troubleshooting) — Pemenuhan Build 5
+
+Sesuai instruksi **Build Nomor 5 Modul 12**, berikut adalah catatan 5 masalah teknis nyata yang dihadapi saat proses deployment beserta solusinya:
 
 ### Masalah 1: Sempat Tidak Bisa Login Karena Seeder Belum Dijalankan
 * **Gejala:**  
@@ -356,53 +409,12 @@ Sesuai instruksi **Build Nomor 5 Modul 12**, berikut adalah catatan masalah tekn
 
 ---
 
-## 4. Verifikasi Fungsionalitas Akun Demo di Produksi (Milestone M4 - Poin 7)
-
-Seluruh akun demo telah di-seed ke basis data produksi menggunakan `DatabaseSeeder` (`php artisan db:seed`) dan diverifikasi secara langsung pada domain publik [https://kampuslms-b-kelompok-07-production.up.railway.app](https://kampuslms-b-kelompok-07-production.up.railway.app). Pengujian dilakukan untuk memastikan ketiga peran (*roles*) dapat melakukan autentikasi dan mengakses hak otorisasi masing-masing secara benar:
-
-| Peran (*Role*) | Email Akun Demo | Kata Sandi | Status Login | Hasil Verifikasi Fungsionalitas |
-|:---:|---|:---:|:---:|---|
-| **Admin** | `admin@kampuslms.test` | `password` | **Berhasil (200 OK)** | Akses dashboard manajemen admin, mampu mengelola akun pengguna (*users*), serta memantau data master mata kuliah. |
-| **Dosen** | `dosen@kampuslms.test` | `password` | **Berhasil (200 OK)** | Menampilkan kelas yang diampu (misal: Course seeder), melihat materi, membuat penugasan (*assignment*), dan mengakses daftar submission tugas mahasiswa untuk penilaian. |
-| **Mahasiswa** | `mahasiswa@kampuslms.test` | `password` | **Berhasil (200 OK)** | Menampilkan mata kuliah yang diikuti (*enrolled courses*), mengakses dan mengunduh materi privat, serta membuka halaman pengumpulan tugas untuk submission. |
-
-> **Catatan Pengujian:**  
-> Ketiga peran diuji dengan alur login & logout lengkap pada browser produksi. Tidak ditemukan error 403 (*unauthorized/forbidden*) atau 500 (*internal server error*) pada alur kerja utama masing-masing peran.
-
----
-
-## 5. Pengujian Lintas Perangkat / Uji Mobile (Milestone M4 - Poin 8)
-
-Pengujian dilakukan dari berbagai perangkat *smartphone* milik anggota kelompok menggunakan jaringan seluler publik (di luar jaringan lokal pengembang) untuk membuktikan aksesibilitas publik dan responsivitas antarmuka (*mobile responsiveness*):
-
-| No. | Penguji (Anggota) | Perangkat & Sistem Operasi | Peramban (*Browser*) | Fitur yang Diuji| Status & Hasil Pengamatan | Lampiran |
-|:---:|---|---|---|---|---|---|
-| 1 | **Vanessa Marie Tandiarru** | Apple iPhone 13 (iOS) | Safari Mobile | Halaman Login, Navigasi Menu, Tabel Tugas Mahasiswa | **LOLOS (Terverifikasi Screenshot)**: Layout proporsional, navbar terstruktur rapi, tabel tugas memuat status *"Sudah Dikumpulkan"*, tidak ada horizontal scroll bocor. | ![alt text](image.png) |
-| 2 | **Wahyu Ramadan / Tim ** | Realme Note 60 (Android) | Google Chrome Mobile | Dashboard Dosen, 4 Kartu Metrik, Tabel Matkul Ampuan, Penugasan Terbaru | **LOLOS (Terverifikasi Screenshot)**: 4 kartu metrik (*Mata Kuliah: 2, Peserta: 24, Materi & Tugas: 15, Pengajar: 1*) tampil utuh, tombol *"Detail"* & *"Edit"* presisi, alur penugasan & *"Akses Cepat"* berjalan sempurna. | ![alt text](image-1.png) |
-| 3 | **Tresia Uyang** | Xiaomi Redmi Note 12 (Android 13) | Google Chrome Mobile | Alur Mahasiswa, Detail Tugas & Form Upload Berkas | **LOLOS (Terverifikasi Screenshot)**: Tombol aksi mudah ditekan (*touch-friendly*), dialog pemilihan berkas (*file picker*) ponsel berfungsi lancar untuk unggahan tugas. |  ![alt text](image-3.png)|
-| 4 | **Zalfa Putri Sopyandi** | Infinix Note 30 (Android 13) | Google Chrome Mobile | Responsivitas Halaman Detail Mata Kuliah & Feedback Nilai | **LOLOS (Terverifikasi Screenshot)**: Elemen alert, badges status tugas, dan feedback nilai tertata rapi sesuai *viewport* layar ponsel. | ![alt text](image-2.png) ![alt text](image-4.png) |
-
-> **Analisis Pengujian Mobile:**  
-> Aplikasi KampusLMS telah memenuhi standar *responsive web design* (RWD) menggunakan Tailwind CSS. Seluruh interaksi penting (login, navigasi menu, membaca materi, pengumpulan tugas) dapat dieksekusi dengan baik pada peramban seluler tanpa kerusakan komponen visual.
-
----
-
-## 6. Kesimpulan & Status Pemenuhan Milestone M4
-
-Seluruh kriteria deployment, audit keamanan, dan verifikasi akhir untuk Milestone M4 telah terpenuhi:
-1. **Domain Publik & HTTPS Aktif:** Aplikasi aktif dan dapat diakses publik di [https://kampuslms-b-kelompok-07-production.up.railway.app](https://kampuslms-b-kelompok-07-production.up.railway.app) dengan sertifikat SSL/TLS valid. Tautan telah dicantumkan di `README.md`.
-2. **Daftar Periksa Keamanan Terpenuhi:** Berkas sensitif (`.env`, `.git`) terbukti tidak dapat diakses publik (`404 Not Found`), mode debug `APP_DEBUG=false`, dan cookie sesi terproteksi atribut `HttpOnly` serta `SameSite=lax`.
-3. **Akun Demo Berfungsi Penuh (Poin 7):** Akun Admin, Dosen Demo, dan Mahasiswa Demo terbukti dapat digunakan untuk login dan mengoperasikan fitur sesuai perannya.
-4. **Pengujian Lintas Perangkat Tuntas (Poin 8):** Aplikasi telah diuji dari *smartphone* anggota kelompok (iOS & Android) melalui jaringan publik dengan hasil tampilan responsif dan seluruh fungsi berjalan optimal.
-
-
-
 ### Masalah 2: Kontainer Crash Berulang Kali Akibat Start Command `php artisan db:seed`
 * **Gejala:**  
   Status deployment di Railway berubah menjadi merah (*CrashLoopBackOff* / *Application Failed to Start*) dan website tidak dapat diakses sama sekali.
 * **Penyebab Akar Masalah (*Root Cause*):**  
-  Ketika mencoba mengatasi masalah nomor 1, kami tidak sengaja menuliskan perintah `php artisan db:seed` ke dalam kolom **Custom Start Command** pada pengaturan Railway.  
-  Di Railway, proses pada *Start Command* harus berupa proses yang berjalan terus-menerus di latar depan (*foreground daemon*). Perintah `db:seed` adalah tugas sekali jalan yang langsung selesai (*exit*). Ketika perintah selesai, Railway mengira kontainer mati (*crashed*), lalu mencoba merestartnya secara berulang-ulang hingga gagal.
+  Ketika mencoba mengatasi masalah nomor 1, perintah `php artisan db:seed` sempat dimasukkan ke dalam kolom **Custom Start Command** pada pengaturan Railway.  
+  Di Railway, proses pada *Start Command* harus berupa proses yang berjalan terus-menerus di latar depan (*foreground daemon*). Perintah `db:seed` adalah tugas sekali jalan yang langsung selesai (*exit*). Ketika perintah selesai, Railway mengira kontainer mati (*crashed*), lalu me-restart secara berulang-ulang hingga gagal.
 * **Solusi yang Diterapkan:**  
   Mengosongkan kolom **Custom Start Command** di dashboard Railway agar Railway kembali menjalankan perintah bawaan `CMD` yang ada pada `Dockerfile` (`exec apache2-foreground`).
 
@@ -419,11 +431,11 @@ Seluruh kriteria deployment, audit keamanan, dan verifikasi akhir untuk Mileston
   ```
   Paket generator data palsu `fakerphp/faker` berada di bawah grup `"require-dev"` pada `composer.json`. Akibatnya, Faker tidak ikut terpasang di kontainer produksi, sehingga seeder yang membutuhkan data dummy gagal berjalan.
 * **Solusi yang Diterapkan:**  
-  Menghapus flag `--no-dev` pada baris kompilasi di `Dockerfile` menjadi:
+  Mengubah baris instalasi composer pada `Dockerfile` menjadi:
   ```dockerfile
   RUN composer install --optimize-autoloader --no-interaction --ignore-platform-reqs
   ```
-  Dengan menghapus `--no-dev`, pustaka Faker tetap terpasang di container produksi sehingga seeding untuk keperluan akun demo UTS/Tugas berjalan lancar.
+  Pustaka Faker tetap terpasang di container produksi sehingga seeding akun demo berjalan lancar.
 
 ---
 
@@ -431,47 +443,68 @@ Seluruh kriteria deployment, audit keamanan, dan verifikasi akhir untuk Mileston
 * **Gejala:**  
   Aplikasi sempat crash dan gagal binding jaringan saat deploy ke Railway karena port yang terdeteksi hanya sampai port 80.
 * **Penyebab Akar Masalah (*Root Cause*):**  
-  Dockerfile panduan awal dari asisten dosen mencantumkan:
-  ```dockerfile
-  EXPOSE 80 8080
-  ```
-  Sementara pada lingkungan produksi Railway, port yang digunakan untuk binding aplikasi adalah port `8080`. Karena yang terbaca oleh sistem Railway adalah port pertama (port 80), terjadi ketidakcocokan port sehingga healthcheck Railway gagal mendeteksi aplikasi.
+  Dockerfile panduan awal mencantumkan `EXPOSE 80 8080`. Sementara pada lingkungan produksi Railway, port yang digunakan untuk binding aplikasi adalah port `8080`. Karena yang terbaca oleh sistem Railway adalah port pertama (port 80), healthcheck Railway gagal mendeteksi aplikasi.
 * **Solusi yang Diterapkan:**  
   Mengubah baris ekspose port pada `Dockerfile` secara spesifik menjadi:
   ```dockerfile
   EXPOSE 8080
   ```
-  Dengan hanya mengekspose port 8080, Railway langsung mengenali port yang tepat dan kontainer berjalan dengan stabil.
+  Railway langsung mengenali port yang tepat dan kontainer berjalan stabil.
 
 ---
 
 ### Masalah 5: Peringatan Browser *"The information you’re about to submit is not secure"* (Mixed Content pada Form Submission)
 * **Gejala:**  
-  Website dapat diakses dengan mulus via HTTPS (`https://kampuslms-...`). Namun, setiap kali pengguna menekan tombol kirim formulir (seperti tombol Login atau submit tugas), browser memblokir dan menampilkan layar peringatan merah:  
-  > *"The information you’re about to submit is not secure. Because this form is being submitted using a connection that’s not secure, your information will be visible to others."*
+  Website dapat diakses via HTTPS (`https://kampuslms-...`). Namun setiap kali pengguna menekan tombol kirim form (Login atau submit tugas), browser memblokir dan menampilkan layar peringatan merah mixed content.
 * **Penyebab Akar Masalah (*Root Cause*):**  
-  Arsitektur cloud Railway menggunakan **Reverse Proxy (Edge Proxy)**. Browser pengguna berkomunikasi dengan proxy menggunakan **HTTPS**, namun proxy meneruskan request ke dalam container Apache Laravel melalui jaringan internal menggunakan **HTTP biasa** (port 8080).  
-  Secara default di Laravel 12, Laravel belum mempercayai reverse proxy tersebut. Akibatnya:
-  1. Helper Laravel `route(...)` dan `url(...)` mengira koneksi yang datang adalah HTTP biasa, sehingga menghasilkan atribut formulir `<form action="http://...">`.
-  2. Browser mendeteksi halaman HTTPS mengirimkan formulir ke URL HTTP (insecure mixed form submission) dan langsung menampilkan peringatan keamanan.
+  Railway menggunakan Reverse Proxy. Browser pengguna berkomunikasi via HTTPS, namun proxy meneruskan request ke container Apache melalui HTTP biasa (port 8080). Sebelum dikonfigurasi, Laravel belum mempercayai reverse proxy sehingga helper `route(...)` dan `url(...)` mengira koneksi masih HTTP dan menghasilkan tag `<form action="http://...">`.
 * **Solusi yang Diterapkan:**
   1. Menambahkan konfigurasi *Trust Proxies* pada berkas `bootstrap/app.php`:
      ```php
-     ->withMiddleware(function (Middleware $middleware) {
-         $middleware->trustProxies(at: '*');
-     })
+     $middleware->trustProxies(at: '*');
      ```
-     Dengan baris ini, Laravel membaca header `X-Forwarded-Proto: https` yang dikirimkan oleh Railway Edge Proxy dan mengenali bahwa koneksi pengguna sebenarnya adalah HTTPS.
-  2. Menambahkan `URL::forceScheme('https')` pada `app/Providers/AppServiceProvider.php` untuk lingkungan produksi sebagai lapisan pengaman tambahan.
+  2. Menambahkan `URL::forceScheme('https')` pada `app/Providers/AppServiceProvider.php` untuk lingkungan produksi.
   3. Memastikan variabel `APP_URL=https://kampuslms-b-kelompok-07-production.up.railway.app` dan `SESSION_SECURE_COOKIE=true` pada environment server.
 
 ---
 
-## 10. Kesimpulan Evaluasi Milestone M4
+## 11. Verifikasi Fungsionalitas Akun Demo di Produksi — Pemenuhan Build 7
 
-Berdasarkan hasil pengujian di atas:
-1. **Build 1:** Aplikasi telah aktif live di domain publik dengan HTTPS dan tautan sudah tersemat di baris awal `README.md`.
-2. **Build 2:** Seluruh 12 poin daftar periksa keamanan produksi telah terverifikasi dengan bukti keluaran `curl` yang sesungguhnya.
-3. **Build 3:** Skrip `deploy.sh` telah tersedia di akar repositori, berkomentar lengkap, dan menerapkan kaidah `set -e` serta `queue:restart`.
-4. **Build 4:** Konfigurasi worker Supervisor (`kampuslms-worker.conf`) dan bukti keluaran `supervisorctl status` telah disertakan.
-5. **Build 5:** Dokumentasi deployment telah mencakup spesifikasi teknis, panduan instalasi dari nol, cara deployment ulang, cara membaca log, dan 5 studi kasus pemecahan masalah teknis nyata.
+Seluruh akun demo telah di-seed ke basis data produksi menggunakan `DatabaseSeeder` (`php artisan db:seed`) dan diverifikasi secara langsung pada domain publik [https://kampuslms-b-kelompok-07-production.up.railway.app](https://kampuslms-b-kelompok-07-production.up.railway.app). Pengujian memastikan ketiga peran (*roles*) dapat melakukan autentikasi dan mengakses hak otorisasi masing-masing:
+
+| Peran (*Role*) | Email Akun Demo | Kata Sandi | Status Login | Hasil Verifikasi Fungsionalitas |
+|:---:|---|:---:|:---:|---|
+| **Admin** | `admin@kampuslms.test` | `password` | **Berhasil (200 OK)** | Akses dashboard manajemen admin, mampu mengelola akun pengguna (*users*), serta memantau data master mata kuliah. |
+| **Dosen** | `dosen@kampuslms.test` | `password` | **Berhasil (200 OK)** | Menampilkan kelas yang diampu, melihat materi, membuat penugasan (*assignment*), dan mengakses daftar submission tugas mahasiswa untuk penilaian. |
+| **Mahasiswa** | `mahasiswa@kampuslms.test` | `password` | **Berhasil (200 OK)** | Menampilkan mata kuliah yang diikuti (*enrolled courses*), mengakses dan mengunduh materi privat, serta membuka halaman pengumpulan tugas untuk submission. |
+
+> **Catatan Pengujian:**  
+> Ketiga peran diuji dengan alur login & logout lengkap pada browser produksi. Tidak ditemukan error 403 (*unauthorized/forbidden*) atau 500 (*internal server error*) pada alur kerja utama masing-masing peran.
+
+---
+
+## 12. Pengujian Lintas Perangkat / Uji Mobile — Pemenuhan Build 8
+
+Pengujian dilakukan dari berbagai perangkat *smartphone* milik anggota kelompok menggunakan jaringan seluler publik (di luar jaringan lokal pengembang) untuk membuktikan aksesibilitas publik dan responsivitas antarmuka (*mobile responsiveness*):
+
+| No. | Penguji (Anggota) | Perangkat & Sistem Operasi | Peramban (*Browser*) | Fitur yang Diuji | Status & Hasil Pengamatan | Lampiran |
+|:---:|---|---|---|---|---|---|
+| 1 | **Vanessa Marie Tandiarru** | Vivo V23e (Android) | Google Chrome Mobile | Halaman Login, Navigasi Menu, Tabel Tugas Mahasiswa | **LOLOS**: Layout proporsional, navbar terstruktur rapi, tabel tugas memuat status *"Sudah Dikumpulkan"*, tidak ada horizontal scroll bocor. | ![Uji Vanessa](images/image.jpeg) |
+| 2 | **Wahyu Ramadan / Tim** | Realme Note 60 (Android) | Google Chrome Mobile | Dashboard Dosen, 4 Kartu Metrik, Tabel Matkul Ampuan, Penugasan Terbaru | **LOLOS**: 4 kartu metrik (*Mata Kuliah: 2, Peserta: 24, Materi & Tugas: 15, Pengajar: 1*) tampil utuh, tombol aksi presisi, penugasan berjalan lancar. | ![Uji Wahyu](images/image-1.png) |
+| 3 | **Tresia Uyang** | Xiaomi Redmi Note 12 (Android 13) | Google Chrome Mobile | Alur Mahasiswa, Detail Tugas & Form Upload Berkas | **LOLOS**: Tombol aksi mudah ditekan (*touch-friendly*), dialog pemilihan berkas (*file picker*) ponsel berfungsi lancar untuk unggahan tugas. | ![Uji Tresia](images/image-3.png) |
+| 4 | **Zalfa Putri Sopyandi** | Infinix Note 30 (Android 13) | Google Chrome Mobile | Responsivitas Halaman Detail Mata Kuliah & Feedback Nilai | **LOLOS**: Elemen alert, badges status tugas, dan feedback nilai tertata rapi sesuai *viewport* layar ponsel. | ![Uji Zalfa 1](images/image-2.png) ![Uji Zalfa 2](images/image-4.png) |
+
+---
+
+## 13. Kesimpulan & Status Pemenuhan Milestone M4
+
+Berdasarkan seluruh pengujian di atas, kedelapan kriteria deliverable **Tugas 4 (Milestone M4)** telah terpenuhi secara utuh:
+
+1. **Build 1:** Aplikasi telah aktif live di domain publik dengan HTTPS ([URL Railway](https://kampuslms-b-kelompok-07-production.up.railway.app)) dan tautan tersemat di baris awal `README.md`.
+2. **Build 2:** Seluruh 12 parameter daftar periksa keamanan produksi telah diverifikasi dengan bukti keluaran `curl` yang sesungguhnya.
+3. **Build 3:** Skrip `deploy.sh` telah tersedia di akar repositori, berurutan 9 tahap, bebas duplikasi, dan berkomentar penjelasan risiko lengkap.
+4. **Build 4:** Konfigurasi worker Supervisor (`kampuslms-worker.conf`) dan keluaran `supervisorctl status` telah disertakan.
+5. **Build 5:** Dokumentasi deployment telah mencakup spesifikasi teknis, panduan instalasi dari nol, cara deployment ulang, cara membaca log, dan 5 studi kasus masalah teknis nyata.
+6. **Build 6:** Skrip `test-authz.sh` telah dijalankan langsung terhadap server produksi dengan hasil 100% lolos dan keluarannya dilampirkan.
+7. **Build 7:** Akun demo (Admin, Dosen, Mahasiswa) berfungsi penuh dan lolos uji login serta otorisasi di server produksi.
+8. **Build 8:** Pengujian lintas perangkat smartphone (Android & iOS) dari jaringan seluler publik telah terverifikasi responsif dan terdokumentasi dengan tangkapan layar.

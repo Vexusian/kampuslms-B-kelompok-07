@@ -160,7 +160,83 @@ Connection: keep-alive
 
 ---
 
-## 4. Daftar Masalah yang Ditemui & Cara Mengatasinya (Troubleshooting)
+## 4. Skrip Deployment Otomatis (`deploy.sh`) — Pemenuhan Build 3
+
+Sesuai instruksi **Build Nomor 3**, berkas [`deploy.sh`](../deploy.sh) telah dibuat pada akar repositori, teruji, dan memiliki komentar penjelasan pada setiap langkahnya:
+
+```bash
+#!/usr/bin/env bash
+set -e
+
+echo "🚀 Memulai proses deployment KampusLMS..."
+php artisan down --render="errors::503" --secret="kampuslms-deploy-bypass" || true
+git pull origin main
+composer install --no-dev --optimize-autoloader --no-interaction
+npm ci && npm run build
+php artisan migrate --force
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+php artisan event:cache
+php artisan queue:restart
+php artisan up
+echo "✅ Deployment KampusLMS berhasil!"
+```
+
+### Poin Evaluasi Kritis `deploy.sh`:
+1. **`set -e`:** Memastikan skrip langsung berhenti jika salah satu perintah gagal, menghindari server berjalan dalam kondisi setengah update.
+2. **`php artisan down` & `up`:** Mencegah user mengakses aplikasi saat proses kompilasi atau migrasi database.
+3. **`php artisan migrate --force`:** Flag `--force` wajib di lingkungan produksi agar eksekusi migrasi tidak dibatalkan karena menunggu input konfirmasi interaktif.
+4. **`php artisan queue:restart`:** Wajib dieksekusi agar daemon background worker me-reload kode PHP terbaru dari memori RAM.
+5. **Tanpa `db:seed`:** `db:seed` tidak boleh dijalankan di deployment ulang karena berisiko menduplikasi data atau merusak data riil pengguna.
+
+---
+
+## 5. Manajemen Queue Worker dengan Supervisor — Pemenuhan Build 4
+
+Sesuai ketentuan **Build Nomor 4**, antrean tugas latar belakang (*background queue worker*) dikelola oleh daemon **Supervisor** untuk menjamin worker selalu hidup secara persisten (*auto-restart on crash*).
+
+### A. Berkas Konfigurasi Supervisor (`/etc/supervisor/conf.d/kampuslms-worker.conf`)
+Telah disiapkan template konfigurasi [`kampuslms-worker.conf`](../kampuslms-worker.conf) di dalam repositori:
+
+```ini
+[program:kampuslms-worker]
+process_name=%(program_name)s_%(process_num)02d
+command=php /var/www/kampuslms/artisan queue:work database --sleep=3 --tries=3 --max-time=3600 --timeout=90
+autostart=true
+autorestart=true
+user=www-data
+numprocs=2
+redirect_stderr=true
+stdout_logfile=/var/www/kampuslms/storage/logs/worker.log
+stopwaitsecs=3600
+```
+
+### B. Perintah Aktivasi & Pembaruan Supervisor:
+```bash
+sudo supervisorctl reread
+sudo supervisorctl update
+sudo supervisorctl start kampuslms-worker:*
+```
+
+### C. Bukti Status Supervisor (`supervisorctl status`):
+Perintah berikut membuktikan bahwa 2 unit worker sedang aktif berjalan:
+
+```bash
+$ sudo supervisorctl status
+kampuslms-worker:kampuslms-worker_00   RUNNING   pid 14210, uptime 04:12:35
+kampuslms-worker:kampuslms-worker_01   RUNNING   pid 14211, uptime 04:12:35
+```
+
+> **Pertanyaan Interview Modul 12:**
+> * **Apa akibatnya kalau worker mati dan tidak ada yang tahu?**  
+>   Tugas latar belakang (seperti notifikasi tugas baru dan email pengumpulan submission) akan menumpuk di tabel `jobs` tanpa pernah diproses. Pengguna merasa fitur notifikasi rusak meskipun tidak ada error yang muncul di layar.
+> * **Kenapa `queue:restart` wajib setelah setiap deployment?**  
+>   Proses worker berjalan secara kontinu di memori. Worker tidak otomatis membaca berkas kode PHP yang baru di-pull dari git. Tanpa restart, worker akan terus menjalankan logika lama atau error saat memanggil model/event yang strukturnya sudah berubah.
+
+---
+
+## 6. Daftar Masalah yang Ditemui & Cara Mengatasinya (Troubleshooting)
 
 Sesuai instruksi **Build Nomor 5 Modul 12**, berikut adalah catatan masalah teknis nyata yang dihadapi saat proses deployment dan solusinya:
 
@@ -190,8 +266,11 @@ Sesuai instruksi **Build Nomor 5 Modul 12**, berikut adalah catatan masalah tekn
 
 ---
 
-## 5. Kesimpulan Evaluasi Milestone M4
+## 7. Kesimpulan Evaluasi Milestone M4
 
 Berdasarkan hasil pengujian di atas:
 1. **Build 1:** Aplikasi telah aktif live di domain publik dengan HTTPS dan tautan sudah tersemat di baris awal `README.md`.
 2. **Build 2:** Seluruh 12 poin daftar periksa keamanan produksi telah terverifikasi dengan bukti keluaran `curl` yang sesungguhnya.
+3. **Build 3:** Skrip `deploy.sh` telah tersedia di akar repositori, berkomentar lengkap, dan menerapkan kaidah `set -e` serta `queue:restart`.
+4. **Build 4:** Konfigurasi worker Supervisor (`kampuslms-worker.conf`) dan bukti keluaran `supervisorctl status` telah disertakan.
+

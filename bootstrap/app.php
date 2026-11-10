@@ -12,6 +12,10 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
+        // Percayai semua reverse proxy (Railway, Cloudflare, Load Balancer)
+        // agar header X-Forwarded-Proto dibaca dan skema HTTPS dikenali dengan benar
+        $middleware->trustProxies(at: '*');
+
         $middleware->alias([
             'role' => \App\Http\Middleware\EnsureUserHasRole::class,
         ]);

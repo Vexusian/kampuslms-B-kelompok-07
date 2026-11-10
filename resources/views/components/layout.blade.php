@@ -8,8 +8,10 @@
     {{-- Font Awesome untuk icon --}}
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    {{-- Vite untuk CSS/JS Laravel --}}
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    {{-- Vite untuk CSS/JS Laravel (hanya dipanggil jika aset build ada) --}}
+    @if (file_exists(public_path('build/manifest.json')) || file_exists(public_path('hot')))
+        @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @endif
     
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }

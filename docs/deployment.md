@@ -340,6 +340,8 @@ kampuslms-worker:kampuslms-worker_00   RUNNING   pid 14210, uptime 04:12:35
 kampuslms-worker:kampuslms-worker_01   RUNNING   pid 14211, uptime 04:12:35
 ```
 
+![Tangkapan Layar Status Supervisor](images/supervisor.png)
+
 > **Pertanyaan Interview Modul 12:**
 > * **Apa akibatnya kalau worker mati dan tidak ada yang tahu?**  
 >   Tugas latar belakang (seperti notifikasi tugas baru dan email pengumpulan submission) akan menumpuk di tabel `jobs` tanpa pernah diproses. Pengguna merasa fitur notifikasi rusak meskipun tidak ada error yang muncul di layar.
@@ -492,7 +494,7 @@ Pengujian dilakukan dari berbagai perangkat *smartphone* milik anggota kelompok 
 | 1 | **Vanessa Marie Tandiarru** | Vivo V23e (Android) | Google Chrome Mobile | Halaman Login, Navigasi Menu, Tabel Tugas Mahasiswa | **LOLOS**: Layout proporsional, navbar terstruktur rapi, tabel tugas memuat status *"Sudah Dikumpulkan"*, tidak ada horizontal scroll bocor. | ![Uji Vanessa](images/image.jpeg) |
 | 2 | **Wahyu Ramadan / Tim** | Realme Note 60 (Android) | Google Chrome Mobile | Dashboard Dosen, 4 Kartu Metrik, Tabel Matkul Ampuan, Penugasan Terbaru | **LOLOS**: 4 kartu metrik (*Mata Kuliah: 2, Peserta: 24, Materi & Tugas: 15, Pengajar: 1*) tampil utuh, tombol aksi presisi, penugasan berjalan lancar. | ![Uji Wahyu](images/image-1.png) |
 | 3 | **Tresia Uyang** | Xiaomi Redmi Note 12 (Android 13) | Google Chrome Mobile | Alur Mahasiswa, Detail Tugas & Form Upload Berkas | **LOLOS**: Tombol aksi mudah ditekan (*touch-friendly*), dialog pemilihan berkas (*file picker*) ponsel berfungsi lancar untuk unggahan tugas. | ![Uji Tresia](images/image-3.png) |
-| 4 | **Zalfa Putri Sopyandi** | Infinix Note 30 (Android 13) | Google Chrome Mobile | Responsivitas Halaman Detail Mata Kuliah & Feedback Nilai | **LOLOS**: Elemen alert, badges status tugas, dan feedback nilai tertata rapi sesuai *viewport* layar ponsel. | ![Uji Zalfa 1](images/image-2.png) ![Uji Zalfa 2](images/image-4.png) |
+| 4 | **Zalfa Putri Sopyandi** | Infinix Note 30 (Android 13) | Google Chrome Mobile | Responsivitas Halaman Detail Mata Kuliah & Feedback Nilai | **LOLOS**: Elemen alert, badges status tugas, dan feedback nilai tertata rapi sesuai *viewport* layar ponsel. | ![Uji Zalfa 1](images/image-no4.jpeg) <br> ![Uji Zalfa 2](images/image-no4-2.jpeg) |
 
 ---
 

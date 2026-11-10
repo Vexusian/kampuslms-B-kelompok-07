@@ -21,6 +21,10 @@ Dokumen ini mencatat bukti implementasi deployment aplikasi **KampusLMS** di lin
   * **Port Binding:** `PORT=8080` (Internal Docker container port)
 * **Basis Data:** MySQL 8.0 (Railway Managed Database Service)
 * **Lingkungan (*Environment*):** `APP_ENV=production`, `APP_DEBUG=false`
+* **Versi PHP:** PHP 8.4.27 (CLI & FPM) dengan ekstensi `pdo_mysql`, `mbstring`, `openssl`, `fileinfo`, `curl`
+* **Web Server & Reverse Proxy:** `railway-hikari` (Edge Nginx Reverse Proxy with SSL Termination)
+* **Basis Data:** MySQL 8.x Terkelola (*Managed Database Engine*)
+* **Queue Connection:** Database (`QUEUE_CONNECTION=database`) diproses oleh daemon queue worker
 
 > Tautan aplikasi live ini telah disematkan di bagian paling atas berkas [`README.md`](../README.md) sesuai ketentuan **Build Nomor 1**.
 
@@ -351,6 +355,47 @@ Sesuai instruksi **Build Nomor 5 Modul 12**, berikut adalah catatan masalah tekn
   Setelah data terisi, akun admin, dosen, dan mahasiswa langsung dapat digunakan untuk login.
 
 ---
+
+## 4. Verifikasi Fungsionalitas Akun Demo di Produksi (Milestone M4 - Poin 7)
+
+Seluruh akun demo telah di-seed ke basis data produksi menggunakan `DatabaseSeeder` (`php artisan db:seed`) dan diverifikasi secara langsung pada domain publik [https://kampuslms-b-kelompok-07-production.up.railway.app](https://kampuslms-b-kelompok-07-production.up.railway.app). Pengujian dilakukan untuk memastikan ketiga peran (*roles*) dapat melakukan autentikasi dan mengakses hak otorisasi masing-masing secara benar:
+
+| Peran (*Role*) | Email Akun Demo | Kata Sandi | Status Login | Hasil Verifikasi Fungsionalitas |
+|:---:|---|:---:|:---:|---|
+| **Admin** | `admin@kampuslms.test` | `password` | **Berhasil (200 OK)** | Akses dashboard manajemen admin, mampu mengelola akun pengguna (*users*), serta memantau data master mata kuliah. |
+| **Dosen** | `dosen@kampuslms.test` | `password` | **Berhasil (200 OK)** | Menampilkan kelas yang diampu (misal: Course seeder), melihat materi, membuat penugasan (*assignment*), dan mengakses daftar submission tugas mahasiswa untuk penilaian. |
+| **Mahasiswa** | `mahasiswa@kampuslms.test` | `password` | **Berhasil (200 OK)** | Menampilkan mata kuliah yang diikuti (*enrolled courses*), mengakses dan mengunduh materi privat, serta membuka halaman pengumpulan tugas untuk submission. |
+
+> **Catatan Pengujian:**  
+> Ketiga peran diuji dengan alur login & logout lengkap pada browser produksi. Tidak ditemukan error 403 (*unauthorized/forbidden*) atau 500 (*internal server error*) pada alur kerja utama masing-masing peran.
+
+---
+
+## 5. Pengujian Lintas Perangkat / Uji Mobile (Milestone M4 - Poin 8)
+
+Pengujian dilakukan dari berbagai perangkat *smartphone* milik anggota kelompok menggunakan jaringan seluler publik (di luar jaringan lokal pengembang) untuk membuktikan aksesibilitas publik dan responsivitas antarmuka (*mobile responsiveness*):
+
+| No. | Penguji (Anggota) | Perangkat & Sistem Operasi | Peramban (*Browser*) | Fitur yang Diuji| Status & Hasil Pengamatan | Lampiran |
+|:---:|---|---|---|---|---|---|
+| 1 | **Vanessa Marie Tandiarru** | Apple iPhone 13 (iOS) | Safari Mobile | Halaman Login, Navigasi Menu, Tabel Tugas Mahasiswa | **LOLOS (Terverifikasi Screenshot)**: Layout proporsional, navbar terstruktur rapi, tabel tugas memuat status *"Sudah Dikumpulkan"*, tidak ada horizontal scroll bocor. | ![alt text](image.png) |
+| 2 | **Wahyu Ramadan / Tim ** | Realme Note 60 (Android) | Google Chrome Mobile | Dashboard Dosen, 4 Kartu Metrik, Tabel Matkul Ampuan, Penugasan Terbaru | **LOLOS (Terverifikasi Screenshot)**: 4 kartu metrik (*Mata Kuliah: 2, Peserta: 24, Materi & Tugas: 15, Pengajar: 1*) tampil utuh, tombol *"Detail"* & *"Edit"* presisi, alur penugasan & *"Akses Cepat"* berjalan sempurna. | ![alt text](image-1.png) |
+| 3 | **Tresia Uyang** | Xiaomi Redmi Note 12 (Android 13) | Google Chrome Mobile | Alur Mahasiswa, Detail Tugas & Form Upload Berkas | **LOLOS (Terverifikasi Screenshot)**: Tombol aksi mudah ditekan (*touch-friendly*), dialog pemilihan berkas (*file picker*) ponsel berfungsi lancar untuk unggahan tugas. |  ![alt text](image-3.png)|
+| 4 | **Zalfa Putri Sopyandi** | Infinix Note 30 (Android 13) | Google Chrome Mobile | Responsivitas Halaman Detail Mata Kuliah & Feedback Nilai | **LOLOS (Terverifikasi Screenshot)**: Elemen alert, badges status tugas, dan feedback nilai tertata rapi sesuai *viewport* layar ponsel. | ![alt text](image-2.png) ![alt text](image-4.png) |
+
+> **Analisis Pengujian Mobile:**  
+> Aplikasi KampusLMS telah memenuhi standar *responsive web design* (RWD) menggunakan Tailwind CSS. Seluruh interaksi penting (login, navigasi menu, membaca materi, pengumpulan tugas) dapat dieksekusi dengan baik pada peramban seluler tanpa kerusakan komponen visual.
+
+---
+
+## 6. Kesimpulan & Status Pemenuhan Milestone M4
+
+Seluruh kriteria deployment, audit keamanan, dan verifikasi akhir untuk Milestone M4 telah terpenuhi:
+1. **Domain Publik & HTTPS Aktif:** Aplikasi aktif dan dapat diakses publik di [https://kampuslms-b-kelompok-07-production.up.railway.app](https://kampuslms-b-kelompok-07-production.up.railway.app) dengan sertifikat SSL/TLS valid. Tautan telah dicantumkan di `README.md`.
+2. **Daftar Periksa Keamanan Terpenuhi:** Berkas sensitif (`.env`, `.git`) terbukti tidak dapat diakses publik (`404 Not Found`), mode debug `APP_DEBUG=false`, dan cookie sesi terproteksi atribut `HttpOnly` serta `SameSite=lax`.
+3. **Akun Demo Berfungsi Penuh (Poin 7):** Akun Admin, Dosen Demo, dan Mahasiswa Demo terbukti dapat digunakan untuk login dan mengoperasikan fitur sesuai perannya.
+4. **Pengujian Lintas Perangkat Tuntas (Poin 8):** Aplikasi telah diuji dari *smartphone* anggota kelompok (iOS & Android) melalui jaringan publik dengan hasil tampilan responsif dan seluruh fungsi berjalan optimal.
+
+
 
 ### Masalah 2: Kontainer Crash Berulang Kali Akibat Start Command `php artisan db:seed`
 * **Gejala:**  

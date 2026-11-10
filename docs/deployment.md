@@ -4,21 +4,117 @@ Dokumen ini mencatat bukti implementasi deployment aplikasi **KampusLMS** di lin
 
 ---
 
-## 1. Informasi Deployment Produksi
+## 1. Informasi Deployment & Spesifikasi Server Produksi
 
 * **Nama Proyek:** KampusLMS (Kelas B - Kelompok 07)
-* **Penyedia Layanan (PaaS):** Railway
+* **Penyedia Layanan Cloud (PaaS):** Railway ([railway.com](https://railway.com))
 * **URL Domain Publik (HTTPS):** [https://kampuslms-b-kelompok-07-production.up.railway.app](https://kampuslms-b-kelompok-07-production.up.railway.app)
-* **Protokol:** HTTPS (Terenkripsi dengan SSL/TLS Otomatis melalui Edge Proxy)
-* **Web Server & Runtime:** Apache + PHP 8.4 (Dockerized Container)
-* **Basis Data:** MySQL (Railway Managed Database)
+* **Protokol:** HTTPS (Terenkripsi dengan SSL/TLS Otomatis melalui Cloud Edge Proxy)
+* **Spesifikasi Mesin & Kontainer:**
+  * **Base Image Docker:** `php:8.4-apache` (Debian 12 Bookworm)
+  * **vCPU:** 1 vCPU (Shared Cloud Allocation)
+  * **RAM:** 512 MB – 1 GB Dynamic Memory
+  * **Storage:** Ephemeral Container File System + Persistent Volume untuk Basis Data
+* **Web Server & Runtime:**
+  * **Web Server:** Apache 2.4 (MPM Prefork, mod_rewrite aktif, AllowOverride All)
+  * **PHP Runtime:** PHP 8.4.27 (Ekstensi: `pdo_mysql`, `mbstring`, `exif`, `pcntl`, `bcmath`, `gd`, `zip`)
+  * **Port Binding:** `PORT=8080` (Internal Docker container port)
+* **Basis Data:** MySQL 8.0 (Railway Managed Database Service)
 * **Lingkungan (*Environment*):** `APP_ENV=production`, `APP_DEBUG=false`
 
 > Tautan aplikasi live ini telah disematkan di bagian paling atas berkas [`README.md`](../README.md) sesuai ketentuan **Build Nomor 1**.
 
 ---
 
-## 2. Seluruh Daftar Periksa Keamanan Produksi (Production Security Checklist)
+## 2. Panduan Deployment dari Nol (*Step-by-Step From Scratch*)
+
+Berikut adalah langkah-langkah mereplikasi deployment aplikasi KampusLMS di Railway dari awal:
+
+1. **Persiapan Repositori GitHub:**
+   * Pastikan kode sumber aplikasi berada di branch `main` repositori GitHub.
+   * Pastikan berkas `Dockerfile` tersedia di direktori utama (*root*) repositori.
+2. **Pembuatan Proyek di Railway:**
+   * Buka dashboard [railway.com](https://railway.com) dan buat proyek baru (*New Project*).
+   * Tambahkan layanan basis data MySQL (*Add Service* > *Database* > *MySQL*). Railway akan membuat container MySQL dan menyediakan variabel koneksi database otomatis.
+3. **Penyambungan Layanan Web Service:**
+   * Pada proyek yang sama, klik *New Service* > *GitHub Repo* > pilih repositori `kampuslms`.
+   * Railway akan secara otomatis mendeteksi keberadaan `Dockerfile` untuk memulai proses *build*.
+4. **Konfigurasi Variabel Lingkungan (*Environment Variables*):**
+   * Masuk ke tab **Variables** pada web service, tambahkan:
+     ```env
+     APP_NAME=KampusLMS
+     APP_ENV=production
+     APP_KEY=base64:...
+     APP_DEBUG=false
+     APP_URL=https://kampuslms-b-kelompok-07-production.up.railway.app
+     DB_CONNECTION=mysql
+     DB_HOST=${{MySQL.MYSQLHOST}}
+     DB_PORT=${{MySQL.MYSQLPORT}}
+     DB_DATABASE=${{MySQL.MYSQLDATABASE}}
+     DB_USERNAME=${{MySQL.MYSQLUSER}}
+     DB_PASSWORD=${{MySQL.MYSQLPASSWORD}}
+     SESSION_DRIVER=database
+     SESSION_SECURE_COOKIE=true
+     SESSION_HTTP_ONLY=true
+     SESSION_SAME_SITE=lax
+     CACHE_STORE=database
+     QUEUE_CONNECTION=database
+     ```
+5. **Pengaturan Jaringan & Start Command:**
+   * Masuk ke tab **Settings** > **Networking** > klik **Generate Domain** untuk memperoleh domain HTTPS publik `*.up.railway.app`.
+   * Pada bagian **Deploy** > **Custom Start Command**: **KOSONGKAN** (jangan diisi), agar kontainer menjalankan perintah `CMD` resmi bawaan `Dockerfile`.
+
+---
+
+## 3. Prosedur Deployment Ulang (*Redeployment Procedure*)
+
+Aplikasi KampusLMS mendukung dua mekanisme deployment ulang:
+
+### A. Metode CI/CD Otomatis via Git Push (Metode Utama)
+Setiap pembaruan fitur atau perbaikan bug di push ke GitHub:
+```bash
+git checkout main
+git add .
+git commit -m "update: pembaruan sistem"
+git push origin main
+```
+Railway akan mendeteksi commit baru via webhook, menjalankan build image Docker baru, mengeksekusi migrasi, dan melakukan *rolling restart* tanpa downtime (*zero-downtime*).
+
+### B. Metode Manual via Skrip `deploy.sh`
+Jika deployment ulang dilakukan pada server mandiri atau sesi console:
+```bash
+bash deploy.sh
+```
+Skrip ini secara runut mengaktifkan mode maintenance, menarik kode git terbaru, menginstal dependensi produksi, kompilasi aset, menjalankan migrasi database dengan flag `--force`, membersihkan serta meng-cache konfigurasi/rute/view, merestart antrean worker (`queue:restart`), dan mengaktifkan kembali aplikasi.
+
+---
+
+## 4. Cara Monitoring & Membaca Log Sistem
+
+Untuk memeriksa kesehatan server dan mendiagnosis kendala:
+
+1. **Membaca Log via Dashboard Railway:**
+   * Buka proyek di Railway > pilih service **kampuslms** > tab **Deployments**.
+   * **Build Logs:** Memantau proses kompilasi Dockerfile, unduhan paket apt, dan composer install.
+   * **Deploy Logs:** Memantau eksekusi runtime, migrasi database, binding port Apache, dan access log HTTP.
+2. **Membaca Log Error Laravel (`laravel.log`):**
+   * Melalui terminal container:
+     ```bash
+     tail -n 50 /var/www/html/storage/logs/laravel.log
+     ```
+   * Untuk memantau error secara langsung (*live stream*):
+     ```bash
+     tail -f /var/www/html/storage/logs/laravel.log
+     ```
+3. **Membaca Status Queue Worker:**
+   ```bash
+   supervisorctl status
+   tail -n 50 /var/www/html/storage/logs/worker.log
+   ```
+
+---
+
+## 5. Seluruh Daftar Periksa Keamanan Produksi (Production Security Checklist)
 
 Mengacu pada daftar periksa resmi **Modul Minggu 12**, berikut adalah status pemenuhan ke-12 parameter keamanan produksi:
 
@@ -39,7 +135,7 @@ Mengacu pada daftar periksa resmi **Modul Minggu 12**, berikut adalah status pem
 
 ---
 
-## 3. Bukti Pengujian Keamanan dengan `curl` (Keluaran Nyata)
+## 6. Bukti Pengujian Keamanan dengan `curl` (Keluaran Nyata)
 
 ### A. Pengujian Proteksi Berkas Lingkungan (`/.env`)
 Membuktikan bahwa berkas rahasia `.env` (berisi app key, database password, kredensial) tidak dapat diunduh oleh publik karena document root web server diarahkan ke `/public`.
@@ -160,7 +256,7 @@ Connection: keep-alive
 
 ---
 
-## 4. Skrip Deployment Otomatis (`deploy.sh`) — Pemenuhan Build 3
+## 7. Skrip Deployment Otomatis (`deploy.sh`) — Pemenuhan Build 3
 
 Sesuai instruksi **Build Nomor 3**, berkas [`deploy.sh`](../deploy.sh) telah dibuat pada akar repositori, teruji, dan memiliki komentar penjelasan pada setiap langkahnya:
 
@@ -192,7 +288,7 @@ echo "✅ Deployment KampusLMS berhasil!"
 
 ---
 
-## 5. Manajemen Queue Worker dengan Supervisor — Pemenuhan Build 4
+## 8. Manajemen Queue Worker dengan Supervisor — Pemenuhan Build 4
 
 Sesuai ketentuan **Build Nomor 4**, antrean tugas latar belakang (*background queue worker*) dikelola oleh daemon **Supervisor** untuk menjamin worker selalu hidup secara persisten (*auto-restart on crash*).
 
@@ -236,28 +332,88 @@ kampuslms-worker:kampuslms-worker_01   RUNNING   pid 14211, uptime 04:12:35
 
 ---
 
-## 6. Daftar Masalah yang Ditemui & Cara Mengatasinya (Troubleshooting)
+## 9. Daftar Masalah yang Ditemui & Cara Mengatasinya (Troubleshooting)
 
 Sesuai instruksi **Build Nomor 5 Modul 12**, berikut adalah catatan masalah teknis nyata yang dihadapi saat proses deployment dan solusinya:
 
-### Masalah: Peringatan Browser *"The information you’re about to submit is not secure"* (Mixed Content pada Form Submission)
+---
 
+### Masalah 1: Sempat Tidak Bisa Login Karena Seeder Belum Dijalankan
+* **Gejala:**  
+  Aplikasi berhasil aktif dan halaman `/login` terbuka normal, namun saat login menggunakan akun demo bawaan (`dosen@kampuslms.test` atau `mahasiswa@kampuslms.test`), muncul pesan kesalahan bahwa kredensial tidak cocok.
+* **Penyebab Akar Masalah (*Root Cause*):**  
+  Pada saat pertama kali deployment di Railway, database baru hanya menjalankan migrasi struktur tabel (`php artisan migrate`). Seeder pengisi data awal (`DatabaseSeeder`) belum pernah dijalankan, sehingga tabel `users` kosong melompong dan tidak ada satupun akun yang terdaftar.
+* **Solusi yang Diterapkan:**  
+  Menjalankan seeder secara eksplisit melalui Railway CLI / Docker startup script dengan flag `--force`:
+  ```bash
+  php artisan db:seed --force
+  ```
+  Setelah data terisi, akun admin, dosen, dan mahasiswa langsung dapat digunakan untuk login.
+
+---
+
+### Masalah 2: Kontainer Crash Berulang Kali Akibat Start Command `php artisan db:seed`
+* **Gejala:**  
+  Status deployment di Railway berubah menjadi merah (*CrashLoopBackOff* / *Application Failed to Start*) dan website tidak dapat diakses sama sekali.
+* **Penyebab Akar Masalah (*Root Cause*):**  
+  Ketika mencoba mengatasi masalah nomor 1, kami tidak sengaja menuliskan perintah `php artisan db:seed` ke dalam kolom **Custom Start Command** pada pengaturan Railway.  
+  Di Railway, proses pada *Start Command* harus berupa proses yang berjalan terus-menerus di latar depan (*foreground daemon*). Perintah `db:seed` adalah tugas sekali jalan yang langsung selesai (*exit*). Ketika perintah selesai, Railway mengira kontainer mati (*crashed*), lalu mencoba merestartnya secara berulang-ulang hingga gagal.
+* **Solusi yang Diterapkan:**  
+  Mengosongkan kolom **Custom Start Command** di dashboard Railway agar Railway kembali menjalankan perintah bawaan `CMD` yang ada pada `Dockerfile` (`exec apache2-foreground`).
+
+---
+
+### Masalah 3: Faker Tidak Berjalan di Server Produksi
+* **Gejala:**  
+  Saat proses seeding di server produksi dijalankan, muncul error fatal:  
+  `Class "Faker\Factory" not found`.
+* **Penyebab Akar Masalah (*Root Cause*):**  
+  Pada file `Dockerfile` standar produksi, dependensi composer diinstal menggunakan flag `--no-dev`:
+  ```dockerfile
+  RUN composer install --no-dev --optimize-autoloader
+  ```
+  Paket generator data palsu `fakerphp/faker` berada di bawah grup `"require-dev"` pada `composer.json`. Akibatnya, Faker tidak ikut terpasang di kontainer produksi, sehingga seeder yang membutuhkan data dummy gagal berjalan.
+* **Solusi yang Diterapkan:**  
+  Menghapus flag `--no-dev` pada baris kompilasi di `Dockerfile` menjadi:
+  ```dockerfile
+  RUN composer install --optimize-autoloader --no-interaction --ignore-platform-reqs
+  ```
+  Dengan menghapus `--no-dev`, pustaka Faker tetap terpasang di container produksi sehingga seeding untuk keperluan akun demo UTS/Tugas berjalan lancar.
+
+---
+
+### Masalah 4: Kontainer Crash Akibat Konfigurasi Port Ganda (`EXPOSE 80 8080`)
+* **Gejala:**  
+  Aplikasi sempat crash dan gagal binding jaringan saat deploy ke Railway karena port yang terdeteksi hanya sampai port 80.
+* **Penyebab Akar Masalah (*Root Cause*):**  
+  Dockerfile panduan awal dari asisten dosen mencantumkan:
+  ```dockerfile
+  EXPOSE 80 8080
+  ```
+  Sementara pada lingkungan produksi Railway, port yang digunakan untuk binding aplikasi adalah port `8080`. Karena yang terbaca oleh sistem Railway adalah port pertama (port 80), terjadi ketidakcocokan port sehingga healthcheck Railway gagal mendeteksi aplikasi.
+* **Solusi yang Diterapkan:**  
+  Mengubah baris ekspose port pada `Dockerfile` secara spesifik menjadi:
+  ```dockerfile
+  EXPOSE 8080
+  ```
+  Dengan hanya mengekspose port 8080, Railway langsung mengenali port yang tepat dan kontainer berjalan dengan stabil.
+
+---
+
+### Masalah 5: Peringatan Browser *"The information you’re about to submit is not secure"* (Mixed Content pada Form Submission)
 * **Gejala:**  
   Website dapat diakses dengan mulus via HTTPS (`https://kampuslms-...`). Namun, setiap kali pengguna menekan tombol kirim formulir (seperti tombol Login atau submit tugas), browser memblokir dan menampilkan layar peringatan merah:  
   > *"The information you’re about to submit is not secure. Because this form is being submitted using a connection that’s not secure, your information will be visible to others."*
-
 * **Penyebab Akar Masalah (*Root Cause*):**  
   Arsitektur cloud Railway menggunakan **Reverse Proxy (Edge Proxy)**. Browser pengguna berkomunikasi dengan proxy menggunakan **HTTPS**, namun proxy meneruskan request ke dalam container Apache Laravel melalui jaringan internal menggunakan **HTTP biasa** (port 8080).  
   Secara default di Laravel 12, Laravel belum mempercayai reverse proxy tersebut. Akibatnya:
   1. Helper Laravel `route(...)` dan `url(...)` mengira koneksi yang datang adalah HTTP biasa, sehingga menghasilkan atribut formulir `<form action="http://...">`.
   2. Browser mendeteksi halaman HTTPS mengirimkan formulir ke URL HTTP (insecure mixed form submission) dan langsung menampilkan peringatan keamanan.
-
 * **Solusi yang Diterapkan:**
   1. Menambahkan konfigurasi *Trust Proxies* pada berkas `bootstrap/app.php`:
      ```php
      ->withMiddleware(function (Middleware $middleware) {
          $middleware->trustProxies(at: '*');
-         // ...
      })
      ```
      Dengan baris ini, Laravel membaca header `X-Forwarded-Proto: https` yang dikirimkan oleh Railway Edge Proxy dan mengenali bahwa koneksi pengguna sebenarnya adalah HTTPS.
@@ -266,11 +422,11 @@ Sesuai instruksi **Build Nomor 5 Modul 12**, berikut adalah catatan masalah tekn
 
 ---
 
-## 7. Kesimpulan Evaluasi Milestone M4
+## 10. Kesimpulan Evaluasi Milestone M4
 
 Berdasarkan hasil pengujian di atas:
 1. **Build 1:** Aplikasi telah aktif live di domain publik dengan HTTPS dan tautan sudah tersemat di baris awal `README.md`.
 2. **Build 2:** Seluruh 12 poin daftar periksa keamanan produksi telah terverifikasi dengan bukti keluaran `curl` yang sesungguhnya.
 3. **Build 3:** Skrip `deploy.sh` telah tersedia di akar repositori, berkomentar lengkap, dan menerapkan kaidah `set -e` serta `queue:restart`.
 4. **Build 4:** Konfigurasi worker Supervisor (`kampuslms-worker.conf`) dan bukti keluaran `supervisorctl status` telah disertakan.
-
+5. **Build 5:** Dokumentasi deployment telah mencakup spesifikasi teknis, panduan instalasi dari nol, cara deployment ulang, cara membaca log, dan 5 studi kasus pemecahan masalah teknis nyata.

@@ -161,6 +161,7 @@
 </head>
 <body>
 
+    @if (!request()->routeIs('login'))
     <nav style="justify-content: space-between; flex-wrap: wrap;">
         <div style="display: flex; gap: 1.5rem; align-items: center;">
             <a href="{{ route('dashboard') }}" class="{{ request()->routeIs('dashboard') ? 'active' : '' }}"><i class="fas fa-home"></i> Dashboard</a>
@@ -208,6 +209,7 @@
             @endauth
         </div>
     </nav>
+    @endif
 
     <main>
         {{-- Flash messages untuk seluruh halaman --}}

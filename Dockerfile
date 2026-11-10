@@ -31,8 +31,8 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 WORKDIR /var/www/html
 COPY . .
 
-# 6. Install dependensi composer produksi
-RUN composer install --no-dev --optimize-autoloader --no-interaction --ignore-platform-reqs
+# 6. Install dependensi composer (sertakan Faker untuk seeding data demo)
+RUN composer install --optimize-autoloader --no-interaction --ignore-platform-reqs
 
 # 7. Berikan hak akses ke storage dan cache
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \

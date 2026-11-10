@@ -22,7 +22,7 @@
             line-height: 1.6;
         }
         nav { 
-            background: #0f172a; 
+            background: #0f172a;
             padding: 1rem 2rem; 
             display: flex; 
             gap: 1.5rem; 

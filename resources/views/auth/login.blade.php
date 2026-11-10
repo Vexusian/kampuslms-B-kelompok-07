@@ -1,5 +1,5 @@
 <x-layout title="Masuk - KampusLMS">
-    <div style="max-width: 440px; margin: 1.5rem auto;">
+    <div style="max-width: 440px; margin: 0 auto;">
         <div style="text-align: center; margin-bottom: 2rem;">
             <div style="width: 56px; height: 56px; border-radius: 12px; background: #dbeafe; color: #1d4ed8; display: inline-flex; align-items: center; justify-content: center; font-size: 1.5rem; margin-bottom: 0.75rem;">
                 <i class="fas fa-lock"></i>

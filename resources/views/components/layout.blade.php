@@ -211,7 +211,7 @@
     </nav>
     @endif
 
-    <main>
+    <main style="{{ request()->routeIs('login') ? 'max-width: 480px; margin: 2.5rem auto; padding: 0 1rem; background: transparent; box-shadow: none;' : '' }}">
         {{-- Flash messages untuk seluruh halaman --}}
         @if (session('success'))
             <div class="alert alert-success">

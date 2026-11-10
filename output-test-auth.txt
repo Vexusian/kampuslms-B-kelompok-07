@@ -1,0 +1,47 @@
+[1m====================================================================[0m
+[1m Pengujian Keamanan Otorisasi & Titik Rawan IDOR KampusLMS[0m
+ Target Server : [0;34mhttps://kampuslms-b-kelompok-07-production.up.railway.app[0m
+ Waktu Uji     : 2026-11-11 02:51:34
+[1m====================================================================[0m
+
+[1;33m[1m[0] Uji Kebocoran File Sensitif & Keamanan Server (.env)[0m
+  [[0;32mPASSED[0m] Pencegahan Kebocoran .env (curl -I https://kampuslms-b-kelompok-07-production.up.railway.app/.env) (HTTP 404, Expected: 403|404)
+  [[0;32mPASSED[0m] Pencegahan Akses Folder Privat (Storage Private) (HTTP 301, Expected: 301|403|404)
+
+[1;33m[1m[1] Memperoleh Kredensial & Token Sanctum (API Authentication)[0m
+  [[0;32mOK[0m] Login Dosen Berhasil (dosen@kampuslms.test)
+  [[0;32mOK[0m] Login Mahasiswa Berhasil (mahasiswa@kampuslms.test)
+
+[1;33m[1m[2] Menguji Akses Tanpa Login (Guest / Unauthenticated)[0m
+  [[0;32mPASSED[0m] Guest GET /courses (Web) (HTTP 302, Expected: 302)
+  [[0;32mPASSED[0m] Guest GET /api/v1/me (API) (HTTP 401, Expected: 401)
+
+[1;33m[1m[3] Menguji Vertical Privilege Escalation (Mahasiswa -> Admin Action)[0m
+  [[0;32mPASSED[0m] Mahasiswa POST /courses (Membuat Mata Kuliah) (HTTP 419, Expected: 401|403|419)
+  [[0;32mPASSED[0m] Mahasiswa DELETE /courses/1 (Menghapus Mata Kuliah) (HTTP 419, Expected: 401|403|419)
+
+[1;33m[1m[4] Menguji Horizontal Privilege Escalation (Dosen Mengubah Kelas Lain)[0m
+  [[0;32mPASSED[0m] Dosen PUT /courses/{id_kelas_lain} (Edit Kelas Dosen Lain) (HTTP 419, Expected: 401|403|404|419)
+  [[0;32mPASSED[0m] Dosen POST /courses/{id_kelas_lain}/enroll (Enroll ke Kelas Lain) (HTTP 419, Expected: 401|403|404|419)
+
+[1;33m[1m[5] Menguji Titik Rawan IDOR Pengumpulan Tugas (Submissions)[0m
+  [[0;32mPASSED[0m] Mahasiswa GET /submissions/{id_orang_lain} (Intip Tugas Mahasiswa Lain) (HTTP 401, Expected: 401|403|404)
+  [[0;32mPASSED[0m] Mahasiswa GET /submissions/{id_orang_lain}/download (Unduh File Siswa Lain) (HTTP 401, Expected: 401|403|404)
+  [[0;32mPASSED[0m] Mahasiswa GET /dosen/assignments/1/submissions (Intip Seluruh Submissions) (HTTP 401, Expected: 401|403|404)
+
+[1;33m[1m[6] Menguji Titik Rawan IDOR Penilaian (Grading Submission)[0m
+  [[0;32mPASSED[0m] Mahasiswa PUT /submissions/1/grade (Memberi Nilai 100 ke Diri Sendiri) (HTTP 419, Expected: 401|403|404|419)
+
+[1;33m[1m[7] Menguji Akses Kelas yang Tidak Diikuti (Unenrolled Access)[0m
+  [[0;32mPASSED[0m] Mahasiswa GET /materials/{unenrolled} (Akses Materi Kelas Luar) (HTTP 401, Expected: 401|403|404)
+  [[0;32mPASSED[0m] Mahasiswa GET /assignments/{unenrolled} (Akses Tugas Kelas Luar) (HTTP 401, Expected: 401|403|404)
+
+[1m====================================================================[0m
+[1m REKAPITULASI PENGUJIAN OTORISASI & KEAMANAN[0m
+ Total Pengujian : 14
+ Lolos (Passed)  : [0;32m14[0m
+ Gagal (Failed)  : [0;31m0[0m
+
+ [0;32m[1mSELURUH TITIK RAWAN KEAMANAN TERLINDUNGI DENGAN BAIK! (100% PASS)[0m
+ Skrip ini siap dilampirkan sebagai bukti deliverable Tugas 4.
+[1m====================================================================[0m

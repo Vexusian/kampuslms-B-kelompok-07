@@ -4,19 +4,116 @@ Dokumen ini mencatat bukti implementasi deployment aplikasi **KampusLMS** di lin
 
 ---
 
-## 1. Informasi Deployment Produksi
+## 1. Informasi & Spesifikasi Server Produksi
 
 * **Nama Proyek:** KampusLMS (Kelas B - Kelompok 07)
-* **Penyedia Layanan (PaaS):** Railway
+* **Penyedia Layanan (PaaS/Cloud):** Railway Cloud Infrastructure
 * **URL Domain Publik (HTTPS):** [https://kampuslms-b-kelompok-07-production.up.railway.app](https://kampuslms-b-kelompok-07-production.up.railway.app)
-* **Protokol:** HTTPS (Terenkripsi dengan SSL/TLS Otomatis)
+* **Protokol:** HTTPS (Terenkripsi dengan Sertifikat SSL/TLS Otomatis)
 * **Lingkungan (*Environment*):** `APP_ENV=production`, `APP_DEBUG=false`
+* **Versi PHP:** PHP 8.4.27 (CLI & FPM) dengan ekstensi `pdo_mysql`, `mbstring`, `openssl`, `fileinfo`, `curl`
+* **Web Server & Reverse Proxy:** `railway-hikari` (Edge Nginx Reverse Proxy with SSL Termination)
+* **Basis Data:** MySQL 8.x Terkelola (*Managed Database Engine*)
+* **Queue Connection:** Database (`QUEUE_CONNECTION=database`) diproses oleh daemon queue worker
 
 Tautan aplikasi live ini juga telah dicantumkan di bagian paling atas berkas [`README.md`](../README.md) agar mudah ditemukan dan diakses oleh penguji.
 
 ---
 
-## 2. Daftar Periksa Keamanan Produksi (Production Security Checklist)
+## 2. Prosedur Deployment dari Nol (Langkah Demi Langkah)
+
+Berikut adalah panduan lengkap menyiapkan lingkungan produksi dari awal (*from scratch*):
+
+1. **Inisialisasi Project di Railway / Server:**
+   * Buat service baru yang terhubung ke repositori GitHub `kampuslms-B-kelompok-07`.
+   * Lampirkan add-on database MySQL di project yang sama.
+2. **Konfigurasi Variabel Lingkungan (*Environment Variables*):**
+   Tambahkan variabel lingkungan produksi wajib berikut:
+   ```env
+   APP_NAME="KampusLMS"
+   APP_ENV=production
+   APP_KEY=base64:... (dihasilkan melalui php artisan key:generate)
+   APP_DEBUG=false
+   APP_URL=https://kampuslms-b-kelompok-07-production.up.railway.app
+
+   DB_CONNECTION=mysql
+   DB_HOST=${{MySQL.MYSQLHOST}}
+   DB_PORT=${{MySQL.MYSQLPORT}}
+   DB_DATABASE=${{MySQL.MYSQLDATABASE}}
+   DB_USERNAME=${{MySQL.MYSQLUSER}}
+   DB_PASSWORD=${{MySQL.MYSQLPASSWORD}}
+
+   QUEUE_CONNECTION=database
+   SESSION_DRIVER=database
+   SESSION_SECURE_COOKIE=true
+   ```
+3. **Penyusunan Perintah Build & Start (*Build & Start Command*):**
+   * **Build Command:**
+     ```bash
+     composer install --no-dev --optimize-autoloader && npm ci && npm run build
+     ```
+   * **Start / Release Command:**
+     ```bash
+     php artisan migrate --force && php artisan optimize && php artisan db:seed --force
+     ```
+4. **Verifikasi Awal:**
+   Buka URL publik, pastikan respon HTTP mengembalikan status `200 OK` dan tidak ada error 500.
+
+---
+
+## 3. Cara Deployment Ulang (Redeployment) & Penggunaan `deploy.sh`
+
+Untuk pembaruan rutin kode aplikasi pada server produksi, repositori telah dilengkapi skrip [`deploy.sh`](../deploy.sh) yang teruji:
+
+### Perintah Eksekusi:
+```bash
+chmod +x deploy.sh
+./deploy.sh
+```
+
+### Urutan Logika Skrip `deploy.sh`:
+1. `set -e` — Memastikan skrip berhenti seketika bila ada satu perintah yang gagal.
+2. `php artisan down` — Mengaktifkan mode maintenance agar pengguna tidak mengalami error saat file diperbarui.
+3. `git pull origin main` — Menarik pembaruan kode terbaru.
+4. `composer install --no-dev --optimize-autoloader` — Menginstal pustaka PHP produksi.
+5. `php artisan migrate --force` — Memperbarui skema database bila ada migrasi baru.
+6. `php artisan optimize:clear && php artisan optimize` — Menghapus cache lama dan membuat ulang cache `config`, `routes`, serta `views`.
+7. `php artisan queue:restart` — **Wajib!** Merestart proses daemon worker antrean agar membaca kode PHP baru di memori RAM.
+8. `php artisan about` — Verifikasi kesehatan internal framework sebelum aplikasi dibuka kembali.
+9. `php artisan up` — Menonaktifkan mode maintenance sehingga aplikasi live kembali.
+
+---
+
+## 4. Panduan Membaca Log Produksi & Diagnosis Masalah (Tanpa `APP_DEBUG`)
+
+Pada lingkungan produksi dengan `APP_DEBUG=false`, error 500 sengaja disembunyikan dari layar pengguna agar kode sumber dan kredensial tidak bocor. Berikut adalah panduan membaca log untuk mendiagnosis masalah:
+
+### A. Lokasi Berkas Log Laravel
+Seluruh *stack trace* dan pesan pengecualian (*exceptions*) tercatat secara otomatis di:
+```bash
+storage/logs/laravel.log
+```
+
+### B. Perintah Memeriksa Log di Server
+1. **Melihat 50 baris error terakhir secara realtime:**
+   ```bash
+   tail -n 50 -f storage/logs/laravel.log
+   ```
+2. **Mencari pesan error spesifik:**
+   ```bash
+   grep -i "error" storage/logs/laravel.log | tail -n 20
+   ```
+3. **Memantau antrean / background job yang gagal:**
+   ```bash
+   php artisan queue:failed
+   ```
+4. **Melalui Antarmuka Dashboard Railway:**
+   * Buka Dashboard Railway &rarr; Pilih service `kampuslms` &rarr; Tab **Deploy Logs** atau **Runtime Logs**.
+   * Log runtime menampilkan seluruh error level PHP-FPM, Nginx, dan Laravel secara langsung.
+
+---
+
+## 5. Daftar Periksa Keamanan Produksi (Production Security Checklist)
 
 Berikut adalah status pemenuhan daftar periksa keamanan produksi:
 
@@ -91,10 +188,45 @@ Connection: keep-alive
 
 ---
 
-## 4. Kesimpulan
+## 4. Verifikasi Fungsionalitas Akun Demo di Produksi (Milestone M4 - Poin 7)
 
-Seluruh kriteria deployment dan keamanan produksi telah terpenuhi:
-1. Domain publik [https://kampuslms-b-kelompok-07-production.up.railway.app](https://kampuslms-b-kelompok-07-production.up.railway.app) beroperasi dengan aman di bawah protokol HTTPS.
-2. Tautan domain telah disematkan di bagian atas berkas `README.md`.
-3. Berkas rahasia `.env` terbukti aman dan tidak dapat diakses secara publik dengan bukti keluaran nyata status `HTTP/1.1 404 Not Found`.
+Seluruh akun demo telah di-seed ke basis data produksi menggunakan `DatabaseSeeder` (`php artisan db:seed`) dan diverifikasi secara langsung pada domain publik [https://kampuslms-b-kelompok-07-production.up.railway.app](https://kampuslms-b-kelompok-07-production.up.railway.app). Pengujian dilakukan untuk memastikan ketiga peran (*roles*) dapat melakukan autentikasi dan mengakses hak otorisasi masing-masing secara benar:
+
+| Peran (*Role*) | Email Akun Demo | Kata Sandi | Status Login | Hasil Verifikasi Fungsionalitas |
+|:---:|---|:---:|:---:|---|
+| **Admin** | `admin@kampuslms.test` | `password` | **Berhasil (200 OK)** | Akses dashboard manajemen admin, mampu mengelola akun pengguna (*users*), serta memantau data master mata kuliah. |
+| **Dosen** | `dosen@kampuslms.test` | `password` | **Berhasil (200 OK)** | Menampilkan kelas yang diampu (misal: Course seeder), melihat materi, membuat penugasan (*assignment*), dan mengakses daftar submission tugas mahasiswa untuk penilaian. |
+| **Mahasiswa** | `mahasiswa@kampuslms.test` | `password` | **Berhasil (200 OK)** | Menampilkan mata kuliah yang diikuti (*enrolled courses*), mengakses dan mengunduh materi privat, serta membuka halaman pengumpulan tugas untuk submission. |
+
+> **Catatan Pengujian:**  
+> Ketiga peran diuji dengan alur login & logout lengkap pada browser produksi. Tidak ditemukan error 403 (*unauthorized/forbidden*) atau 500 (*internal server error*) pada alur kerja utama masing-masing peran.
+
+---
+
+## 5. Pengujian Lintas Perangkat / Uji Mobile (Milestone M4 - Poin 8)
+
+Pengujian dilakukan dari berbagai perangkat *smartphone* milik anggota kelompok menggunakan jaringan seluler publik (di luar jaringan lokal pengembang) untuk membuktikan aksesibilitas publik dan responsivitas antarmuka (*mobile responsiveness*):
+
+| No. | Penguji (Anggota) | Perangkat & Sistem Operasi | Peramban (*Browser*) | Fitur yang Diuji| Status & Hasil Pengamatan | Lampiran |
+|:---:|---|---|---|---|---|---|
+| 1 | **Vanessa Marie Tandiarru** | Apple iPhone 13 (iOS) | Safari Mobile | Halaman Login, Navigasi Menu, Tabel Tugas Mahasiswa | **LOLOS (Terverifikasi Screenshot)**: Layout proporsional, navbar terstruktur rapi, tabel tugas memuat status *"Sudah Dikumpulkan"*, tidak ada horizontal scroll bocor. | ![alt text](image.png) |
+| 2 | **Wahyu Ramadan / Tim ** | Realme Note 60 (Android) | Google Chrome Mobile | Dashboard Dosen, 4 Kartu Metrik, Tabel Matkul Ampuan, Penugasan Terbaru | **LOLOS (Terverifikasi Screenshot)**: 4 kartu metrik (*Mata Kuliah: 2, Peserta: 24, Materi & Tugas: 15, Pengajar: 1*) tampil utuh, tombol *"Detail"* & *"Edit"* presisi, alur penugasan & *"Akses Cepat"* berjalan sempurna. | ![alt text](image-1.png) |
+| 3 | **Tresia Uyang** | Xiaomi Redmi Note 12 (Android 13) | Google Chrome Mobile | Alur Mahasiswa, Detail Tugas & Form Upload Berkas | **LOLOS (Terverifikasi Screenshot)**: Tombol aksi mudah ditekan (*touch-friendly*), dialog pemilihan berkas (*file picker*) ponsel berfungsi lancar untuk unggahan tugas. |  ![alt text](image-3.png)|
+| 4 | **Zalfa Putri Sopyandi** | Infinix Note 30 (Android 13) | Google Chrome Mobile | Responsivitas Halaman Detail Mata Kuliah & Feedback Nilai | **LOLOS (Terverifikasi Screenshot)**: Elemen alert, badges status tugas, dan feedback nilai tertata rapi sesuai *viewport* layar ponsel. | ![alt text](image-2.png) ![alt text](image-4.png) |
+
+> **Analisis Pengujian Mobile:**  
+> Aplikasi KampusLMS telah memenuhi standar *responsive web design* (RWD) menggunakan Tailwind CSS. Seluruh interaksi penting (login, navigasi menu, membaca materi, pengumpulan tugas) dapat dieksekusi dengan baik pada peramban seluler tanpa kerusakan komponen visual.
+
+---
+
+## 6. Kesimpulan & Status Pemenuhan Milestone M4
+
+Seluruh kriteria deployment, audit keamanan, dan verifikasi akhir untuk Milestone M4 telah terpenuhi:
+1. **Domain Publik & HTTPS Aktif:** Aplikasi aktif dan dapat diakses publik di [https://kampuslms-b-kelompok-07-production.up.railway.app](https://kampuslms-b-kelompok-07-production.up.railway.app) dengan sertifikat SSL/TLS valid. Tautan telah dicantumkan di `README.md`.
+2. **Daftar Periksa Keamanan Terpenuhi:** Berkas sensitif (`.env`, `.git`) terbukti tidak dapat diakses publik (`404 Not Found`), mode debug `APP_DEBUG=false`, dan cookie sesi terproteksi atribut `HttpOnly` serta `SameSite=lax`.
+3. **Akun Demo Berfungsi Penuh (Poin 7):** Akun Admin, Dosen Demo, dan Mahasiswa Demo terbukti dapat digunakan untuk login dan mengoperasikan fitur sesuai perannya.
+4. **Pengujian Lintas Perangkat Tuntas (Poin 8):** Aplikasi telah diuji dari *smartphone* anggota kelompok (iOS & Android) melalui jaringan publik dengan hasil tampilan responsif dan seluruh fungsi berjalan optimal.
+
+
+
 

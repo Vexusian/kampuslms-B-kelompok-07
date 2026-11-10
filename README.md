@@ -1,5 +1,11 @@
 # Kampus LMS
 
+> 🌐 **Live Deployment (Produksi):**  
+> **URL Publik (HTTPS):** [https://kampuslms-b-kelompok-07-production.up.railway.app](https://kampuslms-b-kelompok-07-production.up.railway.app)  
+> *Aplikasi telah aktif (live) di domain publik dengan sertifikat SSL/TLS (HTTPS) terverifikasi.*
+
+---
+
 ## Nama Proyek
 
 **Kampus LMS**

@@ -17,13 +17,14 @@ Dalam pembagian tugas Milestone M4 (Minggu 12), saya bertanggung jawab secara kh
      - **Dosen Demo (`dosen@kampuslms.test` / `password`):** Berhasil login dan memverifikasi dashboard dosen yang mengampu 2 kelas aktif dengan total 24 peserta kelas.
      - **Mahasiswa Demo (`mahasiswa@kampuslms.test` / `password`):** Berhasil login dan memverifikasi 5 mata kuliah terdaftar serta daftar penugasan dengan status *"Sudah Dikumpulkan"*.
 
-2. **Pengujian Lintas Perangkat / Mobile pada Apple iPhone 13 (Poin 8):**
-   - Menguji aplikasi secara langsung dari peramban **Safari Mobile (iOS)** melalui jaringan seluler publik (di luar jaringan lokal pengembang) dengan mode Tab Pribadi.
+2. **Pengujian Lintas Perangkat / Mobile pada Vivo V23e (Poin 8):**
+   - Menguji aplikasi secara langsung dari peramban **Google Chrome Mobile (Android)** melalui jaringan seluler publik (di luar jaringan lokal pengembang).
    - **Hasil Pengujian Antarmuka:**
      - Header navigasi (*Dashboard*, *Mata Kuliah*, *Tentang*, *Notifikasi*) proporsional dan tidak mengalami tumpang tindih.
      - Kartu statistik dashboard secara adaptif menyusun menjadi tata letak satu kolom vertikal (*single-column*) yang ergonomis untuk layar ponsel.
      - Tabel mata kuliah dan tabel pengumpulan tugas tertata rapi tanpa menyebabkan kebocoran gulir horizontal (*no horizontal overflow*), dan lencana status (*badges*) berwarna kontras serta mudah dibaca.
      - Seluruh tombol aksi (*Kelas Saya*, *Detail*, *Logout*) memiliki ukuran area sentuh yang nyaman (*touch-friendly*).
+   - Lampiran bukti tangkapan layar telah tersimpan di `docs/images/image.jpeg`.
 
 3. **Troubleshooting Masalah Keamanan Reverse Proxy & Form Submission:**
    - Menemukan dan mengatasi kendala peringatan peramban *"The information you're about to submit is not secure"* pada form login.
@@ -62,7 +63,13 @@ Folder `public/` sengaja dirancang oleh arsitektur Laravel sebagai satu-satunya 
 ### 4. Tunjukkan `supervisorctl status`. Apa akibatnya kalau worker mati dan tidak ada yang tahu?
 
 **Jawaban:**
-- Perintah `supervisorctl status` menampilkan status proses daemon queue worker di server (misalnya: `RUNNING pid 1234, uptime 2 days`).
+- **Keluaran Aktual di Server (Railway Console):**
+  ```text
+  root@46680c9c6602:/var/www/html# supervisorctl status
+  kampuslms-worker:kampuslms-worker_00   RUNNING   pid 433, uptime 0:00:23
+  kampuslms-worker:kampuslms-worker_01   RUNNING   pid 434, uptime 0:00:23
+  ```
+  *(Tangkapan layar terminal telah dilampirkan pada `docs/images/supervisor.png`).*
 - **Akibat Jika Worker Mati Tanpa Diketahui:**
   Seluruh job antrean latar belakang (*background jobs*)—seperti pengiriman email notifikasi penugasan baru kepada puluhan mahasiswa—akan tertahan di tabel `jobs` database dan tidak pernah diproses. Dosen mengira notifikasi sudah terkirim, padahal mahasiswa tidak pernah menerimanya (*silent failure*).
 

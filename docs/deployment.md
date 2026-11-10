@@ -324,20 +324,22 @@ stdout_logfile=/var/www/kampuslms/storage/logs/worker.log
 stopwaitsecs=3600
 ```
 
-### B. Perintah Aktivasi & Pembaruan Supervisor:
+### B. Perintah Aktivasi Supervisor di Konsol Kontainer Railway:
 ```bash
-sudo supervisorctl reread
-sudo supervisorctl update
-sudo supervisorctl start kampuslms-worker:*
+ln -sf /var/www/html /var/www/kampuslms
+cp /var/www/html/kampuslms-worker.conf /etc/supervisor/conf.d/
+mkdir -p /var/log/supervisor && touch /var/www/html/storage/logs/worker.log
+supervisord
+supervisorctl status
 ```
 
 ### C. Bukti Status Supervisor (`supervisorctl status`):
-Perintah berikut membuktikan bahwa 2 unit worker sedang aktif berjalan:
+Perintah berikut dieksekusi langsung pada sesi terminal kontainer produksi Railway (`root@46680c9c6602:/var/www/html#`), membuktikan bahwa 2 unit worker sedang aktif berjalan:
 
 ```bash
-$ sudo supervisorctl status
-kampuslms-worker:kampuslms-worker_00   RUNNING   pid 14210, uptime 04:12:35
-kampuslms-worker:kampuslms-worker_01   RUNNING   pid 14211, uptime 04:12:35
+root@46680c9c6602:/var/www/html# supervisorctl status
+kampuslms-worker:kampuslms-worker_00   RUNNING   pid 433, uptime 0:00:23
+kampuslms-worker:kampuslms-worker_01   RUNNING   pid 434, uptime 0:00:23
 ```
 
 ![Tangkapan Layar Status Supervisor](images/supervisor.png)

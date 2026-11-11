@@ -128,7 +128,7 @@ Mengacu pada daftar periksa resmi **Modul Minggu 12**, berikut adalah status pem
 | 5 | HTTPS aktif & HTTP dialihkan ke HTTPS | Akses HTTP dialihkan secara otomatis ke HTTPS. | **LULUS** | Terbukti via `curl -I`: `HTTP/1.1 308 Permanent Redirect` ke `https://`. |
 | 6 | `SESSION_SECURE_COOKIE=true` | Cookie sesi hanya boleh dikirim melalui jalur terenkripsi HTTPS (`secure` flag). | **LULUS** | `trustProxies(at: '*')` aktif dan cookie membawa atribut `secure; httponly; samesite=lax`. |
 | 7 | Kata sandi database aman | Bukan kata sandi lokal default (seperti `root` / kosong / `password`). | **LULUS** | Menggunakan variabel aman yang digenerate otomatis oleh Railway Managed MySQL. |
-| 8 | Kredensial akun demo terlindungi | Akun demo memakai sandi produksi yang aman dan dipisah dari dokumen publik. | **LULUS** | Akun demo di-seed dengan hash bcrypt aman. |
+| 8 | Kredensial akun demo terlindungi | Akun demo memakai sandi produksi yang aman dan dipisah dari dokumen publik. | **LULUS** | Panel akun demo & kredensial di halaman `/login` disembunyikan di produksi (hanya aktif di environment lokal via `app()->environment('local')`). |
 | 9 | Skrip pengujian otorisasi lolos | Seluruh endpoint otorisasi (role-based policy) lolos uji di server produksi. | **LULUS** | Kebijakan akses dosen, mahasiswa, dan admin konsisten dengan modul minggu 7. |
 | 10 | Berkas submission privat | Berkas submission tugas tidak boleh bisa diunduh tanpa login / otorisasi. | **LULUS** | Disimpan di disk `local` (privat) dan hanya dapat diunduh via Controller + Policy. |
 | 11 | Queue worker berjalan | Antrean tugas berjalan di latar belakang (background worker). | **LULUS** | Queue database aktif untuk pengiriman notifikasi asinkron. |

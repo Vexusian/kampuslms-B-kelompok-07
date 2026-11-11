@@ -52,45 +52,41 @@
             </button>
         </form>
 
-        {{-- Panel Akun Demo untuk Interview & Demo Cepat UTS --}}
-        <div style="margin-top: 1.75rem; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 8px; padding: 1.25rem;">
-            <p style="font-size: 0.85rem; font-weight: 700; color: #475569; margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px;">
-                <i class="fas fa-id-badge" style="color: #2563eb;"></i> Akun Demonstrasi (Demo UTS):
-            </p>
-            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-                <div style="display: flex; justify-content: space-between; align-items: center; background: white; padding: 0.5rem 0.75rem; border-radius: 6px; border: 1px solid #e2e8f0; font-size: 0.85rem;">
-                    <div>
-                        <strong style="color: #0f172a;">Admin Kampus</strong>
-                        <div style="color: #64748b; font-size: 0.75rem;">admin@kampuslms.test</div>
-                    </div>
-                    @if(app()->environment('local'))
+        @if(app()->environment('local'))
+            {{-- Panel Akun Demo untuk Pengujian Lokal --}}
+            <div style="margin-top: 1.75rem; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 8px; padding: 1.25rem;">
+                <p style="font-size: 0.85rem; font-weight: 700; color: #475569; margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                    <i class="fas fa-id-badge" style="color: #2563eb;"></i> Akun Demonstrasi (Khusus Lokal):
+                </p>
+                <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; background: white; padding: 0.5rem 0.75rem; border-radius: 6px; border: 1px solid #e2e8f0; font-size: 0.85rem;">
+                        <div>
+                            <strong style="color: #0f172a;">Admin Kampus</strong>
+                            <div style="color: #64748b; font-size: 0.75rem;">admin@kampuslms.test</div>
+                        </div>
                         <a href="{{ route('dev.login', 1) }}" class="btn btn-sm btn-secondary" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">Click u/ Login</a>
-                    @endif
-                </div>
-
-                <div style="display: flex; justify-content: space-between; align-items: center; background: white; padding: 0.5rem 0.75rem; border-radius: 6px; border: 1px solid #e2e8f0; font-size: 0.85rem;">
-                    <div>
-                        <strong style="color: #0f172a;">Dosen Demo</strong>
-                        <div style="color: #64748b; font-size: 0.75rem;">dosen@kampuslms.test</div>
                     </div>
-                    @if(app()->environment('local'))
+
+                    <div style="display: flex; justify-content: space-between; align-items: center; background: white; padding: 0.5rem 0.75rem; border-radius: 6px; border: 1px solid #e2e8f0; font-size: 0.85rem;">
+                        <div>
+                            <strong style="color: #0f172a;">Dosen Demo</strong>
+                            <div style="color: #64748b; font-size: 0.75rem;">dosen@kampuslms.test</div>
+                        </div>
                         <a href="{{ route('dev.login', 2) }}" class="btn btn-sm btn-secondary" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">Click u/ Login</a>
-                    @endif
-                </div>
-
-                <div style="display: flex; justify-content: space-between; align-items: center; background: white; padding: 0.5rem 0.75rem; border-radius: 6px; border: 1px solid #e2e8f0; font-size: 0.85rem;">
-                    <div>
-                        <strong style="color: #0f172a;">Mahasiswa Demo</strong>
-                        <div style="color: #64748b; font-size: 0.75rem;">mahasiswa@kampuslms.test</div>
                     </div>
-                    @if(app()->environment('local'))
+
+                    <div style="display: flex; justify-content: space-between; align-items: center; background: white; padding: 0.5rem 0.75rem; border-radius: 6px; border: 1px solid #e2e8f0; font-size: 0.85rem;">
+                        <div>
+                            <strong style="color: #0f172a;">Mahasiswa Demo</strong>
+                            <div style="color: #64748b; font-size: 0.75rem;">mahasiswa@kampuslms.test</div>
+                        </div>
                         <a href="{{ route('dev.login', 5) }}" class="btn btn-sm btn-secondary" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">Click /u Login</a>
-                    @endif
+                    </div>
                 </div>
+                <p style="font-size: 0.75rem; color: #94a3b8; margin-top: 0.75rem; text-align: center;">
+                    Kata sandi untuk seluruh akun seeder: <code>password</code>
+                </p>
             </div>
-            <p style="font-size: 0.75rem; color: #94a3b8; margin-top: 0.75rem; text-align: center;">
-                Kata sandi untuk seluruh akun seeder: <code>password</code>
-            </p>
-        </div>
+        @endif
     </div>
 </x-layout>

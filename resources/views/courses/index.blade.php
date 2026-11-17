@@ -36,7 +36,7 @@
             <tr>
                 <th>Kode</th>
                 <th>Nama Mata Kuliah</th>
-                <th>SKS</th>
+                <th style="text-align: center;">SKS</th>
                 <th>Dosen</th>
                 <th>Status</th>
                 <th style="text-align: center;">Aksi</th>

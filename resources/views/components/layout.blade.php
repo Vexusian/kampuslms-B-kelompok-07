@@ -117,6 +117,11 @@
             color: #065f46;
             border: 1px solid #10b981;
         }
+        .alert-warning {
+            background: #fef3c7;
+            color: #92400e;
+            border: 1px solid #f59e0b;
+        }
         .alert-danger {
             background: #fee2e2;
             color: #991b1b;
@@ -216,6 +221,12 @@
         @if (session('success'))
             <div class="alert alert-success">
                 <i class="fas fa-check-circle"></i> {{ session('success') }}
+            </div>
+        @endif
+
+        @if (session('warning'))
+            <div class="alert alert-warning">
+                <i class="fas fa-exclamation-triangle"></i> {{ session('warning') }}
             </div>
         @endif
 

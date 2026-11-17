@@ -9,7 +9,19 @@
         <a href="{{ route('courses.show', $course) }}" class="btn btn-secondary">
             <i class="fas fa-arrow-left"></i> Kembali ke Mata Kuliah
         </a>
-        <div class="flex gap-2">
+        <div class="flex gap-2" style="align-items: center; flex-wrap: wrap;">
+            @if ($user->role === 'admin' || ($user->role === 'dosen' && $course->lecturer_id === $user->id))
+                <a href="{{ route('courses.grades.export', $course) }}" class="btn btn-secondary btn-sm" style="display: inline-flex; align-items: center; gap: 0.4rem;">
+                    <i class="fas fa-file-export"></i> Ekspor Nilai (CSV)
+                </a>
+            @endif
+
+            @if ($user->role === 'dosen' && $course->lecturer_id === $user->id)
+                <button type="button" onclick="document.getElementById('importGradesModal').style.display='flex'" class="btn btn-sm" style="background: #0284c7; color: white; display: inline-flex; align-items: center; gap: 0.4rem;">
+                    <i class="fas fa-file-import"></i> Impor Nilai (CSV)
+                </button>
+            @endif
+
             <button type="button" onclick="window.print()" class="btn btn-secondary btn-sm" style="display: inline-flex; align-items: center; gap: 0.4rem;">
                 <i class="fas fa-print"></i> Cetak Rekap
             </button>
@@ -309,4 +321,32 @@
             }
         }
     </style>
+    @if ($user->role === 'dosen' && $course->lecturer_id === $user->id)
+        <div id="importGradesModal" style="display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); z-index: 9999; align-items: center; justify-content: center; padding: 1rem;">
+            <div style="background: white; border-radius: 8px; max-width: 520px; width: 100%; box-shadow: 0 10px 25px rgba(0,0,0,0.2); overflow: hidden;">
+                <div style="background: #f8fafc; padding: 1rem 1.25rem; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
+                    <h3 style="margin: 0; font-size: 1.1rem; color: #0f172a;"><i class="fas fa-file-import" style="color: #0284c7;"></i> Impor Nilai Mahasiswa</h3>
+                    <button type="button" onclick="document.getElementById('importGradesModal').style.display='none'" style="background: none; border: none; font-size: 1.25rem; color: #64748b; cursor: pointer;">&times;</button>
+                </div>
+                <form action="{{ route('courses.grades.import', $course) }}" method="POST" enctype="multipart/form-data" style="padding: 1.25rem;">
+                    @csrf
+                    <p style="font-size: 0.9rem; color: #475569; margin-bottom: 1rem;">
+                        Unggah berkas CSV untuk memperbarui nilai secara massal. Sistem membaca kolom <code>ID Tugas</code>, <code>Nilai</code>, dan <code>Email Mahasiswa</code> atau <code>NIM</code>.
+                    </p>
+                    <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 6px; padding: 0.75rem 1rem; margin-bottom: 1rem; font-size: 0.85rem; color: #1e40af; display: flex; justify-content: space-between; align-items: center;">
+                        <span>Unduh format template kelas ini:</span>
+                        <a href="{{ route('courses.grades.template', $course) }}" class="btn btn-sm" style="background: #2563eb; color: white;">Unduh Template</a>
+                    </div>
+                    <div class="form-group mb-4">
+                        <label for="grade_csv_file" style="font-weight: 600; font-size: 0.9rem;">Pilih Berkas CSV:</label>
+                        <input type="file" id="grade_csv_file" name="file" accept=".csv,text/csv" required class="form-control" style="padding: 0.4rem;">
+                    </div>
+                    <div style="display: flex; justify-content: flex-end; gap: 0.5rem;">
+                        <button type="button" onclick="document.getElementById('importGradesModal').style.display='none'" class="btn btn-secondary">Batal</button>
+                        <button type="submit" class="btn btn-primary"><i class="fas fa-upload"></i> Unggah & Impor</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    @endif
 </x-layout>

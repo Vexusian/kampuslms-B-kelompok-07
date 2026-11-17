@@ -4,6 +4,7 @@ use App\Http\Controllers\AssignmentController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CourseController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DataExchangeController;
 use App\Http\Controllers\MaterialController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\SubmissionController;
@@ -72,6 +73,9 @@ Route::middleware('auth')->group(function () {
 
     // 1. GRUP ADMIN (prefix: /admin, name: admin.*, middleware: role:admin)
     Route::middleware('role:admin')->prefix('admin')->name('admin.')->group(function () {
+        Route::get('students/export', [DataExchangeController::class, 'exportStudents'])->name('students.export');
+        Route::get('students/template', [DataExchangeController::class, 'studentTemplate'])->name('students.template');
+        Route::post('students/import', [DataExchangeController::class, 'importStudents'])->name('students.import');
         Route::resource('users', UserController::class);
         Route::resource('courses', CourseController::class);
     });
@@ -116,6 +120,12 @@ Route::middleware('auth')->group(function () {
 Route::middleware('auth')->group(function () {
     Route::get('/courses/{course}/grades', [CourseController::class, 'grades'])
         ->name('courses.grades');
+    Route::get('/courses/{course}/grades/export', [DataExchangeController::class, 'exportGrades'])
+        ->name('courses.grades.export');
+    Route::get('/courses/{course}/grades/template', [DataExchangeController::class, 'gradesTemplate'])
+        ->name('courses.grades.template');
+    Route::post('/courses/{course}/grades/import', [DataExchangeController::class, 'importGrades'])
+        ->name('courses.grades.import');
     Route::resource('courses', CourseController::class);
     Route::resource('mata-kuliah', CourseController::class);
     Route::resource('users', UserController::class)->middleware('role:admin');

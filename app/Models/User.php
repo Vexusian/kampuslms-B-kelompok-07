@@ -74,4 +74,8 @@ class User extends Authenticatable
         return $this->hasMany(Grade::class, 'graded_by');
     }
 
+    public function importLogs(): HasMany
+    {
+        return $this->hasMany(ImportLog::class);
+    }
 }

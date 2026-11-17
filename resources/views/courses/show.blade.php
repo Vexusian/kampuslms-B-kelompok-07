@@ -80,7 +80,7 @@
                 </td>
             </tr>
             <tr>
-                <td style="padding: 0.5rem 1rem 0   .5rem 0; font-weight: 600; border: none; color: #64748b;">Jumlah Mahasiswa</td>
+                <td style="padding: 0.5rem 1rem 0.5rem 0; font-weight: 600; border: none; color: #64748b;">Jumlah Mahasiswa</td>
                 <td style="padding: 0.5rem; border: none;">
                     <i class="fas fa-user-graduate" style="color: #2563eb;"></i> {{ $course->students_count ?? $course->students->count() }} Mahasiswa Terdaftar
                 </td>
@@ -223,45 +223,45 @@
                     Lihat Semua <i class="fas fa-chevron-right" style="font-size: 0.8rem;"></i>
                 </a>
             </div>
-            <table>
+            <table style="table-layout: fixed; width: 100%;">
                 <thead>
                     <tr>
                         <th>Judul Materi</th>
-                        <th style="width: 140px;">Bentuk</th>
-                        <th style="width: 130px;">Tanggal Rilis</th>
-                        <th style="text-align: center; width: 180px;">Aksi</th>
+                        <th style="width: 200px;">Bentuk</th>
+                        <th style="width: 150px;">Tanggal Rilis</th>
+                        <th style="text-align: center; width: 140px;">Aksi</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach ($course->materials->sortByDesc('created_at')->take(3) as $material)
                         <tr>
                             <td>
-                                <strong style="color: #0f172a;">{{ $material->title }}</strong>
+                                <strong style="color: #0f172a; display: block; word-break: break-word;">{{ $material->title }}</strong>
                                 @if($material->description)
-                                    <p style="color: #64748b; font-size: 0.8rem; margin: 0.15rem 0 0;">{{ \Illuminate\Support\Str::limit($material->description, 60) }}</p>
+                                    <p style="color: #64748b; font-size: 0.8rem; margin: 0.15rem 0 0; word-break: break-word;">{{ \Illuminate\Support\Str::limit($material->description, 60) }}</p>
                                 @endif
                             </td>
-                            <td>
+                            <td style="vertical-align: middle;">
                                 @if ($material->type === 'link')
-                                    <span style="background: #d1fae5; color: #065f46; font-size: 0.75rem; font-weight: 600; padding: 0.15rem 0.5rem; border-radius: 4px; display: inline-flex; align-items: center; gap: 0.25rem;">
+                                    <span style="background: #d1fae5; color: #065f46; font-size: 0.75rem; font-weight: 600; padding: 0.2rem 0.55rem; border-radius: 4px; display: inline-flex; align-items: center; gap: 0.25rem;">
                                         <i class="fas fa-link"></i> Tautan
                                     </span>
                                 @elseif ($material->file_path)
-                                    <span style="background: #dbeafe; color: #1e40af; font-size: 0.75rem; font-weight: 600; padding: 0.15rem 0.5rem; border-radius: 4px; display: inline-flex; align-items: center; gap: 0.25rem;">
+                                    <span style="background: #dbeafe; color: #1e40af; font-size: 0.75rem; font-weight: 600; padding: 0.2rem 0.55rem; border-radius: 4px; display: inline-flex; align-items: center; gap: 0.25rem;">
                                         <i class="fas {{ $material->file_icon }}"></i> {{ strtoupper(pathinfo($material->original_name ?? $material->file_path, PATHINFO_EXTENSION)) }}
                                     </span>
                                 @else
-                                    <span style="background: #f1f5f9; color: #475569; font-size: 0.75rem; font-weight: 600; padding: 0.15rem 0.5rem; border-radius: 4px; display: inline-flex; align-items: center; gap: 0.25rem;">
+                                    <span style="background: #f1f5f9; color: #475569; font-size: 0.75rem; font-weight: 600; padding: 0.2rem 0.55rem; border-radius: 4px; display: inline-flex; align-items: center; gap: 0.25rem;">
                                         <i class="fas fa-file-alt"></i> Teks
                                     </span>
                                 @endif
                             </td>
-                            <td style="color: #64748b; font-size: 0.85rem;">
-                                {{ $material->created_at ? $material->created_at->format('d M Y') : '-' }}
+                            <td style="color: #64748b; font-size: 0.85rem; vertical-align: middle;">
+                                <i class="far fa-calendar-alt" style="margin-right: 0.25rem;"></i> {{ $material->created_at ? $material->created_at->format('d M Y') : '-' }}
                             </td>
-                            <td style="text-align: center;">
-                                <div class="flex gap-1" style="justify-content: center;">
-                                    <a href="{{ route($rolePrefix . '.materials.show', $material->id) }}" class="btn btn-sm" style="background: #3b82f6; padding: 0.25rem 0.5rem; font-size: 0.8rem;">
+                            <td style="text-align: center; vertical-align: middle;">
+                                <div class="flex gap-1" style="justify-content: center; align-items: center;">
+                                    <a href="{{ route($rolePrefix . '.materials.show', $material->id) }}" class="btn btn-sm" style="background: #3b82f6; padding: 0.25rem 0.6rem; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 0.35rem;">
                                         <i class="fas fa-eye"></i> Detail
                                     </a>
                                     @if ($material->type === 'file' && $material->file_path)
@@ -293,32 +293,38 @@
                     Lihat Semua <i class="fas fa-chevron-right" style="font-size: 0.8rem;"></i>
                 </a>
             </div>
-            <table>
+            <table style="table-layout: fixed; width: 100%;">
                 <thead>
                     <tr>
                         <th>Judul Tugas</th>
-                        <th>Deadline</th>
-                        <th>Status</th>
-                        <th style="text-align: center; width: 120px;">Aksi</th>
+                        <th style="width: 200px;">Deadline</th>
+                        <th style="width: 150px;">Status</th>
+                        <th style="text-align: center; width: 140px;">Aksi</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach ($course->assignments->sortByDesc('due_at')->take(3) as $assignment)
                         @php $isPast = $assignment->due_at && $assignment->due_at->isPast(); @endphp
                         <tr>
-                            <td>{{ $assignment->title }}</td>
-                            <td style="color: #64748b; font-size: 0.9rem;">
-                                {{ $assignment->due_at ? $assignment->due_at->format('d M Y, H:i') : '-' }}
-                            </td>
                             <td>
+                                <strong style="color: #0f172a; display: block; word-break: break-word;">{{ $assignment->title }}</strong>
+                            </td>
+                            <td style="color: #64748b; font-size: 0.85rem; vertical-align: middle;">
+                                <i class="far fa-clock" style="margin-right: 0.25rem;"></i> {{ $assignment->due_at ? $assignment->due_at->format('d M Y, H:i') : '-' }}
+                            </td>
+                            <td style="vertical-align: middle;">
                                 @if ($isPast)
-                                    <span style="padding: 0.2rem 0.5rem; border-radius: 12px; font-size: 0.75rem; font-weight: 600; background: #fee2e2; color: #991b1b;">Berakhir</span>
+                                    <span style="padding: 0.2rem 0.55rem; border-radius: 12px; font-size: 0.75rem; font-weight: 600; background: #fee2e2; color: #991b1b; display: inline-flex; align-items: center; gap: 0.25rem;">
+                                        <i class="fas fa-circle-exclamation"></i> Berakhir
+                                    </span>
                                 @else
-                                    <span style="padding: 0.2rem 0.5rem; border-radius: 12px; font-size: 0.75rem; font-weight: 600; background: #d1fae5; color: #065f46;">Aktif</span>
+                                    <span style="padding: 0.2rem 0.55rem; border-radius: 12px; font-size: 0.75rem; font-weight: 600; background: #d1fae5; color: #065f46; display: inline-flex; align-items: center; gap: 0.25rem;">
+                                        <i class="fas fa-check-circle"></i> Aktif
+                                    </span>
                                 @endif
                             </td>
-                            <td style="text-align: center;">
-                                <a href="{{ route($rolePrefix . '.assignments.show', $assignment->id) }}" class="btn btn-sm" style="background: #3b82f6;">
+                            <td style="text-align: center; vertical-align: middle;">
+                                <a href="{{ route($rolePrefix . '.assignments.show', $assignment->id) }}" class="btn btn-sm" style="background: #3b82f6; padding: 0.25rem 0.6rem; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 0.35rem;">
                                     <i class="fas fa-eye"></i> Detail
                                 </a>
                             </td>

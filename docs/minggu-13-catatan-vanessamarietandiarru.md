@@ -168,9 +168,13 @@ Temuan keamanan pada berkas `app/Http/Controllers/SubmissionController.php:22-26
 - **Saran:** Tambahkan batasan tipe file yang diizinkan secara eksplisit pada validasi, misalnya `mimes:pdf,doc,docx`.
 
 ### 4. Tunjukkan satu temuan yang masuk ke kelompok Anda. Anda terima atau tolak? Kenapa?
-- **Temuan yang masuk:** Saran perbaikan untuk menyembunyikan panel akun demo pada halaman login saat berjalan di lingkungan produksi agar kredensial pengujian tidak tampil bebas untuk umum.
-- **Keputusan:** Diterima.
-- **Alasan:** Masukan tersebut valid untuk standar keamanan produksi. Kelompok kami menindaklanjutinya dengan membatasi tampilan akun demo hanya pada environment lokal (`app()->environment('local')`) melalui commit perbaikan.
+Dari review `tikaacode` (Kelompok 06) pada PR #58 (`feat: tambah fitur impor dan ekspor data mahasiswa serta nilai (CSV)`):
+- **Temuan 1 & 2 (Diterima dan diperbaiki):**
+  - Pada `importStudents()`, belum ada pengecekan role lama sehingga email akun Admin/Dosen di CSV berisiko tertimpa menjadi `mahasiswa`. Diperbaiki dengan menambahkan pengecekan `if ($user->role !== 'mahasiswa')` agar baris tersebut dilewati.
+  - Pada `exportGrades()`, pemanggilan `$assignment->submissions()->with('grade')->get()` di dalam `foreach` memicu N+1 query. Diperbaiki dengan eager loading `with('submissions.grade')` sebelum loop dan memanggil `$assignment->submissions` di dalam loop.
+- **Temuan 3 (Ditolak dengan alasan teknis):**
+  - Reviewer menyarankan mengganti pengecekan otorisasi di `importGrades()` menjadi `Gate::authorize('update', $course)`.
+  - Ditolak karena `CoursePolicy::update()` mengizinkan Admin untuk mengedit mata kuliah, sedangkan sesuai Tabel 3 Spesifikasi KampusLMS, Admin tidak diperbolehkan memberi nilai (hanya Dosen pengampu mata kuliah tersebut yang boleh).
 
 ### 5. Kenapa PR sebaiknya kecil dan satu fitur?
 1. **Mudah ditelaah:** Reviewer dapat memahami perubahan kode secara menyeluruh tanpa kelelahan membaca ratusan baris sekaligus.

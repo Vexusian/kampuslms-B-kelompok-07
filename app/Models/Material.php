@@ -55,6 +55,14 @@ class Material extends Model
     }
 
     /**
+     * Ekstensi berkas dalam format huruf besar (PDF, DOCX, dll).
+     */
+    public function getExtensionAttribute(): string
+    {
+        return strtoupper(pathinfo($this->original_name ?? $this->file_path ?? '', PATHINFO_EXTENSION));
+    }
+
+    /**
      * Ikon FontAwesome yang sesuai dengan ekstensi berkas.
      */
     public function getFileIconAttribute(): string

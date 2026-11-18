@@ -198,10 +198,27 @@ Temuan Keamanan: Belum ada batas maksimal jumlah input pada array `student_ids`
 
 ---
 
-## 5. Jawaban Checkpoint Minggu 13
+## 5. Tindak Lanjut & Tanggapan Review yang Masuk (PR #31)
+
+Sesuai ketentuan Modul 13 bagian BUILD, kelompok yang direview wajib menanggapi seluruh temuan (diterima dan diperbaiki, atau ditolak dengan alasan yang sah), serta minimal satu temuan benar-benar diperbaiki lewat commit baru.
+
+- **PR yang Direview:** [PR #31 — feat:update fitur upload materials](https://github.com/Vexusian/kampuslms-B-kelompok-07/pull/31)
+- **Reviewer:** `@06Victoire` (Kelompok 06)
+
+### Rekapitulasi Tanggapan & Perbaikan Kode:
+
+| No | Kategori | Ringkasan Temuan Reviewer | Keputusan | Tindak Lanjut / Alasan Teknis |
+|:---:|---|---|:---:|---|
+| **1** | **Keamanan** | Aturan validasi `file` dan `external_url` tidak kondisional (`nullable`). Jika user memilih tipe berkas tanpa mengunggah file, record tersimpan dengan `file_path = null` (data korup / 404 saat unduh). | **Diterima & Diperbaiki** | Menambahkan aturan kondisional `required_if:type,file` untuk berkas dan `required_if:type,link` untuk URL eksternal pada method `store()` dan `update()` di `app/Http/Controllers/MaterialController.php`. |
+| **2** | **Performa** | Kueri materi pada `MaterialController@index` tidak memanggil eager loading `course`, memicu N+1 query saat pemeriksaan otorisasi `@can('update', $material)` di view. | **Diterima & Diperbaiki** | Memastikan kueri pagination materi memuat relasi `course` menggunakan `with('course')` pada `MaterialController.php:23`. |
+| **3** | **Struktur & Keterbacaan** | 1. Duplikasi logika pemotongan ekstensi berkas `strtoupper(pathinfo(...))` berulang di beberapa file Blade view.<br>2. Usulan memindahkan seluruh validasi ke Form Request. | **Diterima Sebagian & Ditolak Sebagian** | **Diterima:** Dibuatkan Accessor `getExtensionAttribute()` pada Model `Material` dan seluruh pemanggilan di Blade disederhanakan menjadi `$material->extension`.<br>**Ditolak:** Tetap mempertahankan validasi di controller karena alur unggah berkas fisik privat membutuhkan penanganan respons error kondisional yang terikat erat dengan siklus controller, sementara Form Request difungsikan untuk otorisasi `authorize()`. |
+
+---
+
+## 6. Jawaban Checkpoint Minggu 13
 
 ### 1. Berapa commit atas nama Anda? Tunjukkan `git shortlog -sn`.
-- **Jumlah commit atas nama saya:** **46 commit** pada repositori proyek KampusLMS Kelompok 07:
+- **Jumlah commit atas nama saya:** **44 commit** pada repositori proyek KampusLMS Kelompok 07:
   - 36 commit tercatat dengan identitas `ZalfaPutriSopyandi`
   - 8 commit tercatat dengan identitas `Zalfa Putri`
 - **Data kontribusi tim (`git shortlog -sn --all`):**
@@ -242,9 +259,22 @@ Perintah `git rm --cached .env` hanya menghapus berkas `.env` dari commit saat i
 ---
 
 ### 4. Tunjukkan satu temuan yang masuk ke kelompok Anda. Anda terima atau tolak? Kenapa?
-- **Temuan yang masuk:** Masukan perbaikan untuk merapikan layout tabel pada halaman detail mata kuliah agar kolom materi dan tugas memiliki lebar kolom yang sejajar serta proporsional secara vertikal.
-- **Keputusan:** Diterima.
-- **Alasan:** Masukan tersebut sangat valid untuk meningkatkan kenyamanan antarmuka (*UI/UX*). Kelompok kami langsung menindaklanjutinya dengan menerapkan `table-layout: fixed; width: 100%;` dan menyamakan lebar kolom pada kedua tabel di file `resources/views/courses/show.blade.php`.
+
+Dari *code review* oleh `@06Victoire` (Kelompok 06) pada [PR #31 (`feat:update fitur upload materials`)](https://github.com/Vexusian/kampuslms-B-kelompok-07/pull/31):
+
+1. **Temuan 1 — Keamanan: Validasi input berkas tidak kondisional (DITERIMA & DIPERBAIKI):**
+   * **Masalah:** Input `file` disetel `nullable` tanpa aturan kondisional berbasis tipe (`type`). Saat user memilih `type = file` namun tidak memilih berkas apa pun, validasi tetap lolos dan record tersimpan dengan `file_path = null` (data korup / error 404 saat unduh).
+   * **Keputusan:** **Diterima.**
+   * **Alasan & Perbaikan:** Temuan ini penting untuk menjaga integritas data. Diperbaiki pada `MaterialController.php` dengan menambahkan aturan kondisional `required_if:type,file` untuk input `file` dan `required_if:type,link` untuk `external_url`.
+
+2. **Temuan 2 — Performa: N+1 Query pada pemeriksaan otorisasi daftar materi (DITERIMA & DIPERBAIKI):**
+   * **Masalah:** Pada `MaterialController::index()`, kueri materi tidak melakukan eager loading relasi `course`, sehingga evaluasi `@can('update', $material)` dan `@can('delete', $material)` di view memicu query relasi `courses` berulang per baris materi.
+   * **Keputusan:** **Diterima.**
+   * **Alasan & Perbaikan:** Temuan ini sangat valid untuk efisiensi kueri. Diperbaiki dengan memastikan kueri memanggil eager loading `with('course')` pada `$course->materials()->with('course')->latest()->paginate(15)`.
+
+3. **Temuan 3 — Struktur Kode: Duplikasi logika manipulasi ekstensi berkas di View Blade (DITERIMA SEBAGIAN & DITOLAK SEBAGIAN):**
+   * **Bagian yang Diterima (Logika Ekstensi di View):** Pengecekan `strtoupper(pathinfo(...))` berulang di beberapa berkas view diterima dan diperbaiki dengan memindahkannya ke Accessor `getExtensionAttribute()` pada Model `Material`, sehingga di view cukup memanggil `$material->extension`.
+   * **Bagian yang Ditolak (Memindahkan Seluruh Validasi ke Form Request):** Ditolak dengan alasan teknis, karena saat ini alur validasi di controller memiliki dependensi kondisional dan *custom error feedback* yang terikat erat dengan siklus penyimpanan fisik berkas lokal di controller. Form Request tetap difungsikan sebagai gerbang otorisasi utama berbasis Policy (`authorize()`). Menolak masukan dengan argumen teknis yang tepat adalah tanggapan yang sah dan bernilai penuh sesuai panduan Modul 13.
 
 ---
 

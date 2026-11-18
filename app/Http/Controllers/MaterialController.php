@@ -9,6 +9,7 @@ use App\Models\Material;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 
 class MaterialController extends Controller
 {
@@ -51,21 +52,25 @@ class MaterialController extends Controller
             'type' => ['nullable', 'in:file,link'],
             'content' => ['nullable', 'string'],
             'file' => [
+                'required_if:type,file',
                 'nullable',
                 'file',
                 'mimes:pdf,pptx,docx',
                 'max:20480', // Maks 20 MB (20480 KB)
             ],
             'external_url' => [
+                'required_if:type,link',
                 'nullable',
                 'url',
                 'max:2048',
             ],
         ], [
             'title.required' => 'Judul materi wajib diisi.',
+            'file.required_if' => 'Berkas materi wajib diunggah saat memilih jenis berkas.',
             'file.file' => 'Berkas materi yang diunggah tidak valid.',
             'file.mimes' => 'Format berkas harus berupa PDF, PPTX, atau DOCX.',
             'file.max' => 'Ukuran berkas materi maksimal 20 MB.',
+            'external_url.required_if' => 'Tautan eksternal wajib diisi saat memilih jenis tautan.',
             'external_url.url' => 'Format tautan eksternal tidak valid.',
         ]);
 
@@ -151,21 +156,25 @@ class MaterialController extends Controller
             'type' => ['nullable', 'in:file,link'],
             'content' => ['nullable', 'string'],
             'file' => [
+                Rule::requiredIf(fn () => $request->input('type') === 'file' && ! $material->file_path),
                 'nullable',
                 'file',
                 'mimes:pdf,pptx,docx',
                 'max:20480',
             ],
             'external_url' => [
+                'required_if:type,link',
                 'nullable',
                 'url',
                 'max:2048',
             ],
         ], [
             'title.required' => 'Judul materi wajib diisi.',
+            'file.required_if' => 'Berkas materi wajib diunggah saat memilih jenis berkas.',
             'file.file' => 'Berkas materi yang diunggah tidak valid.',
             'file.mimes' => 'Format berkas harus berupa PDF, PPTX, atau DOCX.',
             'file.max' => 'Ukuran berkas materi maksimal 20 MB.',
+            'external_url.required_if' => 'Tautan eksternal wajib diisi saat memilih jenis tautan.',
             'external_url.url' => 'Format tautan eksternal tidak valid.',
         ]);
 

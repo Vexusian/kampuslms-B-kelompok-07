@@ -248,7 +248,7 @@
                                     </span>
                                 @elseif ($material->file_path)
                                     <span style="background: #dbeafe; color: #1e40af; font-size: 0.75rem; font-weight: 600; padding: 0.2rem 0.55rem; border-radius: 4px; display: inline-flex; align-items: center; gap: 0.25rem;">
-                                        <i class="fas {{ $material->file_icon }}"></i> {{ strtoupper(pathinfo($material->original_name ?? $material->file_path, PATHINFO_EXTENSION)) }}
+                                        <i class="fas {{ $material->file_icon }}"></i> {{ $material->extension }}
                                     </span>
                                 @else
                                     <span style="background: #f1f5f9; color: #475569; font-size: 0.75rem; font-weight: 600; padding: 0.2rem 0.55rem; border-radius: 4px; display: inline-flex; align-items: center; gap: 0.25rem;">

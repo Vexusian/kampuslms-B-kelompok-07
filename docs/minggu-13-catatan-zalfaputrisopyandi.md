@@ -202,15 +202,18 @@ Temuan Keamanan: Belum ada batas maksimal jumlah input pada array `student_ids`
 
 ### 1. Berapa commit atas nama Anda? Tunjukkan `git shortlog -sn`.
 - **Jumlah commit atas nama saya:** **46 commit** pada repositori proyek KampusLMS Kelompok 07:
-  - 38 commit tercatat dengan identitas `ZalfaPutriSopyandi`
+  - 36 commit tercatat dengan identitas `ZalfaPutriSopyandi`
   - 8 commit tercatat dengan identitas `Zalfa Putri`
 - **Data kontribusi tim (`git shortlog -sn --all`):**
   ```text
-  153  Vanessa (Vexusian / Vanessa Marie Tandiarru)
-   58  Wahyu (forbidenperson / wahyyrmdann)
-   46  Zalfa (ZalfaPutriSopyandi / Zalfa Putri)
-   22  Tresia (10241072-jpg / Tresia)
-    1  Achmad Zaki Zaidan (Dosen Pengampu)
+  104  Vexusian
+    49  Vanessa Marie Tandiarru
+    42  forbidenperson
+    36  ZalfaPutriSopyandi
+    17  10241072-jpg
+    16  wahyyrmdann
+     8  Zalfa Putri
+     5  Tresia
   ```
 
 ---

@@ -48,13 +48,12 @@ class SubmissionPolicy
     }
 
     /**
-     * Mengumpulkan / mengumpulkan ulang tugas:
+     * Mengumpulkan tugas:
      * - Hanya mahasiswa yang terdaftar pada mata kuliah penugasan tersebut.
-     *
-     * Catatan: Pengumpulan ulang (re-submit) kini diizinkan.
-     * Controller menggunakan updateOrCreate sehingga berkas lama ditimpa.
-     * Constraint unique composite (assignment_id, user_id) di database
-     * menjamin hanya ada satu submission per mahasiswa per assignment.
+     * - Pengumpulan bersifat final (sekali kumpul). Mahasiswa yang sudah
+     *   mengumpulkan tidak diizinkan mengumpulkan ulang.
+     * - Constraint unique composite (assignment_id, user_id) di database
+     *   menjamin hanya ada satu submission per mahasiswa per assignment.
      */
     public function create(User $user, Assignment $assignment): bool
     {
@@ -86,8 +85,7 @@ class SubmissionPolicy
 
     /**
      * Memperbarui submission:
-     * - Pengumpulan ulang ditangani lewat create + updateOrCreate di Controller.
-     * - Method update() tetap false untuk mencegah PATCH/PUT langsung ke submission.
+     * - Pengumpulan bersifat final. PATCH/PUT langsung ke submission tidak diizinkan.
      */
     public function update(User $user, Submission $submission): bool
     {

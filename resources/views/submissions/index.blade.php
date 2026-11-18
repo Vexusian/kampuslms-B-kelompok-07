@@ -14,7 +14,7 @@
         </div>
         <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
             <div style="background: #eff6ff; padding: 0.5rem 1rem; border-radius: 6px; border: 1px solid #bfdbfe; font-size: 0.85rem; color: #1e40af;">
-                <i class="fas fa-users"></i> Total Terdaftar: <strong>{{ $enrolledStudents->count() }}</strong>
+                <i class="fas fa-users"></i> Total Terdaftar: <strong>{{ $enrolledCount }}</strong>
             </div>
             <div style="background: #ecfdf5; padding: 0.5rem 1rem; border-radius: 6px; border: 1px solid #a7f3d0; font-size: 0.85rem; color: #065f46;">
                 <i class="fas fa-check-circle"></i> Sudah Mengumpulkan: <strong>{{ $submissions->total() }}</strong>

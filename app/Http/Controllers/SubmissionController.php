@@ -24,11 +24,19 @@ class SubmissionController extends Controller
         $assignment->loadMissing('course');
 
         $submissions = $assignment->submissions()->with(['student', 'grade'])->latest('submitted_at')->paginate(15);
-        $enrolledStudents = $assignment->course->students()->orderBy('name')->get();
-        $submittedUserIds = $assignment->submissions()->pluck('user_id')->toArray();
-        $unsubmittedStudents = $enrolledStudents->whereNotIn('id', $submittedUserIds);
 
-        return view('submissions.index', compact('assignment', 'submissions', 'enrolledStudents', 'unsubmittedStudents'));
+        // Hitung total mahasiswa terdaftar langsung di database (tanpa load seluruh model ke RAM)
+        $enrolledCount = $assignment->course->students()->count();
+
+        // Filter mahasiswa yang belum mengumpulkan langsung di level database (whereDoesntHave)
+        $unsubmittedStudents = $assignment->course->students()
+            ->whereDoesntHave('submissions', function ($query) use ($assignment) {
+                $query->where('assignment_id', $assignment->id);
+            })
+            ->orderBy('name')
+            ->get();
+
+        return view('submissions.index', compact('assignment', 'submissions', 'enrolledCount', 'unsubmittedStudents'));
     }
 
     /**
@@ -40,28 +48,19 @@ class SubmissionController extends Controller
      * - Validasi berkas: wajib ada, mimes pdf/doc/docx, maksimal 5 MB (5120 KB).
      * - Perhitungan is_late dihitung di server terhadap due_at.
      * - Tolak jika allow_late bernilai false dan sudah melewati due_at.
-     * - Terapkan updateOrCreate dengan composite key (assignment_id, user_id).
-     * - Berkas lama dihapus dari storage jika melakukan pengumpulan ulang (re-submit).
+     * - Pengumpulan bersifat final (sekali kumpul) dijamin oleh SubmissionPolicy dan composite key (assignment_id, user_id).
      */
     public function store(StoreSubmissionRequest $request, Assignment $assignment)
     {
         Gate::authorize('create', [Submission::class, $assignment]);
 
         $user = $request->user();
-
-        $validated = $request->validate([
-            'file' => ['nullable', 'file', 'mimes:pdf,doc,docx', 'max:5120'],
-            'content' => ['nullable', 'string'],
-        ], [
-            'file.file' => 'Berkas yang diunggah tidak valid.',
-            'file.mimes' => 'Format berkas harus berupa PDF, DOC, atau DOCX.',
-            'file.max' => 'Ukuran berkas maksimal 5 MB.',
-        ]);
+        $validated = $request->validated();
 
         // Hitung status keterlambatan di sisi server berdasarkan due_at
         $isLate = $assignment->due_at ? now()->greaterThan($assignment->due_at) : false;
 
-        // Tolak jika batas waktu berakhir dan pengumpulan terlambat dilarang
+        // Tolak jika batas waktu berakhir dan pengumpulan terlambat dilarang (sebelum berkas disimpan)
         if (! $assignment->allow_late && $isLate) {
             return back()->withErrors(['file' => 'Batas waktu pengumpulan tugas telah berakhir dan pengumpulan terlambat tidak diizinkan.'])->withInput();
         }
@@ -75,39 +74,19 @@ class SubmissionController extends Controller
             $storedPath = $file->store('submissions/' . $assignment->id, 'local');
         }
 
-        // Hitung status keterlambatan di sisi server berdasarkan due_at
-        $isLate = $assignment->due_at ? now()->greaterThan($assignment->due_at) : false;
-
-        // Tolak jika batas waktu berakhir dan pengumpulan terlambat dilarang
-        if (! $assignment->allow_late && $isLate) {
-            return back()->withErrors(['file' => 'Batas waktu pengumpulan tugas telah berakhir dan pengumpulan terlambat tidak diizinkan.'])->withInput();
-        }
-        // Cari submission lama jika ada, lalu hapus berkas fisik lamanya agar tidak menjadi berkas yatim (orphan)
-        $existing = Submission::where('assignment_id', $assignment->id)
-            ->where('user_id', $user->id)
-            ->first();
-
-        if ($existing && $existing->file_path && Storage::disk('local')->exists($existing->file_path)) {
-            Storage::disk('local')->delete($existing->file_path);
-        }
-
-        // Terapkan updateOrCreate sesuai unique composite (assignment_id, user_id)
-        $submission = Submission::updateOrCreate(
-            [
-                'assignment_id' => $assignment->id,
-                'user_id' => $user->id,
-            ],
-            [
-                'content' => $validated['content'] ?? null,
-                'file_path' => $storedPath,
-                'original_filename' => $originalFilename,
-                'submitted_at' => now(),
-                'is_late' => $isLate,
-            ]
-        );
+        // Simpan submission baru (pengumpulan bersifat final, dijamin oleh SubmissionPolicy)
+        $submission = Submission::create([
+            'assignment_id' => $assignment->id,
+            'user_id' => $user->id,
+            'content' => $validated['content'] ?? null,
+            'file_path' => $storedPath,
+            'original_filename' => $originalFilename,
+            'submitted_at' => now(),
+            'is_late' => $isLate,
+        ]);
 
         return redirect()->route('submissions.show', $submission)
-            ->with('success', 'Tugas berhasil dikumpulkan' . ($existing ? ' ulang.' : '.'));
+            ->with('success', 'Tugas berhasil dikumpulkan.');
     }
 
     /**

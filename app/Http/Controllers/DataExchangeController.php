@@ -114,6 +114,12 @@ class DataExchangeController extends Controller
             try {
                 $user = User::withTrashed()->where('email', $email)->first();
                 if ($user) {
+                    if ($user->role !== 'mahasiswa') {
+                        $errorCount++;
+                        $errors[] = "Baris #{$totalRows}: Email {$email} terdaftar sebagai {$user->role} dan tidak dapat diubah.";
+
+                        continue;
+                    }
                     if ($user->trashed()) {
                         $user->restore();
                     }
@@ -124,7 +130,6 @@ class DataExchangeController extends Controller
                     if ($password !== '') {
                         $user->password = Hash::make($password);
                     }
-                    $user->role = 'mahasiswa';
                     $user->save();
                 } else {
                     User::create([
@@ -167,8 +172,7 @@ class DataExchangeController extends Controller
             abort(403, 'Anda tidak memiliki hak akses untuk mengekspor nilai kelas ini.');
         }
 
-        $course->loadMissing(['assignments.submissions.grade', 'students']);
-        $assignments = $course->assignments()->orderBy('id')->get();
+        $assignments = $course->assignments()->with('submissions.grade')->orderBy('id')->get();
         $students = $course->students()->orderBy('name')->get();
         $filename = 'nilai_'.$course->code.'_'.date('Ymd_His').'.csv';
 
@@ -178,7 +182,7 @@ class DataExchangeController extends Controller
             fputcsv($handle, ['ID Tugas', 'Judul Tugas', 'NIM', 'Nama Mahasiswa', 'Email Mahasiswa', 'Nilai', 'Feedback']);
 
             foreach ($assignments as $assignment) {
-                $submissions = $assignment->submissions()->with('grade')->get()->keyBy('user_id');
+                $submissions = $assignment->submissions->keyBy('user_id');
 
                 foreach ($students as $student) {
                     $submission = $submissions->get($student->id);

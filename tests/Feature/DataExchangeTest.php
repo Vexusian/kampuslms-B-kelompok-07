@@ -161,4 +161,48 @@ class DataExchangeTest extends TestCase
             'status' => 'completed',
         ]);
     }
+
+    public function test_import_students_does_not_overwrite_admin_or_dosen_role(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin', 'email' => 'admin@kampus.ac.id', 'name' => 'Admin Utama']);
+        $dosen = User::factory()->create(['role' => 'dosen', 'email' => 'dosen@kampus.ac.id', 'name' => 'Dosen Pengampu']);
+
+        $csvContent = "Nama,Email,NIM,Password\n".
+                      "Hack Admin,admin@kampus.ac.id,20269991,hacked123\n".
+                      "Hack Dosen,dosen@kampus.ac.id,20269992,hacked123\n".
+                      "Mahasiswa Sah,mhs@kampus.ac.id,20269993,secret123\n";
+
+        $file = UploadedFile::fake()->createWithContent('mixed.csv', $csvContent);
+
+        $response = $this->actingAs($admin)->post(route('admin.students.import'), [
+            'file' => $file,
+        ]);
+
+        $response->assertRedirect();
+
+        $this->assertDatabaseHas('users', [
+            'id' => $admin->id,
+            'name' => 'Admin Utama',
+            'role' => 'admin',
+        ]);
+
+        $this->assertDatabaseHas('users', [
+            'id' => $dosen->id,
+            'name' => 'Dosen Pengampu',
+            'role' => 'dosen',
+        ]);
+
+        $this->assertDatabaseHas('users', [
+            'email' => 'mhs@kampus.ac.id',
+            'role' => 'mahasiswa',
+        ]);
+
+        $this->assertDatabaseHas('import_logs', [
+            'type' => 'students',
+            'total_rows' => 3,
+            'success_count' => 1,
+            'error_count' => 2,
+            'status' => 'partial',
+        ]);
+    }
 }

@@ -205,4 +205,96 @@ class DataExchangeTest extends TestCase
             'status' => 'partial',
         ]);
     }
+
+    public function test_admin_can_export_and_download_template_in_xlsx_format(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        User::factory()->create([
+            'role' => 'mahasiswa',
+            'name' => 'Dewi Lestari',
+            'email' => 'dewi@kampus.ac.id',
+        ]);
+
+        $exportResp = $this->actingAs($admin)->get(route('admin.students.export', ['format' => 'xlsx']));
+        $exportResp->assertOk();
+        $exportResp->assertHeader('content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+
+        $templateResp = $this->actingAs($admin)->get(route('admin.students.template', ['format' => 'xlsx']));
+        $templateResp->assertOk();
+        $templateResp->assertHeader('content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    }
+
+    public function test_import_grades_rejected_when_course_archived(): void
+    {
+        $dosen = User::factory()->create(['role' => 'dosen']);
+        $course = Course::factory()->create([
+            'lecturer_id' => $dosen->id,
+            'status' => 'archived',
+        ]);
+
+        $file = UploadedFile::fake()->createWithContent('nilai.csv', "ID Tugas,NIM,Nilai\n");
+        $response = $this->actingAs($dosen)->post(route('courses.grades.import', $course), ['file' => $file]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('error', 'Mata kuliah telah diarsipkan. Pengubahan nilai dikunci.');
+    }
+
+    public function test_import_grades_validates_max_score_and_enrollment(): void
+    {
+        $dosen = User::factory()->create(['role' => 'dosen']);
+        $course = Course::factory()->create(['lecturer_id' => $dosen->id]);
+        $assignment = Assignment::factory()->create(['course_id' => $course->id, 'max_score' => 100]);
+
+        // Siswa 1 terdaftar, tapi nilainya 150 (melebihi max_score)
+        $student1 = User::factory()->create(['role' => 'mahasiswa', 'nim_nip' => '20268001', 'email' => 's1@kampus.ac.id']);
+        $course->students()->attach($student1->id, ['enrolled_at' => now()]);
+
+        // Siswa 2 tidak terdaftar di kelas
+        $student2 = User::factory()->create(['role' => 'mahasiswa', 'nim_nip' => '20268002', 'email' => 's2@kampus.ac.id']);
+
+        $csvContent = "ID Tugas,NIM,Nilai\n".
+                      "{$assignment->id},20268001,150\n".
+                      "{$assignment->id},20268002,80\n";
+
+        $file = UploadedFile::fake()->createWithContent('nilai_invalid.csv', $csvContent);
+        $response = $this->actingAs($dosen)->post(route('courses.grades.import', $course), ['file' => $file]);
+
+        $response->assertRedirect();
+
+        $this->assertDatabaseHas('import_logs', [
+            'type' => 'grades',
+            'total_rows' => 2,
+            'success_count' => 0,
+            'error_count' => 2,
+            'status' => 'failed',
+        ]);
+    }
+
+    public function test_export_grades_includes_final_score_and_sanitizes_formula_injection(): void
+    {
+        $dosen = User::factory()->create(['role' => 'dosen']);
+        $course = Course::factory()->create(['lecturer_id' => $dosen->id]);
+        $assignment = Assignment::factory()->create(['course_id' => $course->id, 'title' => '=SUM(A1:A10)', 'max_score' => 100]);
+        $student = User::factory()->create(['role' => 'mahasiswa', 'name' => '+HackerName', 'nim_nip' => '20269999']);
+        $course->students()->attach($student->id, ['enrolled_at' => now()]);
+
+        $submission = Submission::factory()->create(['assignment_id' => $assignment->id, 'user_id' => $student->id]);
+        $submission->grade()->create([
+            'graded_by' => $dosen->id,
+            'score' => 90,
+            'feedback' => '@malicious',
+            'graded_at' => now(),
+        ]);
+
+        $response = $this->actingAs($dosen)->get(route('courses.grades.export', ['course' => $course, 'format' => 'csv']));
+        $response->assertOk();
+        $content = $response->streamedContent();
+
+        $this->assertStringContainsString('Nilai Akhir MK', $content);
+        $this->assertStringContainsString('Huruf Mutu', $content);
+        // Memastikan formula injection ternetralisir dengan awalan petik tunggal
+        $this->assertStringContainsString("'+HackerName", $content);
+        $this->assertStringContainsString("'=SUM(A1:A10)", $content);
+        $this->assertStringContainsString("'@malicious", $content);
+    }
 }

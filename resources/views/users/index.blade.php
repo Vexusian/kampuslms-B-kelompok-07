@@ -5,11 +5,14 @@
     <div class="flex flex-between mb-6" style="flex-wrap: wrap; gap: 0.75rem;">
         <h1>Daftar User</h1>
         <div class="flex gap-2" style="align-items: center; flex-wrap: wrap;">
-            <a href="{{ route('admin.students.export') }}" class="btn btn-secondary btn-sm">
-                <i class="fas fa-file-export"></i> Ekspor Mahasiswa (CSV)
+            <a href="{{ route('admin.students.export', ['format' => 'csv']) }}" class="btn btn-secondary btn-sm">
+                <i class="fas fa-file-export"></i> Ekspor CSV
+            </a>
+            <a href="{{ route('admin.students.export', ['format' => 'xlsx']) }}" class="btn btn-secondary btn-sm">
+                <i class="fas fa-file-excel"></i> Ekspor XLSX
             </a>
             <button type="button" onclick="document.getElementById('importStudentModal').style.display='flex'" class="btn btn-secondary btn-sm" style="background: #0284c7;">
-                <i class="fas fa-file-import"></i> Impor Mahasiswa (CSV)
+                <i class="fas fa-file-import"></i> Impor Mahasiswa (CSV/XLSX)
             </button>
             <a href="{{ route('admin.users.create') }}" class="btn btn-success btn-sm">
                 <i class="fas fa-plus"></i> Tambah User
@@ -88,15 +91,18 @@
             <form action="{{ route('admin.students.import') }}" method="POST" enctype="multipart/form-data" style="padding: 1.25rem;">
                 @csrf
                 <p style="font-size: 0.9rem; color: #475569; margin-bottom: 1rem;">
-                    Unggah berkas CSV berisi data mahasiswa. Sistem akan membaca kolom <code>Nama</code>, <code>Email</code>, <code>NIM</code>, dan <code>Password</code> (opsional).
+                    Unggah berkas CSV atau XLSX berisi data mahasiswa. Sistem akan membaca kolom <code>Nama</code>, <code>Email</code>, <code>NIM</code>, dan <code>Password</code> (opsional).
                 </p>
-                <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 6px; padding: 0.75rem 1rem; margin-bottom: 1rem; font-size: 0.85rem; color: #1e40af; display: flex; justify-content: space-between; align-items: center;">
-                    <span>Butuh contoh format CSV?</span>
-                    <a href="{{ route('admin.students.template') }}" class="btn btn-sm" style="background: #2563eb; color: white;">Unduh Template</a>
+                <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 6px; padding: 0.75rem 1rem; margin-bottom: 1rem; font-size: 0.85rem; color: #1e40af; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+                    <span>Unduh template:</span>
+                    <div class="flex gap-1">
+                        <a href="{{ route('admin.students.template', ['format' => 'csv']) }}" class="btn btn-sm" style="background: #2563eb; color: white;">CSV</a>
+                        <a href="{{ route('admin.students.template', ['format' => 'xlsx']) }}" class="btn btn-sm" style="background: #059669; color: white;">XLSX</a>
+                    </div>
                 </div>
                 <div class="form-group mb-4">
-                    <label for="student_csv_file" style="font-weight: 600; font-size: 0.9rem;">Pilih Berkas CSV:</label>
-                    <input type="file" id="student_csv_file" name="file" accept=".csv,text/csv" required class="form-control" style="padding: 0.4rem;">
+                    <label for="student_csv_file" style="font-weight: 600; font-size: 0.9rem;">Pilih Berkas (CSV/XLSX):</label>
+                    <input type="file" id="student_csv_file" name="file" accept=".csv, .xlsx, text/csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" required class="form-control" style="padding: 0.4rem;">
                 </div>
                 <div style="display: flex; justify-content: flex-end; gap: 0.5rem;">
                     <button type="button" onclick="document.getElementById('importStudentModal').style.display='none'" class="btn btn-secondary">Batal</button>

@@ -11,14 +11,17 @@
         </a>
         <div class="flex gap-2" style="align-items: center; flex-wrap: wrap;">
             @if ($user->role === 'admin' || ($user->role === 'dosen' && $course->lecturer_id === $user->id))
-                <a href="{{ route('courses.grades.export', $course) }}" class="btn btn-secondary btn-sm" style="display: inline-flex; align-items: center; gap: 0.4rem;">
-                    <i class="fas fa-file-export"></i> Ekspor Nilai (CSV)
+                <a href="{{ route('courses.grades.export', ['course' => $course, 'format' => 'csv']) }}" class="btn btn-secondary btn-sm" style="display: inline-flex; align-items: center; gap: 0.4rem;">
+                    <i class="fas fa-file-export"></i> Ekspor CSV
+                </a>
+                <a href="{{ route('courses.grades.export', ['course' => $course, 'format' => 'xlsx']) }}" class="btn btn-secondary btn-sm" style="display: inline-flex; align-items: center; gap: 0.4rem;">
+                    <i class="fas fa-file-excel"></i> Ekspor XLSX
                 </a>
             @endif
 
             @if ($user->role === 'dosen' && $course->lecturer_id === $user->id)
                 <button type="button" onclick="document.getElementById('importGradesModal').style.display='flex'" class="btn btn-sm" style="background: #0284c7; color: white; display: inline-flex; align-items: center; gap: 0.4rem;">
-                    <i class="fas fa-file-import"></i> Impor Nilai (CSV)
+                    <i class="fas fa-file-import"></i> Impor Nilai (CSV/XLSX)
                 </button>
             @endif
 
@@ -331,15 +334,18 @@
                 <form action="{{ route('courses.grades.import', $course) }}" method="POST" enctype="multipart/form-data" style="padding: 1.25rem;">
                     @csrf
                     <p style="font-size: 0.9rem; color: #475569; margin-bottom: 1rem;">
-                        Unggah berkas CSV untuk memperbarui nilai secara massal. Sistem membaca kolom <code>ID Tugas</code>, <code>Nilai</code>, dan <code>Email Mahasiswa</code> atau <code>NIM</code>.
+                        Unggah berkas CSV atau XLSX untuk memperbarui nilai secara massal. Sistem membaca kolom <code>ID Tugas</code>, <code>Nilai</code>, dan <code>Email Mahasiswa</code> atau <code>NIM</code>.
                     </p>
-                    <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 6px; padding: 0.75rem 1rem; margin-bottom: 1rem; font-size: 0.85rem; color: #1e40af; display: flex; justify-content: space-between; align-items: center;">
-                        <span>Unduh format template kelas ini:</span>
-                        <a href="{{ route('courses.grades.template', $course) }}" class="btn btn-sm" style="background: #2563eb; color: white;">Unduh Template</a>
+                    <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 6px; padding: 0.75rem 1rem; margin-bottom: 1rem; font-size: 0.85rem; color: #1e40af; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+                        <span>Unduh template:</span>
+                        <div class="flex gap-1">
+                            <a href="{{ route('courses.grades.template', ['course' => $course, 'format' => 'csv']) }}" class="btn btn-sm" style="background: #2563eb; color: white;">CSV</a>
+                            <a href="{{ route('courses.grades.template', ['course' => $course, 'format' => 'xlsx']) }}" class="btn btn-sm" style="background: #059669; color: white;">XLSX</a>
+                        </div>
                     </div>
                     <div class="form-group mb-4">
-                        <label for="grade_csv_file" style="font-weight: 600; font-size: 0.9rem;">Pilih Berkas CSV:</label>
-                        <input type="file" id="grade_csv_file" name="file" accept=".csv,text/csv" required class="form-control" style="padding: 0.4rem;">
+                        <label for="grade_csv_file" style="font-weight: 600; font-size: 0.9rem;">Pilih Berkas (CSV/XLSX):</label>
+                        <input type="file" id="grade_csv_file" name="file" accept=".csv, .xlsx, text/csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" required class="form-control" style="padding: 0.4rem;">
                     </div>
                     <div style="display: flex; justify-content: flex-end; gap: 0.5rem;">
                         <button type="button" onclick="document.getElementById('importGradesModal').style.display='none'" class="btn btn-secondary">Batal</button>

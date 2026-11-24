@@ -69,7 +69,7 @@ Memasang listener `DB::listen` pada `app/Providers/AppServiceProvider.php`:
 
 ## 2. BUILD — Test suite KampusLMS
 
-1. **Pemenuhan Syarat Jumlah Test Suite (Minimal 20 Feature Test):**  
+### 1. **Pemenuhan Syarat Jumlah Test Suite (Minimal 20 Feature Test):**  
    Implementasi kode suite pengujian baru **`tests/Feature/Minggu14FeatureTest.php`** yang memuat **22 feature test**. Seluruh test mencakup 8 kriteria spesifikasi Modul 14:
    - *Autentikasi:* Login berhasil, gagal, proteksi guest, logout, dan throttling 5 kali percobaan.
    - *CRUD Mata Kuliah:* Sukses oleh admin, ditolak untuk dosen/mahasiswa, update kelas dosen sendiri vs kelas dosen lain.
@@ -81,49 +81,16 @@ Memasang listener `DB::listen` pada `app/Providers/AppServiceProvider.php`:
    - *Notifikasi:* Event ter-dispatch saat tugas dibuat dan saat nilai diberikan.
    Kontribusi saya (Tresia) adalah melakukan verifikasi dan pengetesan lokal suite `Minggu14FeatureTest` (22 passed) bersama seluruh rangkaian test sebelumnya, sehingga total pengujian mencapai 76 test (100% hijau).
 
-2. **Sinkronisasi Matriks Keamanan (`docs/keamanan.md`):**  
+### 2. **Sinkronisasi Matriks Keamanan (`docs/keamanan.md`):**  
    Tabel 12 Titik Rawan IDOR telah diselaraskan dengan menautkan setiap endpoint ke method uji otomatis spesifik pada `tests/Feature/Minggu14FeatureTest.php` (seperti `test_unduhan_submission_ditolak_untuk_bukan_pemilik`, `test_crud_mata_kuliah_ditolak_untuk_dosen_dan_mahasiswa`, `test_penilaian_ditolak_untuk_dosen_lain`, dll) yang menjamin celah tersebut tertutup permanen.
 
-3. **Pemanfaatan Fake Facade:**  
+### 3. **Pemanfaatan Fake Facade:**  
    * `Storage::fake('local')` digunakan pada pengujian upload & download materi dan submission di `Minggu14FeatureTest` (baris 154, 270, 291).
    * `Event::fake([AssignmentPublished::class])` dan `Event::fake([GradeSubmitted::class])` digunakan untuk menguji alur notifikasi tugas dan penilaian di `Minggu14FeatureTest` (baris 386, 404).
 
-4. **Eksekusi Pengujian pada CI (GitHub Actions):**  
+### 4. **Eksekusi Pengujian pada CI (GitHub Actions):**  
    Konfigurasi [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) telah diperbarui dengan ekstensi `sqlite, pdo_sqlite` dan langkah `php artisan test` untuk menjalankan seluruh 75 test suite secara otomatis pada setiap Pull Request.
 
-5. **Dokumentasi Investigasi Bug Nyata (`docs/debugging.md`):**  
+### 5. **Dokumentasi Investigasi Bug Nyata (`docs/debugging.md`):**  
    Menyusun dokumentasi 3 kasus bug nyata (Missing SQLite Driver, Kerentanan IDOR Download Berkas, dan N+1 Lazy Loading) lengkap dengan metode persempitan masalah secara sistematis dan test otomatis pencegah regresinya yang merujuk pada `Minggu14FeatureTest`.
 
-## 3. Jawaban Checkpoint Minggu 14 — Gerbang Wawancara Dosen
-
-### 1. Peragakan: hapus satu fitur, tunjukkan test yang menjadi merah karenanya.
-* **Jawaban & Demonstrasi:**  
-  *“Saya dapat mendemonstrasikannya dengan menghapus atau menonaktifkan baris otorisasi di `SubmissionController@download` (atau pada `SubmissionPolicy@download`). Begitu otorisasi `Gate::authorize('download', $submission)` dikomentari, feature test `test_unduhan_submission_ditolak_untuk_bukan_pemilik` pada `tests/Feature/Minggu14FeatureTest.php` yang tadinya mengharapkan status 403 Forbidden langsung **berubah menjadi MERAH (FAILED)** karena controller malah mengizinkan unduhan dan mengembalikan status 200 OK. Ini membuktikan bahwa test kami benar-benar menguji logika pertahanan, bukan sekadar test palsu.”*
-
-### 2. Kenapa test yang hanya `assertStatus(200)` sering tidak bermakna?
-* **Jawaban:**  
-  *“Karena status 200 OK hanya menandakan bahwa server tidak mengalami crash atau error fatal saat memproses request. Status 200 sama sekali tidak membuktikan apakah data yang tampil di layar benar, apakah query mengambil data milik orang lain, atau apakah otorisasi berjalan. Bahkan jika kita mengosongkan seluruh method controller dan mengembalikan response kosong, `assertStatus(200)` akan tetap hijau. Test yang bermakna wajib memeriksa isi response (`assertSee`), rekaman database (`assertDatabaseHas`), atau state perubahan data.”*
-
-### 3. Kenapa test jalur ditolak lebih penting daripada test jalur sukses di aplikasi ini?
-* **Jawaban:**  
-  *“Jalur sukses hanya menguji fitur dalam skenario normal (*happy path*). Namun, pada sistem LMS multi-peran, ancaman terbesar berasal dari manipulasi hak akses dan celah IDOR (misalnya mahasiswa mengunduh berkas jawaban teman atau dosen mengedit nilai kelas lain). Test jalur ditolak (memverifikasi HTTP 403 Forbidden) memastikan bahwa pagar keamanan dan otorisasi backend benar-benar menolak pihak yang tidak berwenang, bukan hanya menyembunyikan tombol di antarmuka Blade.”*
-
-### 4. Apa fungsi `RefreshDatabase`? Kenapa migrasi harus reversible agar ia bekerja?
-* **Jawaban:**  
-  *“`RefreshDatabase` berfungsi mengosongkan dan mengatur ulang skema database ke kondisi awal sebelum setiap test dijalankan, sehingga hasil pengujian selalu konsisten dan tidak terkontaminasi oleh data dari test sebelumnya.  
-  Migrasi harus bersifat *reversible* (memiliki method `down()` yang benar) karena saat `RefreshDatabase` dijalankan di awal atau saat mereset skema, Laravel mengeksekusi operasi `migrate:rollback` untuk meruntuhkan tabel sebelum membangunnya kembali. Jika method `down()` rusak, proses reset akan gagal dan test tidak dapat dieksekusi.”*
-
-### 5. Buka `docs/debugging.md`. Ceritakan satu bug: bagaimana Anda mempersempit penyebabnya?
-* **Jawaban:**  
-  *“Saya mengambil contoh **Bug Ketiadaan Driver SQLite** saat menjalankan test.  
-  Gejalanya: 53 test gagal bersamaan dengan pesan `could not find driver`.  
-  Cara mempersempitnya secara sistematis:  
-  1. *Reproduksi:* Menjalankan satu test spesifik via `--filter=ExampleTest` untuk memastikan error bukan karena logika test tertentu.  
-  2. *Analisis Konfigurasi:* Mengecek `phpunit.xml` dan melihat bahwa test menggunakan koneksi `sqlite :memory:`.  
-  3. *Inspeksi Runtime:* Menjalankan `php -m` di terminal dan menemukan bahwa modul `pdo_sqlite` belum terdaftar di ekstensi aktif PHP Laragon.  
-  Dengan metode ini, penyebab langsung terisolasi pada konfigurasi `php.ini` tanpa perlu meraba-raba kode aplikasi.”*
-
-### 6. Kenapa `dd()` tidak boleh masuk PR, sementara `Log::info()` boleh?
-* **Jawaban:**  
-  *“`dd()` (*dump and die*) menghentikan eksekusi program seketika dan langsung merender struktur internal data ke layar peramban. Jika masuk ke produksi, ini akan merusak pengalaman pengguna dan membocorkan data sensitif (struktur variabel, kredensial) ke publik.  
-  Sebaliknya, `Log::info()` beroperasi secara aman di latar belakang tanpa menghentikan aliran kode HTTP, dan keluarannya ditulis ke berkas log server tertutup (`storage/logs/laravel.log`) yang hanya bisa dibaca oleh administrator.”*
